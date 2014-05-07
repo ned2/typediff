@@ -10,7 +10,8 @@ For more information, visit http://www.delph-in.net.
 
 Tools found within:
 
-1. Typediff
+Typediff
+--------
 
 Typediff enables users to interactively compare and contrast the
 resultant analyses of sets of input text. By comparing similar
@@ -21,7 +22,8 @@ browser-based and command line interface. For more information see
 the file typediff.mk.
 
 
-2. Parseit 
+Parseit 
+-------
 
 Parseit is a command line tool for manipulating DELPH-IN derivations.
 Parseit supports extracting specific attributes from derivations,

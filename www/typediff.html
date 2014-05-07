@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=utf-8 />
+  <title>typediff</title>
+  <link rel="stylesheet" type="text/css" media="screen" href="../www/typediff.css"/>
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script type="text/javascript">
+    if (typeof jQuery == 'undefined') {
+        document.write(unescape("%3Cscript src='../www/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
+    }
+  </script>
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+  <script>
+    if (typeof jQuery.ui == 'undefined') {
+        document.write(unescape("%3Cscript src='../www/jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
+    }
+  </script>
+  <script type="text/javascript" src="../www/underscore-min.js"></script>
+  <script type="text/javascript" src="../www/typediff.js"></script>
+  <script type="text/javascript" src="../www/render.js"></script>
+  <script type="text/html" id="item-template">
+    <div class="item">
+      <div class="tree-box popup hidden">
+        <div class="tree-actions hidden">
+          <input class="activate-derivations" type="submit" value="Activate All"/>
+          <input class="disable-derivations" type="submit" value="Disable All"/>
+          <input class="copy-item" type="submit" value="Copy Item" title="Copy this item to the other set with the same active trees."/>
+        </div>
+      </div>
+      <div class="mrs-box popup hidden">
+        <div class="mrs-label"></div>
+        <div class="mrs"></div>
+      </div>
+      <div class="actions">
+        <div class="number">1.</div>
+        <div class="del" title="remove item">✖</div>
+        <div class="disable">
+          <span class="icon" title="disable item">≢</span>
+          <span class="icon hidden" title="enable item">≡</span>
+        </div>
+      </div>
+      <div class="clear"></div>
+      <div class="text"></div>
+      <div class="num-parses"></div>
+      <div class="clear"></div>
+    </div>
+  </script>
+</head>
+<body>
+<div id="help-box">
+  <div id="help-content">
+    <p>Typediff is a tool to allow you to quickly explore types
+       used in the processing of utterances by DELPH-IN
+       grammars. Typediff uses ACE for parsing.</p>
+
+    <p>To get started, select <span class="highlight">Add Items</span>
+       and enter as many items as you want into the A Items and B
+       Items, separated by new lines.</p>
+
+    <p>In the <span class="highlight">difference mode</span>, this
+       displays all types used to process A items that were not used
+       in the processing of B items. This allows you (for instance) to
+       contrast similar sentences, such as passive and active
+       variants, thereby shedding light on which types are involved in
+       constraining a phenomenon. If the phenomenon you wish to
+       investigate does not lend itself to having such "minimal
+       pairs", you can try adding additional sentences to the B items
+       to filter out noisy types from the A items.</p>
+
+    <p>The type list is pseudo-sorted by more interesting types
+       (hovering types indicates their kind), and enabling
+       the <span class="highlight">super types</span> option will
+       include super types the types inherit from.  This is only
+       sensible in difference mode, otherwise you will see all types
+       up the hierarchy to *top*.</p>
+
+    <p><span class="highlight">Clicking on an item</span> will display
+       all derivations for that item and allow you to select which
+       reading(s) to be used in the comparison. Trees with a gray
+       background are active.</p>
+
+    <p><span class="highlight">Hovering over the red sign types</span>
+       will highlight the corresponding span in all input strings
+       based on the first active derivation for each item. This will
+       also highlight the corresponding subtrees within the derivation
+       trees.</p>
+
+    <p>Within the parse selection popup,
+      the <span class="highlight">Copy Item</span> button in the
+      derivation tree popup will copy over the current item into the
+      other item set, preserving the active states of the trees and
+      disabling all other items. This allows for a convenient way to
+      diff the types in different readings of the same item.</p>
+
+     <p>It is also possible to use Typediff
+       to <span class="highlight">compare items across different
+       versions</span> of the same grammar. Simply select the relevant
+       grammar version from the drop down list before adding items to
+       either the A or B sets.</p>
+  </div>
+  <div id="help-tab-container">
+       <div id="help-tab">
+         <a id="toggle-help">help</a>
+       </div>
+  </div>
+</div>
+
+  <div id="add-items-box" class="popup hidden">
+    <form action="#" method="post" onsubmit="return false;">
+      <div class="input-box"><div class="header">A Items</div><textarea id="pos-input" name="pos-items"></textarea></div>
+      <div class="spacer"></div>
+      <div class="input-box"><div class="header">B Items</div><textarea id="neg-input" name="neg-items"></textarea></div>
+      <input id="submit-items-button" type="submit" value="Add Items"/>
+    </form>
+  </div>
+
+<div id="container">
+  <div id="console-pane" class="pane left-pane">
+    <div class="pane-header">CONFIG</div>
+    <div class="pane-content">
+      <div id="options">
+        <form action="#" method="post" onsubmit="return false;">
+          <div class="option-line">
+            <div class="option">
+              <div class="option-name">Grammar:</div>
+              <div class="option-input">
+                <select id="grammar-input" name="grammar-name"></select>
+              </div>
+            </div>
+            <div class="option" title="treebank to take type coverage statistics from">
+              <div class="option-name">Treebank:</div>
+              <div class="option-input">
+                <select id="treebank-input" name="treebank-name"></select>
+              </div>
+            </div>
+            <div class="option" title="limit number of readings ACE returns">
+              <div class="option-name">Count:</div>
+              <div class="option-input">
+                <input id="count-input" type="text" name="count" value="10"/>
+              </div>
+            </div>
+          </div>
+          <div class="option-line">
+            <div class="option" title="Toggle whether fragment readings are returned">
+              <div class="option-name">Fragments:</div>
+              <div class="option-input">
+                <input type="checkbox" name="fragments">
+              </div>
+            </div>
+            <div class="option" title="Show the (diffed) super types each type inherits from">
+              <div class="option-name">Super types:</div>
+              <div class="option-input">
+                <input type="checkbox" name="supers">
+              </div>
+            </div>
+            <div class="option" title="Choose short or long labels for tree nodes">
+              <div class="option-name">Labels:</div>
+              <div class="option-input">
+                <span title="use short labels for tree nodes"><input type="radio" name="labels" value="short" checked /> short</span>
+                <span title="use rule names and lex types for tree labels"><input type="radio" name="labels" value="long"/> long</span>
+              </div>
+            </div>
+          </div>
+          <div class="option-line">
+            <div class="option">
+              <div class="option-name">Mode:</div>
+              <div class="option-input">
+                <span title="show types used to process A items but not used to process B items"><input type="radio" name="mode" value="difference" checked /> difference</span>
+                <span title="show types used in the processing of both A and B items"><input type="radio" name="mode" value="intersection"/> intersection</span>
+                <span title="show types used in the processing of all items"><input type="radio" name="mode" value="union" /> union</span>
+              </div>
+            </div>
+          </div> 
+          <div id="actions" class="option-line">
+            <input id="add-items-button" type="submit" value="Add Items"/>
+            <input id="swap-items-button" class="disabled" type="submit" value="Swap A-B"/>
+            <input id="clear-button" class="disabled" type="submit" value="Clear"/>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div id="status-pane" class="pane right-pane">
+    <div class="pane-header">STATUS</div>
+    <div class="pane-content">
+      <div id="waiting-box" class="hidden">Working...</div>
+      <div id="success-box" class="hidden">
+        <div class="status-label">Grammar used to parse A items:</div>
+        <div id="pos-grammar" class="status-value"></div>
+        <div></div>
+        <div class="status-label">Grammar used to parse B items:</div>
+        <div id="neg-grammar" class="status-value"></div>
+        <div></div>
+        <div class="status-label">Number of types:</div>
+        <div id="numtypes" class="status-value"></div>
+        <div></div>
+        <div class="status-label">Number of super types:</div>
+        <div id="numsupers" class="status-value"></div>
+        <div class="status-label">Treebank details:</div>
+        <div id="treebank-details" class="status-value"></div>
+      </div>
+      <div id="fail-box" class="error hidden"></div>
+    </div>
+  </div>
+  <div id="input-pane" class="pane left-pane">
+    <div class="pane-header">INPUT</div>
+    <div class="pane-content">
+      <div id="pos-items" class="item-type hidden">
+        <div class="item-type-header">A ITEMS</div>
+        <div class="item-list"></div>
+      </div>
+      <div id="neg-items" class="item-type hidden">
+        <div class="item-type-header">B ITEMS</div>
+        <div class="item-list"></div>
+      </div>
+    </div>
+  </div>
+  <div id="output-pane" class="pane right-pane">
+    <div class="pane-header">OUTPUT</div>
+    <div class="pane-content">
+      <div id="output-box"></div>
+    </div>
+  </div>
+  <div class="clear"></div>
+</div>
+</body>
+</html>

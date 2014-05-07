@@ -1,0 +1,323 @@
+body {
+    min-height: 500px;
+}
+
+#help-box {
+    position: absolute;
+    width: 39%;
+    top: 0;
+    right: 1em;
+}
+
+#help-content {
+    background-color: #EEE;
+    box-shadow: 2px 2px 5px rgba(0,0,0,.5);
+    border-radius: 0 0 0 10px;
+    padding: 1em;
+    display: none;
+}
+
+#help-tab {
+    background-color: #EEE;
+    box-shadow: 2px 2px 5px rgba(0,0,0,.5);
+    position: absolute;
+    right: 0;
+    width: 5em;
+    border-radius: 0 0 10px 10px;
+}
+
+#toggle-help {
+    display: block;
+    margin: .1em auto;
+    width: 2em;
+    cursor: pointer;
+}
+
+.highlight { font-weight: 700 }
+
+#container { margin: 0 1em }
+
+#options {
+    display: inline-block;
+    vertical-align: top;
+}
+
+#actions {
+    display: inline-block;
+    vertical-align: top;
+}
+
+.left-pane {
+    width: 60%;
+}
+
+.right-pane {
+    width: 39%;
+    float: right;
+}
+
+.pane { display: inline-block }
+
+.pane-content { margin: 1em }
+
+.pane-header {
+    text-align: center;
+    padding: .3em;
+    font-size: 18pt;
+    background-color: rgba(0,0,0,.2);
+}
+
+.option { 
+    display: inline-block;
+    margin-right: 0.5em;
+    vertical-align: top;
+ }
+
+.option-line { line-height: 2em }
+
+.option-name {
+    display: inline-block;
+    margin-right: 0.5em;
+}
+
+.option-input { 
+    display: inline-block;
+    vertical-align: top;
+}
+
+#count-input { width: 2em }
+
+.status-label {
+    display: inline-block;
+    vertical-align: top;
+    width: 65%;
+}
+
+.status-value { display: inline-block }
+
+#fail-box { font-size: 85% }
+
+.error { color: red }
+
+#neg-items { margin-top: 2em }
+
+.item-type-header { margin-top: .5em }
+
+.item {
+    border: solid 2px black;
+    background-color: white;
+    border-radius: 10px;
+    margin-top: .5em;
+    transition: background-color .5s;
+}
+
+.item .text {
+    font-size: 120%;
+    width: 85%;
+    margin: 0.3em;
+    float: left;
+}
+
+.text .active { color: red; }
+
+.item:hover { 
+    cursor: pointer;
+    box-shadow: 0 0 5px #aaa;
+}
+
+.item .popup { cursor: default }
+
+.derivation { 
+    background-color: white;
+    display: inline-block;
+    vertical-align: top;
+    border-radius: 10px;
+    padding: .5em;
+    margin: .5em;
+}
+
+.derivation.active { background-color: rgba(0, 0, 0, 0.3) }
+
+.derivation:hover { cursor: pointer }
+
+input, select { margin: 0 }
+
+input[type=submit]:hover { cursor: pointer }
+
+input[type=submit].disabled:hover { cursor: default }
+
+input[type=submit]:active {
+	position: relative;
+	top: 1px;
+}
+
+input[type=submit].disabled:active { position: static }
+
+input[type=submit] { font-weight: 700 }
+
+input[type=text], input[type=submit], select {
+    background: white;
+    border: solid 2px black;
+}
+
+.item.disabled, input[type=submit].disabled {
+    border-color: gray;
+    color: gray;
+}
+
+.actions {
+    margin: 0.3em 0.3em 0 0.3em;
+    font-size: 110%;
+}
+
+.actions * { display: inline-block }
+
+.actions .number { font-weight: 700 }
+
+.del,.disable {
+    float: right;
+    margin-left: 0.6em;
+    font-size: 110%;
+}
+
+.tree-box.popup, .mrs-box.popup { 
+    padding: .5em;
+    overflow-y: auto;
+ }
+
+.tree-box { 
+    max-width: 57%; 
+    max-height: 85%;
+    left: 1.5%;
+    top: 9%;
+}
+
+.mrs-box {
+    max-width: 36%; 
+    max-height: 85%;
+    left: 61%;
+    top: 9%;
+}
+
+.mrs-box .mrs {
+    font-family: "Courier New", Courier, monospace;
+}
+
+.ui-tooltip {
+    border-radius: 5px;
+	border: 1px solid #aaa;
+    background-color: rgba(255,255,255,0.9);
+	border-width: 2px;
+	padding: .3em;
+	position: absolute;
+	z-index: 9999;
+	box-shadow: 0 0 5px #aaa;
+}
+
+.ttname {
+    display: inline-block;
+    vertical-align: bottom;
+    width: 6em;
+}
+
+.ttval {
+    display: inline-block;
+    font-family: "Courier New", Courier, monospace;
+    vertical-align: bottom;
+}
+
+.tree-actions { margin: .5em; }
+
+.num-parses {
+    font-size: 85%;
+    float: right;
+    margin-right: 0.5em;
+}
+
+.del:hover,.disable:hover { color: rgba(0, 0, 0, 0.5) }
+
+.clear { clear: both }
+.hidden { display: none }
+
+.popup {
+    position: fixed;
+    border: solid 2px black;
+    border-radius: 10px;
+    background: white;
+    padding: 1em;
+}
+
+#add-items-box, #treebanks-box {
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    width: 850px;
+    height: 220px;
+    margin-top: -110px;
+    margin-left: -425px;
+}
+
+#treebanks-box {
+    text-align: center;
+    top: 9%;
+    left: 18%;
+}
+
+.input-box {
+    display: inline-block;
+}
+
+#add-items-box textarea {
+    height: 150px;
+    width: 400px;
+}
+
+#add-items-box .header { font-weight: 700 }
+
+#add-items-box .spacer { 
+    width: 1em;
+    display: inline-block;
+}
+
+#add-items-box input[type=submit] { 
+    display: block;
+    margin: 1em auto 0 auto;
+}
+
+.type-line { margin: .3em auto }
+
+.type {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 105%;
+    border-radius: 10px;
+    border: 2px solid black;
+    width: 77%;
+    float: left;
+    padding: 0.15em .5em;
+
+}
+
+.type.active { font-weight: 700 }
+
+.super { 
+    border: 2px dashed black;
+    width: 65%;
+}
+
+.sign.type:not(.super) { cursor: pointer }
+
+.sign.type:not(.super):hover { 
+    cursor: pointer;
+    box-shadow: 0px 0px 6px;
+}
+
+.stat { 
+    display: inline-block;
+    font-family: "Courier New", Courier, monospace;
+    text-align: right;
+}
+
+.items-stat { 
+    width: 14%;
+    float: right;
+}

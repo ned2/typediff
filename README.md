@@ -19,7 +19,7 @@ sentences, differing with respect to specific grammatical phenomena,
 users can rapidly determine which grammar internal components are
 involved in the processing of specific phenomena.  Typediff has both a
 browser-based and command line interface. For more information see
-the file typediff.mk.
+the file [typediff.mk](docs/typediff.mk).
 
 
 Parseit 
@@ -29,7 +29,7 @@ Parseit is a command line tool for manipulating DELPH-IN derivations.
 Parseit supports extracting specific attributes from derivations,
 counting the distribution of these attributes over profiles, and
 converting derivations into other formats. For more information see
-the file parseit.mk.
+the [parseit.mk](docs/parseit.mk).
 
 
 

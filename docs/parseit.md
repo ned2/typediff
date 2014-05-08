@@ -33,5 +33,5 @@ and standard input.
    require access to the type hierachy (such as using the descendents
    option when extracting types) you will need to generate a couple of
    grammar data files. See
-   [docs/grammar-utils.md](docs/grammar-utils.md) for further details.
+   [grammar-utils.md](grammar-utils.md) for further details.
    

@@ -32,7 +32,7 @@ speedup the loading if the hierarchy.
 ### Type hierarchy XML dumps
 
 Typediff uses an XML dump of a grammar's type hierarchy. This is
-created automatically when you run `src/grammar-utils.py make-data`
+created automatically when you run `grammar-utils.py make-data`
 but can also be run manually. This can be done using the dumphierarchy
 binary found in the bin directory as follows:
    

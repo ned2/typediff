@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import sys
 import os
@@ -15,10 +15,8 @@ import config
 Typediff is a tool to allow you to quickly explore the types used in
 the processing of input by DELPH-IN grammars. 
 
-Author: Ned Letcher
-
 Usage:
-$ typediff.py [options] GRAMMAR_NAME pos_sent1 pos_sent2 ... @ neg_sent1 neg_sent2
+$ typediff.py [options] GRAMMAR_NAME pos_sent1 pos_sent2 ... @ neg_sent1 neg_sent2 ...
 
 Options:
 
@@ -37,30 +35,30 @@ Options:
 The remainder of the options are only relevant to the command line mode:
 
 -d 
- Operate in difference mode (default).
+  Operate in difference mode (default).
 
 -i
- Operate in intersection mode.
+  Operate in intersection mode.
 
 -u
- Operate in union mode.
+  Operate in union mode.
  
 -n count
- The number of trees ACE is limited to returning.
+  The number of trees ACE is limited to returning.
 
 --frags
- Include fragment readigns (only supported by ERG currently).
+  Include fragment readigns (only supported by ERG currently).
 
 --all 
- Take types from all of the parses returned by ACE instead of just the best.
+  Take types from all of the parses returned by ACE instead of just the best.
 
 --supers
- Include the super types in the output.
+  Include the super types in the output.
 
 --raw
- Don't sort and colorize the list of types.
-
+  Don't sort and colorize the list of types.
 """
+
 
 # TODO
 # update various config files to reflect LOGONROOT variable 
@@ -111,9 +109,12 @@ class ColorText(object):
     def __str__(self):
         return ''.join((self.color, self.text, self.END))
 
+
 def pretty_print_types(types, hierarchy):
-    """Print the type list to the terminal, sorting and colorizing as
-    specified by the TYPES variable."""
+    """
+    Print the type list to the terminal, sorting and colorizing as
+    specified by the TYPES variable.
+    """
     def descendants(s):
         if s == 'other':
             return []

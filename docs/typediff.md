@@ -1,5 +1,4 @@
-Typediff README
-===============
+# Typediff
 
 Typediff is a tool that enables rapid exploration of the types used in
 the processing of input by DELPH-IN grammars. Its intended use case is
@@ -13,17 +12,14 @@ would be very much desired.
 A live installation of Typediff can be found here:
 http://hum.csse.unimelb.edu.au/typediff/
 
-The source for Typediff is available from
-http://github.com/ned2/typediff
-
 Typediff uses ACE for parsing, and should be compatible with any
 DELPH-IN grammar that has been configured to work with ACE. Many
 thanks to Woodley Packard for his assistance with extracting 
 the required data from ACE.
 
 
-How it Works
-------------
+## How it Works
+
 
 Users enter any number of input items into the A items set and the B
 items set. Each input item is parsed (with ACE) and then for each
@@ -56,66 +52,53 @@ The web interface will not work on versions of Internet Explorer < 9
 and has currently only been tested on Google Chrome and Firefox.
 
 
-To get running:
----------------
+## To get running
 
 1. Install Typediff somewhere your web server has read and execute
    permissions. (Unless you just wish to use the command line version).
 
 2. Move src/config_example.py to src/config.py and edit accordingly.
-   Note that currently the grammar entries are not loaded into the 
-   web interface 
 
 3. Create the various grammar data required for typediff to run. This
    includes the compiled grammar .dat files used by ACE as well as XML
    dumps of the type hierarchy for each grammar. You can generate
-   these yourself (see below for instructions on how to create the XML
-   files) or you can run the following command from the typediff root
-   directory:
+   these yourself or you can run the following command:
  
-       $ src/td-utils.py make-data
+       $ src/grammar-utils.py make-data
 
    This will create all the data required by typediff in the directory
-   specified by the DATAPATH paramater in config.py.
+   specified by the DATAPATH parameter in config.py. See
+   [docs/grammar-utils.md](docs/grammar-utils.md) for further details.
 
-4. Typediff uses ACE along with a couple of other binaries that use
-   ACE libraries. The included versions of these programs in the
-   repository have all been compiled for 64-bit machines, and the ACE
-   libraries are included in the binaries, so you might be lucky
-   enough that these might just all work. If not you'll have to
-   compile your own version of ACE and the bundled C programs. 
 
-   See http://sweaglesw.org/linguistics/ace/ for alternative 64bit
-   binaries, or the source. Also see instructions at the top of
-   typifier.c for how to compile it and dumphierarchy.c.
+The above steps should hopefully be sufficient to get Typediff
+running, however you may find that you need to perform further
+steps...
 
-5. If you want segmentation for Jacy to work you'll need to install
-   the Python MeCab bindings. On Ubuntu, installing the packages
-   python-mecab and mecab-ipadic-utf8 should suffice.
 
+### Compiling ACE binaries
+
+Typediff uses ACE along with a couple of other binaries that use ACE
+libraries. The included versions of these programs in the repository
+have all been compiled for 64-bit machines, and the ACE libraries are
+included in the binaries, so you might be lucky enough that these
+might just all work. If not you'll have to compile your own version of
+ACE and the bundled C programs. See
+http://sweaglesw.org/linguistics/ace/ for alternative 64bit binaries,
+and ACE source. Instructions for how to compile the other binaries can
+be found at the top of typifier.c. You'll then need to modify the various 
+binary paths in config.py.
+
+
+### Jacy Segmentation
+
+If you want segmentation for Jacy to work you'll need to install the
+Python MeCab bindings. On Ubuntu, installing the packages python-mecab
+and mecab-ipadic-utf8 should suffice.
+
+
+### Web server setup
 
 For the web interface, you might want to double check that your
-webserver is compressing application/json data, as the data that is
+web server is compressing application/json data, as the data that is
 sent from the server can be quite bulky.
-
-
-Creating the XML dumps manually:
-
-Create XML dumps of the type hierarchies for each of the grammars you
-wish to use with typediff. This can be done using the dumphierarchy
-binary found in the bin directory as follows:
-   
-    $ dumphierarchy terg.dat > terg.xml
-   
-Note that this XML format targets the same format as that produced by
-the following commands in the lisp prompt when the LKB and a grammar
-are loaded:
-
-    (lkb::batch-check-lexicon)
-    (lkb::types-to-xml :file "~/types.xml")
-
-Even though typediff uses ACE, the file produced by this command
-should work just as well, so long as you make sure you use the same
-version of the grammar as is being used by ACE. (batch-check-lexicon
-is required to ensure that all lexical types are included in the
-output, as 'leaf types' can be loaded on demand by the LKB).

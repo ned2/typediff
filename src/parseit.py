@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+
 from __future__ import division
 
 import sys
@@ -14,25 +15,25 @@ import stats
 # FEATURES TO ADD
 # * extend typifer functionality to descendants of supertypes
 
+# * report coverage across treebanks for attributes 
 
-"""A flexible tool for converting and extracting information from
-DELPH-IN grammar derivations. Supports reading stored derivations 
-from DELPH-IN profiles as well as on the fly parsing from text files
-and standard input.
 
-Functionality includes:
-  * converting to PTB style bracketted derivations
-  * drawing trees (pretty printing, latex output, GUI visualization)
-  * extracting (token, lextype) pair features
-  * extracting rule name features 
-  * counting occurrences of lextypes and rules 
-  * comparing feature sets using KL Divergence and Jenson 
-    Shannon Divergence  (from two or more different 
-    sets of profiles)
-
+"""
 Usage:
 
-$ parseit [global options] GRAMMAR MODE [mode options] TARGETS
+$ parseit [global options] GRAMMAR MODE [mode options] PATHS
+
+GRAMMAR is the alias of a grammar found in config.
+
+MODE is one of {convert, compare, count, draw}.
+
+PATHS is a list of zero or more profile paths to use as input. If this
+--parse option is specified they are treated as text files with a
+single sentence on each line to parse.
+
+If no PATHS are specified, parseit reads lines from stdin and feeds
+them to ACE for parsing.
+
 
 Global options:
 
@@ -40,14 +41,14 @@ Global options:
     Specifies that profiles to be queried are gold profiles.
  
   --best
-    Change the number of analyses to return for each item.
+    Specifythe number of readings to use for each item.
     Default is 1. Has no effect in compare mode.
 
   --cutoff
-    Number of derivations to stop processing at.
+    Number of input derivations to stop at.
 
   --parse
-    PATH argument is treated as text fies which must be parsed.
+    PATH arguments are treated as text fies which must be parsed.
 
 Convert mode options:
 
@@ -66,15 +67,13 @@ Convert mode options:
     the same format as the 'lextypes' feature, but with each item
     preceeded by its I-ID.
 
-  --le
-    Use lex entry names for tree tree representations rather than 
-    lextypes.
+  --le Use lex entry names for the penultimate node in tree
+    representations rather than lextypes.
 
 Draw mode options:
 
-  --le
-    Use lex entry names for tree tree representations rather than 
-    lextypes.
+  --le Use lex entry names for the penultimate node in tree
+    representations rather than lextypes.
 """
 
 
@@ -117,12 +116,13 @@ class UnknownFeatureException(BaseException):
 
 
 def argparser():
-    ap = argparse.ArgumentParser()
+    ap = argparse.ArgumentParser(add_help=False)
     ap.add_argument("grammar", metavar="GRAMMAR_NAME")
     ap.add_argument("--gold", action='store_true')
     ap.add_argument("--parse", action='store_true')
     ap.add_argument("--best", type=int, default=1)
     ap.add_argument("--cutoff", type=int)
+    ap.add_argument("-h", "--help", action='store_true')
     subparsers = ap.add_subparsers(help='sub-command help', dest='command')
 
     # this assumes paths argument is two sequences of paths separated by '@'
@@ -233,23 +233,34 @@ def convert_trees(results_dict, feature, align, paths, failtok, backoff):
     return sep.join(lines).encode('utf8')
 
 
-def update_reading_counts(reading, feature, counts):
+def update_reading_counts(reading, feature, counts, ancestor):
     if feature == 'lextypes':
         counts.update(reading.lextypes)
     elif feature == 'rules':
         counts.update(reading.rules)
     elif feature == 'types':
-        counts.update(reading.types)
+        if ancestor is None:
+            counts.update(reading.types)    
+        else:
+            hierarchy = delphin.load_hierarchy(reading.grammar.types_path)
+            try:
+                descendent_types = set(t.name for t in hierarchy[ancestor].descendants())
+            except delphin.TypeNotFoundError as e:
+                sys.stderr.write(str(e))
+                sys.exit()
+            for t in reading.types:
+                if t in descendent_types:
+                    counts[t] += reading.types[t]
     else:
         raise UnknownFeatureException(feature)
 
 
-def collection_features(results, feature):
+def collection_features(results, feature, ancestor=None):
     counts = Counter()
 
     for item in results:
         for reading in item:
-            update_reading_counts(reading, feature, counts)
+            update_reading_counts(reading, feature, counts, ancestor)
 
     return '\n'.join('{}    {}'.format(val,key) for key,val in counts.most_common()) 
 
@@ -334,6 +345,10 @@ def get_results(grammar, arg):
 def main():
     arg = argparser().parse_args()
 
+    if arg.help:
+        print __DOCSTRING__
+        return 0
+
     if arg.command == 'convert' and arg.align and arg.best > 1:
         sys.stderr.write("Align option requires that best = 1.\n")
         return 1
@@ -349,11 +364,13 @@ def main():
         results = get_results(grammar, arg)
 
         if arg.command == 'count':
-             print collection_features(results.values(), arg.feature, descendents)
+             print collection_features(results.values(), arg.feature, arg.descendents)
         elif arg.command == 'convert':
             print convert_trees(results, arg.feature, arg.align, arg.paths, arg.failtok, arg.backoff)
         elif arg.command == 'draw':
             draw(results)
+
+    return 0
 
 
 if __name__ == "__main__":

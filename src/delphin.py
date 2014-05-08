@@ -436,8 +436,8 @@ class Reading(object):
     def latex(self):
         return self.tree.latex()
 
-    def pprint(self):
-        return self.tree.pprint()
+    def pprint(self, **kwargs):
+        return self.tree.pprint(**kwargs)
 
     def input(self):
         """Reconstruct input based on parsed tokens."""
@@ -713,12 +713,12 @@ class TypeHierarchy(object):
     
     def find_depths(self, xtype, depth):
         try:
-            if depth < tipe.depth:
-                tipe.depth = depth
+            if depth < xtype.depth:
+                xtype.depth = depth
             else:
                 return
         except AttributeError:
-            tipe.depth = depth
+            xtype.depth = depth
 
         for c in xtype.children:
             self.find_depths(c, depth+1)
@@ -806,7 +806,8 @@ class Tree(object):
         http://www.nltk.org/_modules/nltk/tree.html.
         """
         from nltk import Tree as NLTKTree
-        tree = NLTKTree(self.ptb()) 
+        string = self.ptb().replace('[', '\[').replace(']', '\]')
+        tree = NLTKTree(string) 
         latex = tree.pprint_latex_qtree()
         return latex.replace('-LRB-', '(').replace('-RRB-', ')')
 

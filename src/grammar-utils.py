@@ -1,21 +1,5 @@
 #!/usr/bin/env python
 
-"""
-
-A script for generating data needed by Typediff.
-
-Usage:
-
-$ td-utils.py make-data [grammar-alias]
-
-If the grammar-alias is provided, data for just that grammar will be
-generated, otherwise data for all grammars configured in config.py
-will be generated.
-
-Requires that DATAPATH in config.py is set to an appropriate value.
-
-"""
-
 from subprocess import Popen, PIPE
 
 import sys
@@ -24,10 +8,24 @@ import stat
 import argparse
 import cPickle
 
-from config import *
-
-import common
 import delphin
+import config
+
+
+"""
+A convenience script for generating data needed by things in the
+grammalytics toolkit. Other functions may be added in the future.
+
+Usage:
+
+$ grammar-utils.py make-data [GRAMMARS ...]
+
+If one or more grammar-alias is provided, data for just those grammar
+will be generated, otherwise data for all grammars configured in
+config.py will be generated.
+
+Requires that DATAPATH in config.py is set to an appropriate value.
+"""
 
 
 class Usage(Exception):
@@ -48,8 +46,8 @@ class UtilError(Exception):
 
 def argparser():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("command", metavar="COMMAND")
-    argparser.add_argument("grammar", nargs='?', metavar="GRAMMAR")
+    argparser.add_argument("command", choices=('make-data'), metavar="COMMAND")
+    argparser.add_argument("grammars", nargs=argparse.REMAINDER, metavar="GRAMMAR")
     return argparser
 
 
@@ -61,10 +59,10 @@ def pickle_typesfile(grammar):
 
 
 def build_grammar_image(grammar):
-    if ACESRC is not None:
-        os.chdir(ACESRC)
+    if config.ACESRC is not None:
+        os.chdir(config.ACESRC)
     print "compiling {}".format(grammar.alias)
-    args = [ACEBIN, '-g', grammar.aceconfig, '-G', grammar.dat_path]
+    args = [config.ACEBIN, '-g', grammar.aceconfig, '-G', grammar.dat_path]
     process= Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = process.communicate()
     
@@ -78,7 +76,7 @@ def build_grammar_image(grammar):
 
 def get_types_dump(grammar):
     print "dumping {} hierarchy".format(grammar.alias)
-    args = [DUMPHIERARCHYBIN, grammar.dat_path]
+    args = [config.DUMPHIERARCHYBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = process.communicate()
     
@@ -99,22 +97,19 @@ def make_data(grammar):
 def main():
     arg = argparser().parse_args()
     
-    try:
-        if arg.command == "make-data":
-            if not os.path.exists(DATAPATH):
-                os.makedirs(DATAPATH)
+    if arg.command == "make-data":
+        if not os.path.exists(config.DATAPATH):
+            os.makedirs(config.DATAPATH)
+        if len(arg.grammars) == 0:
+            grammars = [config.load_grammar(g['alias']) for g in config.GRAMMARLIST]
+        else:
+            grammars = [config.load_grammar(g) for g in arg.grammars]
 
-            if arg.grammar is not None:
-                grammars = common.get_grammars(GRAMMARLIST)
-                grammar = common.Grammar(grammars[arg.grammar], DATAPATH)
+        for grammar in grammars:
+            try:
                 make_data(grammar)
-            else:
-                grammars = [grammar.Grammar(params, DATAPATH) 
-                            for alias, params in GRAMMARS.items()]
-                for grammar in grammars:
-                    make_data(grammar)
-    except UtilError as e:
-        sys.stderr.write(e.msg+'\n')
+            except UtilError as e:
+                sys.stderr.write(e.msg+'\n')
 
         
 if __name__ == "__main__":

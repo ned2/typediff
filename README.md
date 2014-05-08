@@ -1,4 +1,4 @@
-grammalytics
+Grammalytics
 ============
 
 A set of tools for mining, analyzing and exploring derivations

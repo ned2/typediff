@@ -12,68 +12,16 @@ import config
 import stats
 
 
-# FEATURES TO ADD
-# * extend typifer functionality to descendants of supertypes
+"""parseit.py
+Author: Ned Letcher
+https://github.com/ned2/grammalytics
 
-# * report coverage across treebanks for attributes 
+A flexible tool for converting and extracting information from
+DELPH-IN grammar derivations. Supports reading stored derivations from
+DELPH-IN profiles as well as on the fly parsing from text files and
+standard input.
 
-
-"""
-Usage:
-
-$ parseit [global options] GRAMMAR MODE [mode options] PATHS
-
-GRAMMAR is the alias of a grammar found in config.
-
-MODE is one of {convert, compare, count, draw}.
-
-PATHS is a list of zero or more profile paths to use as input. If this
---parse option is specified they are treated as text files with a
-single sentence on each line to parse.
-
-If no PATHS are specified, parseit reads lines from stdin and feeds
-them to ACE for parsing.
-
-
-Global options:
-
-  --gold
-    Specifies that profiles to be queried are gold profiles.
- 
-  --best
-    Specifythe number of readings to use for each item.
-    Default is 1. Has no effect in compare mode.
-
-  --cutoff
-    Number of input derivations to stop at.
-
-  --parse
-    PATH arguments are treated as text fies which must be parsed.
-
-Convert mode options:
-
-  --align
-    Ensures output for items are aligned to input items by
-    adding a placeholder token for items that did not receive
-    a parse.
-
-  --failtok
-    String to print for failed parses when --align is used. 
-    Default string is 'NULL'. 
-
-  --backoff
-    Specifies the path to a file containing item features to be 
-    used as a backoff for items with no parse. Currently assumes
-    the same format as the 'lextypes' feature, but with each item
-    preceeded by its I-ID.
-
-  --le Use lex entry names for the penultimate node in tree
-    representations rather than lextypes.
-
-Draw mode options:
-
-  --le Use lex entry names for the penultimate node in tree
-    representations rather than lextypes.
+For usage, run parseit.py --help
 """
 
 
@@ -115,37 +63,58 @@ class UnknownFeatureException(BaseException):
         return "Unknown feature: {}".format(self.msg)
 
 
+OPTSHELP = {
+    'gold' : """Specifies that profiles to be queried are gold profiles.""",
+    'best' : """Specify the number of readings to use for each item. Default is
+1. Has no effect in compare mode.""",
+    'cutoff' : """Number of input derivations to stop at.""",
+    'parse' : """PATH arguments are treated as text fies which must be parsed.""",
+    'align' : """ Ensures output for items are aligned to input items by adding a
+placeholder token for items that did not receive a parse.""",
+    'failtok' :"""String to print for failed parses when --align is used.  Default
+string is 'NULL'.""",
+    'backoff' : """Specifies the path to a file containing item features to be used as
+a backoff for items with no parse. Currently assumes the same format
+as the 'lextypes' feature, but with each item preceeded by its
+I-ID.""",
+    'le' : """le Use lex entry names for the penultimate node in tree
+representations rather than lextypes.""",
+    'descendents' : """Restricts types reported on to those that inherit from the type
+supplied as an argument. Only relevant when using the 'types'
+feature.""",
+}
+
+
 def argparser():
-    ap = argparse.ArgumentParser(add_help=False)
-    ap.add_argument("grammar", metavar="GRAMMAR_NAME")
-    ap.add_argument("--gold", action='store_true')
-    ap.add_argument("--parse", action='store_true')
-    ap.add_argument("--best", type=int, default=1)
-    ap.add_argument("--cutoff", type=int)
-    ap.add_argument("-h", "--help", action='store_true')
-    subparsers = ap.add_subparsers(help='sub-command help', dest='command')
+    ap = argparse.ArgumentParser()
+    ap.add_argument("grammar", metavar="GRAMMAR_NAME", help="The alias of a grammar found in config.py")
+    ap.add_argument("--gold", action='store_true', help=OPTSHELP['gold'])
+    ap.add_argument("--parse", action='store_true', help=OPTSHELP['parse'])
+    ap.add_argument("--best", type=int, default=1, help=OPTSHELP['best'])
+    ap.add_argument("--cutoff", type=int, help=OPTSHELP['cutoff'])
+    subparsers = ap.add_subparsers(help='Command help:', dest='command')
 
     # this assumes paths argument is two sequences of paths separated by '@'
-    ap1 = subparsers.add_parser('compare', help='Extract different kinds of features from trees')
+    ap1 = subparsers.add_parser('compare', help='Compare distribuion of attributes across sets of profiles.')
     ap1.add_argument("feature", choices=COUNT_FEATURES, metavar="FEATURE")
     ap1.add_argument("paths", nargs='+', metavar="PATHS")
 
-    ap2 = subparsers.add_parser('convert', help='Extract different kinds of features from trees')
-    ap2.add_argument("--failtok", default='NULL')
-    ap2.add_argument("--align", action='store_true')
-    ap2.add_argument("--le", action='store_true')
-    ap2.add_argument("--backoff")
+    ap2 = subparsers.add_parser('convert', help='Extract different kinds of attributes from derivations.')
+    ap2.add_argument("--failtok", default='NULL', help=OPTSHELP['failtok'])
+    ap2.add_argument("--align", action='store_true', help=OPTSHELP['align'])
+    ap2.add_argument("--le", action='store_true', help=OPTSHELP['le'])
+    ap2.add_argument("--backoff", help=OPTSHELP['backoff'])
     ap2.add_argument("feature", choices=CONVERT_FEATURES, metavar="FEATURE")
     ap2.add_argument("paths", nargs='*', metavar="PATHS")
 
-    ap3 = subparsers.add_parser('count', help='Count up and sort occurrences of a label type accross a corpus')    
-    ap3.add_argument("--le", action='store_true')
-    ap3.add_argument("--descendents")
+    ap3 = subparsers.add_parser('count', help='Count up and sort occurrences of attributes across a collection.')    
+    ap3.add_argument("--le", action='store_true', help=OPTSHELP['le'])
+    ap3.add_argument("--descendents", help=OPTSHELP['descendents'])
     ap3.add_argument("feature", choices=COUNT_FEATURES, metavar="FEATURE")
     ap3.add_argument("paths", nargs='*', metavar="PATHS")
 
-    ap4 = subparsers.add_parser('draw', help='Draw the derivation.')
-    ap4.add_argument("--le", action='store_true')
+    ap4 = subparsers.add_parser('draw', help='Draw the derivation with a GUI from NLTK.')
+    ap4.add_argument("--le", action='store_true', help=OPTSHELP['le'])
     ap4.add_argument("paths", nargs='*', metavar="PATHS")
 
     return ap
@@ -344,10 +313,6 @@ def get_results(grammar, arg):
 
 def main():
     arg = argparser().parse_args()
-
-    if arg.help:
-        print __DOCSTRING__
-        return 0
 
     if arg.command == 'convert' and arg.align and arg.best > 1:
         sys.stderr.write("Align option requires that best = 1.\n")

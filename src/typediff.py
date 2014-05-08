@@ -11,11 +11,18 @@ import delphin
 import config
 
 
-"""
-Typediff is a tool to allow you to quickly explore the types used in
-the processing of input by DELPH-IN grammars. 
+"""typediff.py
+Author: Ned Letcher
+https://github.com/ned2/grammalytics
 
-Usage:
+Typediff is a tool to allow you to quickly explore the types used in
+the processing of input by DELPH-IN grammars.
+
+For usage, run parseit.py --help
+"""
+
+
+HELP = """Usage:
 $ typediff.py [options] GRAMMAR_NAME pos_sent1 pos_sent2 ... @ neg_sent1 neg_sent2 ...
 
 Options:
@@ -47,7 +54,7 @@ The remainder of the options are only relevant to the command line mode:
   The number of trees ACE is limited to returning.
 
 --frags
-  Include fragment readigns (only supported by ERG currently).
+  Include fragment readings (only supported by ERG currently).
 
 --all 
   Take types from all of the parses returned by ACE instead of just the best.
@@ -61,6 +68,7 @@ The remainder of the options are only relevant to the command line mode:
 
 
 # TODO
+# move help text into argparse
 # update various config files to reflect LOGONROOT variable 
 
 # add tnt option to typediff's interface

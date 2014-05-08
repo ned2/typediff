@@ -68,7 +68,7 @@ and has currently only been tested on Google Chrome and Firefox.
 
    This will create all the data required by typediff in the directory
    specified by the DATAPATH parameter in config.py. See
-   [docs/grammar-utils.md](docs/grammar-utils.md) for further details.
+   [grammar-utils.md](grammar-utils.md) for further details.
 
 
 The above steps should hopefully be sufficient to get Typediff

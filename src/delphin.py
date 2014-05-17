@@ -202,8 +202,8 @@ class Fragment(object):
             # supplied grammar was just an alias
             self.grammar = LogonGrammar(grammar)
 
-        if dat_path is None:
-            dat_path = self.grammar.dat_path
+        if dat_path is not None:
+            self.grammar.dat_path = dat_path
 
         if ace_path is None:
             ace_path = ACEBIN
@@ -212,7 +212,7 @@ class Fragment(object):
             lextypes = False
 
         self.preprocess()
-        self.parse(ace_path, dat_path, count, fragments, tnt, typifier, cache, lextypes)
+        self.parse(ace_path, self.grammar.dat_path, count, fragments, tnt, typifier, cache, lextypes)
 
         if logpath is not None:
             self.write_log()
@@ -258,20 +258,17 @@ class Fragment(object):
             self.log_lines.append(out)
  
         self.readings = []
-        for reading in readings:
+        for i,reading in enumerate(readings):
             mrs, derivation = reading.split(';')
-            r = Reading(derivation, grammar=self.grammar, mrs=mrs, lextypes=lextypes)
+            r = Reading(derivation, resultid=i, grammar=self.grammar, 
+                        mrs=mrs.strip(), lextypes=lextypes, typifier=typifier)
 
             if cache:
                 # only cache derivation if need be, as it becomes
                 # fairly memory intensive when working with many readings
-                r.derivation = reading
+                r.derivation = derivation.strip()
 
             self.readings.append(r)
-
-            if typifier is not None:
-                r.reconstruct(derivation, typifier, dat_path)
-
 
     def preprocess(self):
         self.yy_input = False
@@ -311,14 +308,30 @@ class Fragment(object):
 
 class Reading(object):
 
-    def __init__(self, derivation, grammar=None, mrs=None, ptokens=None, lextypes=True):
-        self.grammar = grammar
+    def __init__(self, derivation, iid=None, resultid=None, grammar=None, 
+                 mrs=None, ptokens=None, lextypes=True, dat_path=None, typifier=None):
+        try:
+            # supplied grammar is a Grammar object
+            alias = grammar.alias
+            self.grammar = grammar
+        except AttributeError:
+            # supplied grammar was just an alias
+            self.grammar = LogonGrammar(grammar)
+
+        self.iid = iid
+        self.resultid = resultid
         self.mrs = mrs
         self.tree = parse_derivation(derivation)
         self.process_parse(lextypes)
-  
+
         if ptokens is not None:
             self.restore_token_case(ptokens)
+
+        if dat_path is not None:
+            self.grammar.dat_path = dat_path
+
+        if typifier is not None:
+            self.reconstruct(derivation, typifier, self.grammar.dat_path)
 
     def process_parse(self, lextypes):
         self.tokens = []
@@ -400,7 +413,7 @@ class Reading(object):
         env['LC_ALL'] = 'en_US.UTF-8'
         args = [typifier_path, dat_path]
         process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env, close_fds=True)
-        out, err = process.communicate(input=derivation)
+        out, err = process.communicate(input=derivation.encode('utf8'))
 
         if process.returncode != 0:
             raise AceError('typifier', err)
@@ -1005,7 +1018,7 @@ def tsdb_query(query, profile):
     return out
     
 
-def get_profiles_ids(paths):
+def get_profile_ids(*paths):
     """Return all the i-ids found in a list of profile paths."""
     ids = []
     
@@ -1018,57 +1031,68 @@ def get_profiles_ids(paths):
 
 
 def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None, 
-                        lextypes=True, typifier=None):
+                        lextypes=True, typifier=None, iid=None, condition=None):
     """
     Return Readings from across a series of profiles. This assumes
-    unique i-ids across all profiles. If best = 1, then returns a
-    dictionary which maps i-ids onto Readings. If best > 1, returns a
-    dictionary which maps i-ids onto lists of Readings.
+    unique i-ids across all profiles. Returns a dictionary which maps
+    i-ids onto lists of Readings.
     """
+    results_dict = defaultdict(list)
+    
     if gold:
-        query = 'select i-id mrs p-tokens derivation where readings > 0'
+        # We are querying a gold (ie thinned) profile. Note that we
+        # can still find multiple readings in a gold profile. eg when
+        # t-active > 1
+        query = 'select i-id result-id mrs p-tokens derivation where readings > 0'
     else:
-        # Need to prevent multiple readings from the same item being
-        # returned.  This query won't return all results for
-        # gold/thinned profiles whose single result will have somewhat
-        # arbitrary result-ids. (note that result-id is zero indexed)
-        query = 'select i-id mrs p-tokens derivation where result-id <= {}'.format(best - 1)
+        # This query is not appropriate for gold/thinned profiles as
+        # the result(s) will have effectively arbitrary result-ids. We
+        # must also restrict queries to within relevant result-ids
+        # otherwise query times/memory usage explodes for large parse
+        # forests.
+        query = 'select i-id result-id mrs p-tokens derivation where result-id <= {}'.format(best - 1)
+        
+    if iid is not None:
+        query += ' and i-id == {}'.format(iid) 
 
-    readings = defaultdict(list)
- 
+    if condition is not None:
+        query += 'and {}'.format(condition)
+
     for path in paths:
         results = tsdb_query(query, path)
 
         for result in results.splitlines():
             result = result.decode('utf-8')
-            bits = result.split(' | ', 3)
+            bits = result.split(' | ', 4)
             iid = int(bits[0].strip())
-            mrs = bits[1].strip()
-            ptokens = bits[2].strip()
-            derivation = bits[3].strip()
-            reading = Reading(derivation, grammar=grammar, mrs=mrs, 
-                              ptokens=ptokens, lextypes=lextypes,
+            resultid = bits[1].strip()
+            mrs = bits[2].strip()
+            ptokens = bits[3].strip()
+            derivation = bits[4].strip()
+            reading = Reading(derivation, iid=iid, resultid=resultid, grammar=grammar, 
+                              mrs=mrs, ptokens=ptokens, lextypes=lextypes,
                               typifier=typifier)
-            reading.iid = iid
-            readings[iid].append(reading)
+            results_dict[iid].append(reading)
 
-            if cutoff is not None and len(readings) >= cutoff:
-                return readings
+            if cutoff is not None and len(results) >= cutoff:
+                return results_dict
 
-    return readings
+    return results_dict
 
 
 def get_text_results(lines, grammar, best=1, cutoff=None, lextypes=True, typifier=None):
-    readings = defaultdict(list)
+    results_dict = defaultdict(list)
+
     for i, line in enumerate(lines):
         f = Fragment(line, grammar, count=best, cache=True, lextypes=lextypes, typifier=typifier)
+
         for reading in f.readings:
-            readings[i].append(reading)
+            results_dict[i].append(reading)
 
-        if cutoff is not None and len(readings) >= cutoff:
-            return readings
+        if cutoff is not None and len(results) >= cutoff:
+            return results_dict
 
-    return readings
+    return results_dict
 
 
 # When module is imported, initialize paths from logon installation

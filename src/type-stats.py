@@ -13,9 +13,18 @@ from collections import Counter
 
 import delphin
 
-from common import *
+# TODO change to relative import
 from config import *
 
+
+"""
+This script is for working with type statistics from DELPH-IN treebanks. Funcitonality 
+includes collecting treebank statisitcs, saving as pickle files for storage, loading from
+existing pickle file and exporting to text and json formats.
+"""
+
+
+# TODO: This file needs to be updated to the newer version of typediff in the grammalytics toolkit
 
 BLACKLIST = set()
 SPEECH_PROFILES = set(['vm6', 'vm13', 'vm13', 'vm31', 'vm32', 'ecpa', 'ecoc', 'ecos', 'ecpr'])

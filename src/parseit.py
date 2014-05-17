@@ -82,6 +82,8 @@ representations rather than lextypes.""",
     'descendents' : """Restricts types reported on to those that inherit from the type
 supplied as an argument. Only relevant when using the 'types'
 feature.""",
+    'id' : """Apply operation only to item with this i-id.""",
+    'tsql': """An additional tsql constraint, eg 't-active = 1'.""",
 }
 
 
@@ -92,6 +94,8 @@ def argparser():
     ap.add_argument("--parse", action='store_true', help=OPTSHELP['parse'])
     ap.add_argument("--best", type=int, default=1, help=OPTSHELP['best'])
     ap.add_argument("--cutoff", type=int, help=OPTSHELP['cutoff'])
+    ap.add_argument("--id", type=int, help=OPTSHELP['id'])
+    ap.add_argument("--tsql", help=OPTSHELP['tsql'])
     subparsers = ap.add_subparsers(help='Command help:', dest='command')
 
     # this assumes paths argument is two sequences of paths separated by '@'
@@ -184,11 +188,11 @@ def convert_trees(results_dict, feature, align, paths, failtok, backoff):
             backoffs = extract_backoff_items(backoff)
 
         lines = []
-        for iid in delphin.get_profiles_ids(paths):
+        for iid in delphin.get_profile_ids(*paths):
             try:
                 features = reading_features(results_dict[iid][0], feature)
                 lines.append(features)
-            except KeyError:
+            except IndexError:
                 if backoff is not None:
                     lines.append(tagged[iid])
                 else:
@@ -271,7 +275,7 @@ def compare(grammar, arg):
 def draw(results_dict):
     import nltk.draw.tree
     from nltk import Tree as NLTKTree
-    results = sorted(resuts_dict.iteritems(), key=lambda x:x[0])
+    results = sorted(results_dict.iteritems(), key=lambda x:x[0])
     trees = []
 
     for i,item in results:
@@ -304,10 +308,13 @@ def get_results(grammar, arg):
                                            typifier=typifier)
     else:
         results = delphin.get_profile_results(arg.paths, best=arg.best, 
-                                              gold=arg.gold, cutoff=arg.cutoff, 
+                                              gold=arg.gold, 
+                                              cutoff=arg.cutoff, 
                                               grammar=grammar,
                                               lextypes=lextypes,
-                                              typifier=typifier)
+                                              typifier=typifier,
+                                              iid=arg.id,
+                                              condition=arg.tsql)
     return results
 
 
@@ -317,6 +324,8 @@ def main():
     if arg.command == 'convert' and arg.align and arg.best > 1:
         sys.stderr.write("Align option requires that best = 1.\n")
         return 1
+    elif arg.command == 'draw':
+            arg.feature = None # just hack this rather than working out when defined
 
     grammar = config.load_grammar(arg.grammar)
 

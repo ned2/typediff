@@ -260,13 +260,9 @@ class Fragment(object):
         self.readings = []
         for i,reading in enumerate(readings):
             mrs, derivation = reading.split(';')
-            r = Reading(derivation, resultid=i, grammar=self.grammar, 
-                        mrs=mrs.strip(), lextypes=lextypes, typifier=typifier)
-
-            if cache:
-                # only cache derivation if need be, as it becomes
-                # fairly memory intensive when working with many readings
-                r.derivation = derivation.strip()
+            r = Reading(derivation.strip(), resultid=i, grammar=self.grammar, 
+                        mrs=mrs.strip(), lextypes=lextypes, typifier=typifier, 
+                        cache=cache)
 
             self.readings.append(r)
 
@@ -309,7 +305,8 @@ class Fragment(object):
 class Reading(object):
 
     def __init__(self, derivation, iid=None, resultid=None, grammar=None, 
-                 mrs=None, ptokens=None, lextypes=True, dat_path=None, typifier=None):
+                 mrs=None, ptokens=None, lextypes=True, dat_path=None, 
+                 typifier=None, cache=False, pspans=[]):
         try:
             # supplied grammar is a Grammar object
             alias = grammar.alias
@@ -318,27 +315,40 @@ class Reading(object):
             # supplied grammar was just an alias
             self.grammar = LogonGrammar(grammar)
 
-        self.iid = iid
-        self.resultid = resultid
-        self.mrs = mrs
-        self.tree = parse_derivation(derivation)
-        self.process_parse(lextypes)
-
-        if ptokens is not None:
-            self.restore_token_case(ptokens)
-
         if dat_path is not None:
             self.grammar.dat_path = dat_path
 
-        if typifier is not None:
-            self.reconstruct(derivation, typifier, self.grammar.dat_path)
+        self.iid = iid
+        self.resultid = resultid
+        self.mrs = mrs
+        self.tree = parse_derivation(derivation, cache=(cache or len(pspans) > 0))
 
-    def process_parse(self, lextypes):
+        # initial parse of Tree object
+        # extract tokens and align spans
+        self._process_tree(*pspans)
+
+        # restore case to the tokens
+        if ptokens is not None:
+            self._restore_token_case(ptokens)
+
+        # collect stats from tree/subtree
+        if pspans:
+            self._tree_stats(*self.subtrees)
+        else:
+            self._tree_stats(self.tree)
+
+        # reconstruct tree/subtree and collect stats
+        if typifier is not None:
+            if pspans is not None:
+                for tree in reading.subtrees:
+                    reading._reconstruct(tree.derivation(), typifier)
+            else:
+                reading._reconstruct(derivation, typifier)
+
+    def _process_tree(self, *pspans):
+        """Extracts tokens and aligns any spans to derivations"""
         self.tokens = []
-        self.root_condition = None
-        self._lextypes = None       
-        self.lex_entries = Counter()
-        self.rules = Counter()
+        self.subtrees = []
 
         if self.tree.start == -1:
             # Parse from PET which inculdes top level root
@@ -347,44 +357,81 @@ class Reading(object):
             self.root_condition = self.tree.label
             self.tree = self.tree.children[0]
 
-        stack = [self.tree]
-        le_nodes = []
+        stack = [self.tree]       
+        subtrees = []
+
+        # move this to get_tokens-nodes() function? (then token() function calls this
+        while len(stack) > 0:
+            node = stack.pop()
+            child1 = node.children[0]
+            
+            subtrees.append(node)
+            if type(child1) is Token:
+                self.tokens.append(child1)
+            else:
+                stack.extend(node.children)
+
+        self.tokens.reverse()
+
+        if len(pspans) > 0: 
+            vstartchars = {}
+            vendchars = {}
+            for token in self.tokens:
+                vstartchars[token.start] = token.from_char
+                vendchars[token.end] = token.to_char
+
+            # find closest matching trees for any pspans provided
+            for start, end in pspans:
+                sumdiff = lambda tree:abs(vstartchars[tree.start] - start) + abs(vendchars[tree.end] - end)
+                # TODO
+                # this leaves the choice of subtrees with the same vertices as abitrary
+                # we need to ensure selection of higher nodes
+                closest_tree = min(subtrees, key=sumdiff)
+                diff = sumdiff(closest_tree)
+                self.subtrees.append(closest_tree)
+#                if diff > 0:
+#                    print self.iid, diff
+#                    import pdb; pdb.set_trace()
+
+    def _tree_stats(self, *trees):
+        """
+        Process the (sub)tree we got back from the parse of the derivation.
+        If lextypes is True, the lexicon is consulted to count up the lextype
+        occurences.
+        """
+        self.root_condition = None
+        self.lex_entries = Counter()
+        self.rules = Counter()
+        self.types = Counter()       
+        self._lextypes = None
+
+        for tree in trees:
+            self._do_tree_stats(tree)
+
+    def _do_tree_stats(self, tree):
+        stack = [tree]
 
         while len(stack) > 0:
             node = stack.pop()
             child1 = node.children[0]
 
             if type(child1) is Token:
-                self.tokens.append(child1)
                 self.lex_entries[child1.lex_entry] += 1
-                le_nodes.append(node)
             else:
                 self.rules[node.label] += 1
                 stack.extend(node.children)
 
-        if lextypes:
-            self._lextypes = Counter()
-            for n in le_nodes:
-                try:
-                    lextype = self.grammar.lex_lookup(n.label)
-                    self._lextypes[lextype] += 1
-                    n.label = lextype
-                except(LexLookupError) as e:
-                    sys.stderr.write(e.msg)
-
-        self.tokens.reverse()
-
-    def restore_token_case(self, ptokens):       
-        ptokens = self.index_ptokens(ptokens)
+    def _restore_token_case(self, ptokens):       
+        ptokens = self._index_ptokens(ptokens)
 
         for t in self.tokens:
-            ptoks = ptokens[(t.start,t.end)]
+            ptoks = ptokens[(t.start, t.end)]
             for p in ptoks:
                 if t.string.lower() != p:
                     t.string = p
                     break
             
-    def index_ptokens(self, ptokens):
+    def _index_ptokens(self, ptokens):
         ptoks = ptokens.split(') (')
 
         index = defaultdict(set)
@@ -396,22 +443,22 @@ class Reading(object):
         
         return index
 
-    def reconstruct(self, derivation, typifier_path, dat_path):
+    def _reconstruct(self, derivation, typifier_path):
         """
         Use the custom ACE Typifier program to reconstruct a derivation to
         its complete AVM and extract all type names. This C program can be 
         found in src/typifier.c
 
         This sets two instance variables: 
-            self.types    -- all type names found within the complete AVM 
-            self.tree     -- a json representation of the derivation tree
-                             (somewhat unrelated, but happens to be 
-                             returned from the typifier program which had
-                             this functionality grafted onto it.) 
+            self.types     -- all type names found within the complete AVM 
+            self.json_tree -- a json representation of the derivation tree
+                              (somewhat unrelated, but happens to be 
+                              returned from the typifier program which had
+                              this functionality grafted onto it.) 
         """
         env = dict(os.environ)
         env['LC_ALL'] = 'en_US.UTF-8'
-        args = [typifier_path, dat_path]
+        args = [typifier_path, self.grammar.dat_path]
         process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env, close_fds=True)
         out, err = process.communicate(input=derivation.encode('utf8'))
 
@@ -422,21 +469,22 @@ class Reading(object):
         self.err = err
         types = [t for t in types.split() if not t.startswith('"') or 
                  (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
-        self.types = Counter(types)
+        # need the Counter() conversion??
+        self.types.update(Counter(types))
 
         # ACE escapes single quotes with a backslash. The json decoder
         # does not accept this as valid JSON.
         tree = tree.replace("\\'", "'")
         self.json_tree = json.loads(tree.strip())
 
-    def lookup_lextypes(self):
+    def _lookup_lextypes(self):
         """
         Consult the Grammar to convert all lex entries into their
         lextypes.
         """
         self._lextypes = Counter()
 
-        for le, val in self.lex_entries.items():
+        for le, val in self.lex_entries.iteritems():
             try:
                 lextype = self.grammar.lex_lookup(le)
                 self._lextypes[lextype] += val
@@ -460,7 +508,7 @@ class Reading(object):
     def lextypes(self):
         """Support lazy loading of lextypes from grammar"""
         if self._lextypes is None:
-            self.lookup_lextypes(self.grammar)
+            return self._lookup_lextypes(self.grammar)
 
         return self._lextypes
 
@@ -769,20 +817,22 @@ class TypeHierarchy(object):
 
 
 class Token(object):
-    def __init__(self, string, lex_entry, start, end, from_char, to_char):
+    def __init__(self, string, lex_entry, start, end, from_char, to_char, span=None):
         self.string = string
         self.lex_entry = lex_entry
         self.from_char = from_char
         self.to_char = to_char
         self.start = start
         self.end = end
+        self.span = span
 
 
 class Tree(object):
-    def __init__(self, label, start=None, end=None):
+    def __init__(self, label, start, end, span=None):
         self.label = label
         self.start = start
         self.end = end
+        self.span = span
         self.children = []
 
     def ptb(self):
@@ -802,6 +852,35 @@ class Tree(object):
             children = (u'{}'.format(self._ptb(x)) for x in subtree.children)
             return u'({} {})'.format(subtree.label, u' '.join(children))
 
+    def tokens(self):
+        tokens = []
+        stack = [self]
+
+        while len(stack) > 0:
+            node = stack.pop()
+            child1 = node.children[0]
+
+            if type(child1) is Token:
+                tokens.append(child1)
+            else:
+                stack.extend(node.children)
+
+        tokens.reverse()
+        return tokens
+
+    def input(self):
+        return ' '.join(t.string for t in self.tokens())
+
+    def derivation(self):
+        return self._derivation(self)        
+
+    def _derivation(self, subtree):
+        if type(subtree) is Token:
+            return u'({})'.format(subtree.span)
+        else:
+            children = (u'{}'.format(self._derivation(x)) for x in subtree.children)
+            return u'({} {})'.format(subtree.span, u' '.join(children))
+            
     def pprint(self, **kwargs):
         """
         Returns a representation of the tree compatible with the LaTeX
@@ -824,9 +903,17 @@ class Tree(object):
         latex = tree.pprint_latex_qtree()
         return latex.replace('-LRB-', '(').replace('-RRB-', ')')
 
+    def draw(self):
+        from nltk import Tree as NLTKTree
+        NLTKTree(self.ptb()).draw()
 
-def parse_derivation(derivation):
-    """Parse a derivation string, returning a Tree object."""
+
+def parse_derivation(derivation, cache=False):
+    """
+    Parse a DELPH-IN derivation string, returning a Tree object.
+    If cache is true, the Tree instances will each store the 
+    relevant span of the derivation string in the attribute 'span'.
+    """
     escape_str = '__ESC__'
     der_string = derivation.replace('\\"', escape_str)
     node_re = r'("[^"]+"|[^()"]+)+'
@@ -835,7 +922,7 @@ def parse_derivation(derivation):
     # Walk through each span, updating a stack of trees. 
     # Where a span is either lparen + node or rparen.
     # The stack is a list of Trees and Tokens 
-    stack = [Tree(None)]
+    stack = [Tree(None, None, None)]
     for match in span_re.finditer(der_string): 
         span = match.group() 
 
@@ -847,8 +934,14 @@ def parse_derivation(derivation):
             chunks = span.split()
             from_char = int(chunks[chunks.index('+FROM')+1].replace(escape_str, ''))
             to_char = int(chunks[chunks.index('+TO')+1].replace(escape_str, ''))
+            #print chars, from_char, to_char
             lex = stack[-1]
-            token = Token(chars, lex.label, lex.start, lex.end, from_char, to_char)
+            if cache:
+                cachespan = span[1:].strip().replace(escape_str, '\\"')
+            else:
+                cachespan = None
+            token = Token(chars, lex.label, lex.start, lex.end, from_char, 
+                          to_char, span=cachespan)
             stack.append(token)
 
         # Beginning of a tree/subtree 
@@ -859,12 +952,20 @@ def parse_derivation(derivation):
             atts = span[1:].strip().split() 
 
             if len(atts) > 1:
-                node = Tree(atts[1], start=int(atts[3]), end=int(atts[4])) 
+                label = atts[1]
+                start = int(atts[3])
+                end = int(atts[4])
+                if cache:
+                    cachespan = span[1:].strip().replace(escape_str, '\\"')
+                else:
+                    cachespan = None
+                node = Tree(label, start, end, span=cachespan)                    
             elif len(atts) == 1:
                 # initial root condition node, not found in ACE
                 # derivations set start and end to -1 to make this
                 # detectable.
-                node = Tree(atts[0], start=-1, end=-1)
+                label = atts[0]
+                node = Tree(label, -1, -1, span=label)
             else:
                 parse_error(der_string, match, 'empty-node') 
 
@@ -1031,7 +1132,7 @@ def get_profile_ids(*paths):
 
 
 def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None, 
-                        lextypes=True, typifier=None, iid=None, condition=None):
+                        lextypes=True, typifier=None, condition=None, pspans=None):
     """
     Return Readings from across a series of profiles. This assumes
     unique i-ids across all profiles. Returns a dictionary which maps
@@ -1052,11 +1153,21 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
         # forests.
         query = 'select i-id result-id mrs p-tokens derivation where result-id <= {}'.format(best - 1)
         
-    if iid is not None:
-        query += ' and i-id == {}'.format(iid) 
-
     if condition is not None:
         query += 'and {}'.format(condition)
+
+    if pspans is not None:
+        query += 'and p-id = {}'.format(pspans)
+        ipquery = 'select i-id ip-author where p-id = {}'.format(pspans)
+        annotations = defaultdict(list)
+
+        for path in paths:
+            results = tsdb_query(ipquery, path)
+            for result in results.splitlines():
+                bits = result.split('|')
+                iid = int(bits[0])
+                start, end = (int(x) for x in bits[1].split('-'))
+                annotations[iid].append((start, end))
 
     for path in paths:
         results = tsdb_query(query, path)
@@ -1071,7 +1182,8 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
             derivation = bits[4].strip()
             reading = Reading(derivation, iid=iid, resultid=resultid, grammar=grammar, 
                               mrs=mrs, ptokens=ptokens, lextypes=lextypes,
-                              typifier=typifier)
+                              typifier=typifier, pspans=annotations[iid])
+
             results_dict[iid].append(reading)
 
             if cutoff is not None and len(results) >= cutoff:
@@ -1084,7 +1196,7 @@ def get_text_results(lines, grammar, best=1, cutoff=None, lextypes=True, typifie
     results_dict = defaultdict(list)
 
     for i, line in enumerate(lines):
-        f = Fragment(line, grammar, count=best, cache=True, lextypes=lextypes, typifier=typifier)
+        f = Fragment(line, grammar, count=best, lextypes=lextypes, typifier=typifier)
 
         for reading in f.readings:
             results_dict[i].append(reading)

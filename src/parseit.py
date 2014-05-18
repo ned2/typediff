@@ -82,8 +82,9 @@ representations rather than lextypes.""",
     'descendents' : """Restricts types reported on to those that inherit from the type
 supplied as an argument. Only relevant when using the 'types'
 feature.""",
-    'id' : """Apply operation only to item with this i-id.""",
     'tsql': """An additional tsql constraint, eg 't-active = 1'.""",
+    'pspans': """Restrict all results to pertain to derivation subspans
+corresponding this this p-id (phenomenon id).""",
 }
 
 
@@ -94,8 +95,8 @@ def argparser():
     ap.add_argument("--parse", action='store_true', help=OPTSHELP['parse'])
     ap.add_argument("--best", type=int, default=1, help=OPTSHELP['best'])
     ap.add_argument("--cutoff", type=int, help=OPTSHELP['cutoff'])
-    ap.add_argument("--id", type=int, help=OPTSHELP['id'])
     ap.add_argument("--tsql", help=OPTSHELP['tsql'])
+    ap.add_argument("--pspans", type=int, help=OPTSHELP['pspans'])
     subparsers = ap.add_subparsers(help='Command help:', dest='command')
 
     # this assumes paths argument is two sequences of paths separated by '@'
@@ -313,7 +314,7 @@ def get_results(grammar, arg):
                                               grammar=grammar,
                                               lextypes=lextypes,
                                               typifier=typifier,
-                                              iid=arg.id,
+                                              pspans=arg.pspans,
                                               condition=arg.tsql)
     return results
 

@@ -307,6 +307,10 @@ class Reading(object):
     def __init__(self, derivation, iid=None, resultid=None, grammar=None, 
                  mrs=None, ptokens=None, lextypes=True, dat_path=None, 
                  typifier=None, cache=False, pspans=[]):
+        self.iid = iid
+        self.resultid = resultid
+        self.mrs = mrs
+
         try:
             # supplied grammar is a Grammar object
             alias = grammar.alias
@@ -318,14 +322,27 @@ class Reading(object):
         if dat_path is not None:
             self.grammar.dat_path = dat_path
 
-        self.iid = iid
-        self.resultid = resultid
-        self.mrs = mrs
-        self.tree = parse_derivation(derivation, cache=(cache or len(pspans) > 0))
+        if cache or len(pspans) > 0:
+            # if the cache option has been explicitly specified or if
+            # there are phenomenon spanns to align to edges, then
+            # cache the derivation substrings inside Tree objects
+            cache_derivations = True
+        else:
+            cache_derivations = False
 
-        # initial parse of Tree object
-        # extract tokens and align spans
-        self._process_tree(*pspans)
+        self.tree = parse_derivation(derivation, cache=cache_derivations)
+
+        # attributes we'll be populating
+        self.lex_entries = Counter()
+        self.rules = Counter()
+        self.types = Counter()       
+        self._lextypes = None
+        self.tokens = []
+        self.subtrees = []
+        self.root_condition = None
+
+        # initial parse of Tree object, extract tokens and align spans
+        self._process_tree(pspans, lextypes)
 
         # restore case to the tokens
         if ptokens is not None:
@@ -339,17 +356,14 @@ class Reading(object):
 
         # reconstruct tree/subtree and collect stats
         if typifier is not None:
-            if pspans is not None:
-                for tree in reading.subtrees:
-                    reading._reconstruct(tree.derivation(), typifier)
+            if len(pspans) > 0:
+                for tree in self.subtrees:
+                    self._reconstruct(tree.derivation, typifier)
             else:
-                reading._reconstruct(derivation, typifier)
+                self._reconstruct(derivation, typifier)
 
-    def _process_tree(self, *pspans):
+    def _process_tree(self, pspans, lextypes):
         """Extracts tokens and aligns any spans to derivations"""
-        self.tokens = []
-        self.subtrees = []
-
         if self.tree.start == -1:
             # Parse from PET which inculdes top level root
             # condition. Record and then discard this node of the
@@ -357,21 +371,8 @@ class Reading(object):
             self.root_condition = self.tree.label
             self.tree = self.tree.children[0]
 
-        stack = [self.tree]       
-        subtrees = []
-
-        # move this to get_tokens-nodes() function? (then token() function calls this
-        while len(stack) > 0:
-            node = stack.pop()
-            child1 = node.children[0]
-            
-            subtrees.append(node)
-            if type(child1) is Token:
-                self.tokens.append(child1)
-            else:
-                stack.extend(node.children)
-
-        self.tokens.reverse()
+        lex_lookup = self.grammar.lex_lookup if lextypes else None
+        self.tokens, subtrees = self.tree.process(lex_lookup=lex_lookup)
 
         if len(pspans) > 0: 
             vstartchars = {}
@@ -386,12 +387,20 @@ class Reading(object):
                 # TODO
                 # this leaves the choice of subtrees with the same vertices as abitrary
                 # we need to ensure selection of higher nodes
-                closest_tree = min(subtrees, key=sumdiff)
-                diff = sumdiff(closest_tree)
-                self.subtrees.append(closest_tree)
-#                if diff > 0:
-#                    print self.iid, diff
-#                    import pdb; pdb.set_trace()
+                # TODO
+                # Workout if there is a threshold at which point we should be excluding matches
+                match = min(subtrees, key=sumdiff)
+                self.subtrees.append(match)
+                #self._debug_alignment(match, sumdiff)
+
+    def _debug_alignment(self, match, sumdiff):
+        diff = sumdiff(match)
+        print diff
+        if diff > 0:
+            print self.iid, diff, match.input()
+            self.tree.draw()
+            import pdb; pdb.set_trace()
+            pass
 
     def _tree_stats(self, *trees):
         """
@@ -399,16 +408,14 @@ class Reading(object):
         If lextypes is True, the lexicon is consulted to count up the lextype
         occurences.
         """
-        self.root_condition = None
-        self.lex_entries = Counter()
-        self.rules = Counter()
-        self.types = Counter()       
-        self._lextypes = None
-
         for tree in trees:
             self._do_tree_stats(tree)
 
     def _do_tree_stats(self, tree):
+        """
+        This could be moved inside Tree. pass relevant dictionaries to
+        update stats
+        """
         stack = [tree]
 
         while len(stack) > 0:
@@ -469,8 +476,7 @@ class Reading(object):
         self.err = err
         types = [t for t in types.split() if not t.startswith('"') or 
                  (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
-        # need the Counter() conversion??
-        self.types.update(Counter(types))
+        self.types.update(types)
 
         # ACE escapes single quotes with a backslash. The json decoder
         # does not accept this as valid JSON.
@@ -500,6 +506,9 @@ class Reading(object):
     def pprint(self, **kwargs):
         return self.tree.pprint(**kwargs)
 
+    def draw(self):
+        return self.tree.draw()
+
     def input(self):
         """Reconstruct input based on parsed tokens."""
         return ' '.join(t.string for t in self.tokens)
@@ -508,7 +517,7 @@ class Reading(object):
     def lextypes(self):
         """Support lazy loading of lextypes from grammar"""
         if self._lextypes is None:
-            return self._lookup_lextypes(self.grammar)
+            self._lookup_lextypes()
 
         return self._lextypes
 
@@ -835,6 +844,29 @@ class Tree(object):
         self.span = span
         self.children = []
 
+    def process(self, lex_lookup=None):
+        """
+        Initial processing of tree, extracting tokens and all nodes,
+        adjusting the label of penultimate nodes to be lextypes if a
+        lex_lookup funciton is specified.
+        """
+        nodes = []
+        tokens = []
+        stack = [self]       
+        while len(stack) > 0:
+            node = stack.pop()
+            child1 = node.children[0]
+            nodes.append(node)
+            if type(child1) is Token:
+                tokens.append(child1)
+                if lex_lookup is not None:
+                    node.label = lex_lookup(child1.lex_entry)
+            else:
+                stack.extend(node.children)
+
+        tokens.reverse()
+        return tokens, nodes 
+
     def ptb(self):
         """
         Returns a psuedo Penn Treebank style tree of the derivation.
@@ -853,6 +885,10 @@ class Tree(object):
             return u'({} {})'.format(subtree.label, u' '.join(children))
 
     def tokens(self):
+        """
+        Get the tokens of this tree. Used for getting nodes of
+        subtrees.
+        """
         tokens = []
         stack = [self]
 
@@ -871,6 +907,7 @@ class Tree(object):
     def input(self):
         return ' '.join(t.string for t in self.tokens())
 
+    @property
     def derivation(self):
         return self._derivation(self)        
 
@@ -1138,8 +1175,9 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
     unique i-ids across all profiles. Returns a dictionary which maps
     i-ids onto lists of Readings.
     """
-    results_dict = defaultdict(list)
-    
+    results_dict = defaultdict(list) 
+    annotations = defaultdict(list)
+   
     if gold:
         # We are querying a gold (ie thinned) profile. Note that we
         # can still find multiple readings in a gold profile. eg when
@@ -1159,7 +1197,6 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
     if pspans is not None:
         query += 'and p-id = {}'.format(pspans)
         ipquery = 'select i-id ip-author where p-id = {}'.format(pspans)
-        annotations = defaultdict(list)
 
         for path in paths:
             results = tsdb_query(ipquery, path)
@@ -1180,8 +1217,8 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
             mrs = bits[2].strip()
             ptokens = bits[3].strip()
             derivation = bits[4].strip()
-            reading = Reading(derivation, iid=iid, resultid=resultid, grammar=grammar, 
-                              mrs=mrs, ptokens=ptokens, lextypes=lextypes,
+            reading = Reading(derivation, iid=iid, resultid=resultid, mrs=mrs,
+                              grammar=grammar, ptokens=ptokens, lextypes=lextypes, 
                               typifier=typifier, pspans=annotations[iid])
 
             results_dict[iid].append(reading)

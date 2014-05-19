@@ -97,6 +97,7 @@ def argparser():
     ap.add_argument("--cutoff", type=int, help=OPTSHELP['cutoff'])
     ap.add_argument("--tsql", help=OPTSHELP['tsql'])
     ap.add_argument("--pspans", type=int, help=OPTSHELP['pspans'])
+    ap.add_argument("--le", action='store_true', help=OPTSHELP['le'])
     subparsers = ap.add_subparsers(help='Command help:', dest='command')
 
     # this assumes paths argument is two sequences of paths separated by '@'
@@ -107,19 +108,16 @@ def argparser():
     ap2 = subparsers.add_parser('convert', help='Extract different kinds of attributes from derivations.')
     ap2.add_argument("--failtok", default='NULL', help=OPTSHELP['failtok'])
     ap2.add_argument("--align", action='store_true', help=OPTSHELP['align'])
-    ap2.add_argument("--le", action='store_true', help=OPTSHELP['le'])
     ap2.add_argument("--backoff", help=OPTSHELP['backoff'])
     ap2.add_argument("feature", choices=CONVERT_FEATURES, metavar="FEATURE")
     ap2.add_argument("paths", nargs='*', metavar="PATHS")
 
     ap3 = subparsers.add_parser('count', help='Count up and sort occurrences of attributes across a collection.')    
-    ap3.add_argument("--le", action='store_true', help=OPTSHELP['le'])
     ap3.add_argument("--descendents", help=OPTSHELP['descendents'])
     ap3.add_argument("feature", choices=COUNT_FEATURES, metavar="FEATURE")
     ap3.add_argument("paths", nargs='*', metavar="PATHS")
 
     ap4 = subparsers.add_parser('draw', help='Draw the derivation with a GUI from NLTK.')
-    ap4.add_argument("--le", action='store_true', help=OPTSHELP['le'])
     ap4.add_argument("paths", nargs='*', metavar="PATHS")
 
     return ap

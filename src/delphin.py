@@ -259,7 +259,7 @@ class Fragment(object):
  
         self.readings = []
         for i,reading in enumerate(readings):
-            mrs, derivation = reading.split(';')
+            mrs, derivation = reading.split(';', 1)
             r = Reading(derivation.strip(), resultid=i, grammar=self.grammar, 
                         mrs=mrs.strip(), lextypes=lextypes, typifier=typifier, 
                         cache=cache)
@@ -324,7 +324,7 @@ class Reading(object):
 
         if cache or len(pspans) > 0:
             # if the cache option has been explicitly specified or if
-            # there are phenomenon spanns to align to edges, then
+            # there are phenomenon spans to align to edges, then
             # cache the derivation substrings inside Tree objects
             cache_derivations = True
         else:
@@ -384,18 +384,25 @@ class Reading(object):
             # find closest matching trees for any pspans provided
             for start, end in pspans:
                 sumdiff = lambda tree:abs(vstartchars[tree.start] - start) + abs(vendchars[tree.end] - end)
-                # TODO
-                # this leaves the choice of subtrees with the same vertices as abitrary
-                # we need to ensure selection of higher nodes
-                # TODO
-                # Workout if there is a threshold at which point we should be excluding matches
                 match = min(subtrees, key=sumdiff)
-                self.subtrees.append(match)
-                #self._debug_alignment(match, sumdiff)
 
-    def _debug_alignment(self, match, sumdiff):
+                # Ensure that we're getting the highest node for this
+                # span relevant for sequences of single child
+                # derivation Has not been checked to see if working as
+                # phenomena investigated currently doesn't tend to
+                # involve singly-branching derivations.
+                while True:
+                    if match.parent is None:
+                        break
+                    elif sumdiff(match.parent) == sumdiff(match):
+                        match = match.parent
+                    else:
+                        break
+                self.subtrees.append(match)
+                self._debug_alignment(vstartchars, vendchars, match, start, end, sumdiff)
+
+    def _debug_alignment(self, vstartchars, vendchars, match, start, end, sumdiff):
         diff = sumdiff(match)
-        print diff
         if diff > 0:
             print self.iid, diff, match.input()
             self.tree.draw()
@@ -512,6 +519,10 @@ class Reading(object):
     def input(self):
         """Reconstruct input based on parsed tokens."""
         return ' '.join(t.string for t in self.tokens)
+
+    @property
+    def derivation(self):
+        return self.tree.derivation
 
     @property
     def lextypes(self):
@@ -853,26 +864,34 @@ class Tree(object):
         nodes = []
         tokens = []
         stack = [self]       
+        self.depth = 0
+        self.parent = None
+
         while len(stack) > 0:
             node = stack.pop()
             child1 = node.children[0]
             nodes.append(node)
+            child_depth = node.depth + 1
+            
             if type(child1) is Token:
+                child1.depth = child_depth
+                child1.parent = node
                 tokens.append(child1)
                 if lex_lookup is not None:
                     node.label = lex_lookup(child1.lex_entry)
             else:
+                for n in node.children:
+                    n.parent = node
+                    n.depth = child_depth
                 stack.extend(node.children)
 
         tokens.reverse()
         return tokens, nodes 
 
     def ptb(self):
-        """
-        Returns a psuedo Penn Treebank style tree of the derivation.
+        """Returns a psuedo Penn Treebank style tree of the derivation.
         'Pseudo' because currently the only PTB normalization done is
-        for round parentheses.
-        """
+        for round parentheses."""
         return self._ptb(self)
 
     def _ptb(self, subtree):
@@ -885,10 +904,7 @@ class Tree(object):
             return u'({} {})'.format(subtree.label, u' '.join(children))
 
     def tokens(self):
-        """
-        Get the tokens of this tree. Used for getting nodes of
-        subtrees.
-        """
+        """Get the tokens of this tree."""
         tokens = []
         stack = [self]
 
@@ -904,6 +920,29 @@ class Tree(object):
         tokens.reverse()
         return tokens
 
+    def pprint(self, **kwargs):
+        """Returns a representation of the tree compatible with the LaTeX
+        qtree package. Requires the nltk module. See
+        http://www.nltk.org/_modules/nltk/tree.html."""
+        from nltk import Tree as NLTKTree
+        tree = NLTKTree(self.ptb()) 
+        return tree.pprint(**kwargs)
+
+    def latex(self):
+        """Returns a representation of the tree compatible with the
+        LaTeX qtree package. Requires the nltk module. See 
+        http://www.nltk.org/_modules/nltk/tree.html."""
+        from nltk import Tree as NLTKTree
+        string = self.ptb().replace('[', '\[').replace(']', '\]')
+        tree = NLTKTree(string) 
+        latex = tree.pprint_latex_qtree()
+        return latex.replace('-LRB-', '(').replace('-RRB-', ')')
+
+    def draw(self):
+        from nltk import Tree as NLTKTree
+        NLTKTree(self.ptb()).draw()
+
+    @property
     def input(self):
         return ' '.join(t.string for t in self.tokens())
 
@@ -917,40 +956,12 @@ class Tree(object):
         else:
             children = (u'{}'.format(self._derivation(x)) for x in subtree.children)
             return u'({} {})'.format(subtree.span, u' '.join(children))
+
             
-    def pprint(self, **kwargs):
-        """
-        Returns a representation of the tree compatible with the LaTeX
-        qtree package. Requires the nltk module. See
-        http://www.nltk.org/_modules/nltk/tree.html.
-        """
-        from nltk import Tree as NLTKTree
-        tree = NLTKTree(self.ptb()) 
-        return tree.pprint(**kwargs)
-
-    def latex(self):
-        """
-        Returns a representation of the tree compatible with the
-        LaTeX qtree package. Requires the nltk module. See 
-        http://www.nltk.org/_modules/nltk/tree.html.
-        """
-        from nltk import Tree as NLTKTree
-        string = self.ptb().replace('[', '\[').replace(']', '\]')
-        tree = NLTKTree(string) 
-        latex = tree.pprint_latex_qtree()
-        return latex.replace('-LRB-', '(').replace('-RRB-', ')')
-
-    def draw(self):
-        from nltk import Tree as NLTKTree
-        NLTKTree(self.ptb()).draw()
-
-
 def parse_derivation(derivation, cache=False):
-    """
-    Parse a DELPH-IN derivation string, returning a Tree object.
+    """Parse a DELPH-IN derivation string, returning a Tree object.
     If cache is true, the Tree instances will each store the 
-    relevant span of the derivation string in the attribute 'span'.
-    """
+    relevant span of the derivation string in the attribute 'span'."""
     escape_str = '__ESC__'
     der_string = derivation.replace('\\"', escape_str)
     node_re = r'("[^"]+"|[^()"]+)+'
@@ -970,7 +981,9 @@ def parse_derivation(derivation, cache=False):
             chars = span.split('"', 2)[1]
             chunks = span.split()
             from_char = int(chunks[chunks.index('+FROM')+1].replace(escape_str, ''))
-            to_char = int(chunks[chunks.index('+TO')+1].replace(escape_str, ''))
+            # for multi word tokens, we need to get the *last* +TO value
+            list_rindex = lambda x: len(chunks) - chunks[-1::-1].index(x) - 1
+            to_char = int(chunks[list_rindex('+TO')+1].replace(escape_str, ''))
             #print chars, from_char, to_char
             lex = stack[-1]
             if cache:
@@ -1053,11 +1066,9 @@ def parse_error(string, match, expecting):
 
 
 def load_hierarchy(xmlfile_path, save_pickle=False):
-    """
-    Load the pickled version of the hierarchy. If there is none,
+    """Load the pickled version of the hierarchy. If there is none,
     load the hierarchy and also save a pickle of it if save_pickle is
-    True.
-    """ 
+    True.""" 
     root = os.path.splitext(xmlfile_path)[0]
     try:
         with open(root+'.pickle', 'rb') as f:
@@ -1087,11 +1098,9 @@ def lookup_hierarchy(arg):
 
 
 def get_supers(types, hierarchy):
-    """
-    Given a list of types, return a set containing every ancestors to
+    """Given a list of types, return a set containing every ancestors to
     all the input types. GLBs are resolved using the function
-    resolve_glbs.
-    """
+    resolve_glbs."""
     supers = []
     for t in types:
         if t.startswith('"'):
@@ -1138,12 +1147,10 @@ def resolve_glbs(types, hierarchy):
 
 
 def tsdb_query(query, profile):
-    """
-    Perform a query using the tsdb commandline program.  the query
+    """Perform a query using the tsdb commandline program.  the query
     argument to this function is used as the value of the tsdb -query
     argument and the profile argument to this function is used as the
-    value of the tsdb -home argument.
-    """
+    value of the tsdb -home argument."""
     env = dict(os.environ)
     env['LC_ALL'] = 'en_US.UTF-8'
     args = ['tsdb', '-home', profile, '-query', query]
@@ -1169,12 +1176,12 @@ def get_profile_ids(*paths):
 
 
 def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None, 
-                        lextypes=True, typifier=None, condition=None, pspans=None):
-    """
-    Return Readings from across a series of profiles. This assumes
+                        lextypes=True, typifier=None, condition=None, pspans=None,
+                        cache=False):
+    """Return Readings from across a series of profiles. This assumes
     unique i-ids across all profiles. Returns a dictionary which maps
-    i-ids onto lists of Readings.
-    """
+    i-ids onto lists of Reading sorted by result-id (ie decreasing
+    order of confidence according to the parse selection model)."""
     results_dict = defaultdict(list) 
     annotations = defaultdict(list)
    
@@ -1213,13 +1220,14 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
             result = result.decode('utf-8')
             bits = result.split(' | ', 4)
             iid = int(bits[0].strip())
-            resultid = bits[1].strip()
+            resultid = int(bits[1].strip())
             mrs = bits[2].strip()
             ptokens = bits[3].strip()
             derivation = bits[4].strip()
             reading = Reading(derivation, iid=iid, resultid=resultid, mrs=mrs,
                               grammar=grammar, ptokens=ptokens, lextypes=lextypes, 
-                              typifier=typifier, pspans=annotations[iid])
+                              typifier=typifier, pspans=annotations[iid], 
+                              cache=cache)
 
             results_dict[iid].append(reading)
 
@@ -1229,11 +1237,13 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
     return results_dict
 
 
-def get_text_results(lines, grammar, best=1, cutoff=None, lextypes=True, typifier=None):
+def get_text_results(lines, grammar, best=1, cutoff=None, lextypes=True, 
+                     typifier=None, cache=False):
     results_dict = defaultdict(list)
 
     for i, line in enumerate(lines):
-        f = Fragment(line, grammar, count=best, lextypes=lextypes, typifier=typifier)
+        f = Fragment(line, grammar, count=best, lextypes=lextypes, typifier=typifier, 
+                     cache=cache)
 
         for reading in f.readings:
             results_dict[i].append(reading)

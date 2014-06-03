@@ -136,7 +136,7 @@ def reading_features(reading, feature):
     elif feature == 'ptb':
         output = reading.ptb()
     elif feature == 'input':
-        output = reading.input()
+        output = reading.input
     elif feature == 'mrs':
         output = reading.mrs
     elif feature == 'derivation':
@@ -285,7 +285,8 @@ def draw(results_dict):
 
 def get_results(grammar, arg):
     lextypes = not (arg.feature in NONTDL_FEATURES or arg.le)
-    
+    cache = (arg.command == 'convert' and arg.feature == 'derivation')
+
     if arg.command == 'count' and arg.feature == 'types':
         typifier = config.TYPIFIERBIN
     else:
@@ -304,7 +305,8 @@ def get_results(grammar, arg):
                                            best=arg.best, 
                                            cutoff=arg.cutoff,
                                            lextypes=lextypes, 
-                                           typifier=typifier)
+                                           typifier=typifier,
+                                           cache=cache)
     else:
         results = delphin.get_profile_results(arg.paths, best=arg.best, 
                                               gold=arg.gold, 
@@ -313,7 +315,8 @@ def get_results(grammar, arg):
                                               lextypes=lextypes,
                                               typifier=typifier,
                                               pspans=arg.pspans,
-                                              condition=arg.tsql)
+                                              condition=arg.tsql,
+                                              cache=cache)
     return results
 
 

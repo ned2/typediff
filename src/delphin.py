@@ -357,9 +357,11 @@ class Reading(object):
         # reconstruct tree/subtree and collect stats
         if typifier is not None:
             if len(pspans) > 0:
-                for tree in self.subtrees:
-                    self._reconstruct(tree.derivation, typifier)
+                # only reconstruct matching phenomenon spans
+                for subtree in self.subtrees:
+                    self._reconstruct(subtree.derivation, typifier)
             else:
+                # reconstruct entire tree
                 self._reconstruct(derivation, typifier)
 
     def _process_tree(self, pspans, lextypes):
@@ -398,16 +400,9 @@ class Reading(object):
                         match = match.parent
                     else:
                         break
-                self.subtrees.append(match)
-                self._debug_alignment(vstartchars, vendchars, match, start, end, sumdiff)
 
-    def _debug_alignment(self, vstartchars, vendchars, match, start, end, sumdiff):
-        diff = sumdiff(match)
-        if diff > 0:
-            print self.iid, diff, match.input()
-            self.tree.draw()
-            import pdb; pdb.set_trace()
-            pass
+                match.diff = sumdiff(match)                  
+                self.subtrees.append(match)
 
     def _tree_stats(self, *trees):
         """
@@ -516,6 +511,7 @@ class Reading(object):
     def draw(self):
         return self.tree.draw()
 
+    @property
     def input(self):
         """Reconstruct input based on parsed tokens."""
         return ' '.join(t.string for t in self.tokens)
@@ -1147,7 +1143,7 @@ def resolve_glbs(types, hierarchy):
 
 
 def tsdb_query(query, profile):
-    """Perform a query using the tsdb commandline program.  the query
+    """Perform a query using the tsdb commandline program. The query
     argument to this function is used as the value of the tsdb -query
     argument and the profile argument to this function is used as the
     value of the tsdb -home argument."""
@@ -1186,23 +1182,29 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
     annotations = defaultdict(list)
    
     if gold:
-        # We are querying a gold (ie thinned) profile. Note that we
-        # can still find multiple readings in a gold profile. eg when
-        # t-active > 1
-        query = 'select i-id result-id mrs p-tokens derivation where readings > 0'
+        # This is for querying a thinned profile, where we can simply
+        # return all all readings. Note though that we can still find
+        # multiple readings in a gold profile. eg when t-active > 1.
+        # This query will return all however, so if just the first is wanted, 
+        # the rest need to be excuded downstream.
+        query = 'select i-id result-id mrs p-tokens derivation from result where readings > 0'
     else:
         # This query is not appropriate for gold/thinned profiles as
-        # the result(s) will have effectively arbitrary result-ids. We
+        # the readings will have relatively arbitrary result-ids. We
         # must also restrict queries to within relevant result-ids
         # otherwise query times/memory usage explodes for large parse
         # forests.
         query = 'select i-id result-id mrs p-tokens derivation where result-id <= {}'.format(best - 1)
         
     if condition is not None:
-        query += 'and {}'.format(condition)
+        # NOTE: just adding 't-active=1' won't give you gold trees,
+        # you'll get the best (n) trees for each item that *has* a
+        # gold tree. To get gold readings, you need to thin the profile and
+        # then use the gold query above.
+        query += ' and {}'.format(condition)
 
     if pspans is not None:
-        query += 'and p-id = {}'.format(pspans)
+        query += ' and p-id = {}'.format(pspans)
         ipquery = 'select i-id ip-author where p-id = {}'.format(pspans)
 
         for path in paths:
@@ -1215,7 +1217,6 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
 
     for path in paths:
         results = tsdb_query(query, path)
-
         for result in results.splitlines():
             result = result.decode('utf-8')
             bits = result.split(' | ', 4)

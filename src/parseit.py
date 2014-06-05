@@ -47,7 +47,9 @@ SINGLELINE_FEATURES = [
     'generic-ratio', 
     'unknown-ratio', 
     'node-ratio', 
-    'input'
+    'input',
+    'align',
+    'align-errors'
 ]
 
 # Features that support the convert mode
@@ -79,7 +81,7 @@ as the 'lextypes' feature, but with each item preceeded by its
 I-ID.""",
     'le' : """le Use lex entry names for the penultimate node in tree
 representations rather than lextypes.""",
-    'descendents' : """Restricts types reported on to those that inherit from the type
+    'descendants' : """Restricts types reported on to those that inherit from the type
 supplied as an argument. Only relevant when using the 'types'
 feature.""",
     'tsql': """An additional tsql constraint, eg 't-active = 1'.""",
@@ -98,6 +100,7 @@ def argparser():
     ap.add_argument("--tsql", help=OPTSHELP['tsql'])
     ap.add_argument("--pspans", type=int, help=OPTSHELP['pspans'])
     ap.add_argument("--le", action='store_true', help=OPTSHELP['le'])
+    ap.add_argument("--debug", action='store_true')
     subparsers = ap.add_subparsers(help='Command help:', dest='command')
 
     # this assumes paths argument is two sequences of paths separated by '@'
@@ -113,7 +116,7 @@ def argparser():
     ap2.add_argument("paths", nargs='*', metavar="PATHS")
 
     ap3 = subparsers.add_parser('count', help='Count up and sort occurrences of attributes across a collection.')    
-    ap3.add_argument("--descendents", help=OPTSHELP['descendents'])
+    ap3.add_argument("--descendants", help=OPTSHELP['descendants'])
     ap3.add_argument("feature", choices=COUNT_FEATURES, metavar="FEATURE")
     ap3.add_argument("paths", nargs='*', metavar="PATHS")
 
@@ -125,6 +128,8 @@ def argparser():
 
 def reading_features(reading, feature):
     lines = []
+    output = None
+
     if feature == 'lextypes':
         for token in reading.tokens:
             lt = reading.grammar.lex_lookup(token.lex_entry)
@@ -151,6 +156,19 @@ def reading_features(reading, feature):
         output = str(sum(reading.unknowns.values()) / sum(reading.lex_entries.values()))
     elif feature == 'node-ratio':
         output = str(reading.num_nodes / sum(reading.lex_entries.values()))
+    elif feature in ('align', 'align-errors'):
+        for subtree in reading.subtrees:
+            if feature == 'align-errors' and subtree.diff == 0:
+                continue
+                
+            string = u'iid: {}  result-id: {:>2}  diff: {:>2}  match: {}'
+            line = string.format(reading.iid, reading.resultid, subtree.diff, subtree.input)
+
+            if DEBUG:
+                reading.tree.draw()
+                print "DEBUG: " + output
+                
+            lines.append(line)
     else:
         raise UnknownFeatureException(feature)
 
@@ -175,13 +193,15 @@ def extract_backoff_items(path):
     return results
 
 
-def convert_trees(results_dict, feature, align, paths, failtok, backoff):
+def convert_trees(results_dict, feature, align, paths, failtok, best, backoff):
     if not align:
         results = sorted(results_dict.iteritems(), key=lambda x:x[0])
         lines = []
         for iid, item in results:
-            for reading in item:
-                lines.append(reading_features(reading, feature))
+            for reading in item[:best]:
+                features = reading_features(reading, feature)
+                if features is not None:
+                    lines.append(features)
     else:
         if backoff is not None:
             backoffs = extract_backoff_items(backoff)
@@ -216,12 +236,12 @@ def update_reading_counts(reading, feature, counts, ancestor):
         else:
             hierarchy = delphin.load_hierarchy(reading.grammar.types_path)
             try:
-                descendent_types = set(t.name for t in hierarchy[ancestor].descendants())
+                descendant_types = set(t.name for t in hierarchy[ancestor].descendants())
             except delphin.TypeNotFoundError as e:
                 sys.stderr.write(str(e))
                 sys.exit()
             for t in reading.types:
-                if t in descendent_types:
+                if t in descendant_types:
                     counts[t] += reading.types[t]
     else:
         raise UnknownFeatureException(feature)
@@ -308,7 +328,8 @@ def get_results(grammar, arg):
                                            typifier=typifier,
                                            cache=cache)
     else:
-        results = delphin.get_profile_results(arg.paths, best=arg.best, 
+        results = delphin.get_profile_results(arg.paths, 
+                                              best=arg.best, 
                                               gold=arg.gold, 
                                               cutoff=arg.cutoff, 
                                               grammar=grammar,
@@ -321,7 +342,9 @@ def get_results(grammar, arg):
 
 
 def main():
+    global DEBUG
     arg = argparser().parse_args()
+    DEBUG = arg.debug
 
     if arg.command == 'convert' and arg.align and arg.best > 1:
         sys.stderr.write("Align option requires that best = 1.\n")
@@ -340,9 +363,9 @@ def main():
         results = get_results(grammar, arg)
 
         if arg.command == 'count':
-             print collection_features(results.values(), arg.feature, arg.descendents)
+             print collection_features(results.values(), arg.feature, arg.descendants)
         elif arg.command == 'convert':
-            print convert_trees(results, arg.feature, arg.align, arg.paths, arg.failtok, arg.backoff)
+            print convert_trees(results, arg.feature, arg.align, arg.paths, arg.failtok, arg.best, arg.backoff)
         elif arg.command == 'draw':
             draw(results)
 

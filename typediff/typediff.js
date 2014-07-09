@@ -210,7 +210,7 @@ function processItems(callback) {
         'fragments': $('input[name=fragments]').prop('checked'),
     };
         
-    var posting = $.post('src/webtypes.py', data);
+    var posting = $.post('../src/webtypes.py', data);
     posting.done(function(data) {
         if (data.success) {
             if (data.descendants)
@@ -244,7 +244,7 @@ function processItemResults(newItems, type) {
         var itemSection = $(['#',type,'-items'].join(''));
 
         items.push(item);
-        $item.find('.text').text(item.string).attr('title', item.string);
+        $item.find('.text').text(item.input).attr('title', item.input);
         $item.find('.number').text(counter+1);
         $item.find('.num-parses').text(readings + pluralize(' parse', readings));
         $item.attr('id', id);
@@ -433,7 +433,7 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
     if (SUPERS)
         $('#numsupers').text(diffs.supers.length);
     else
-        $('#numsupers').text('');
+        $('#numsupers').text('?');
 
     if (treebank)
         $('#treebank-details').html(treebank.name+'<br>'+treebank.trees+' trees');
@@ -461,19 +461,26 @@ function doDiff() {
     // worth the effort.
     var grammar = $('.item').attr('grammar');
 
-    var getThem = function(i, prop) { 
-        if (i.disabled) {
+    var getTypes = function(item) { 
+        if (item.disabled) {
             return [];
         } else {
-            return [].concat.apply([], _.map(i.readings, function(x) {
-                return x.active ? x[prop] : []; 
+            return [].concat.apply([], _.map(item.readings, function(x) {
+                return x.active ? Object.keys(x.types) : []; 
+            }));
+        }
+    };
+
+    var getSupers = function(item) { 
+        if (item.disabled) {
+            return [];
+        } else {
+            return [].concat.apply([], _.map(item.readings, function(x) {
+                return x.active ? x.supers : []; 
             }));
         }
     };
     
-    var getTypes = function(i) { return getThem(i, 'types'); }
-    var getSupers = function(i) { return getThem(i, 'supers'); }
-
     var posTypes = _.uniq([].concat.apply([], _.map(POSITEMS, getTypes))); 
     var posSupers = _.uniq([].concat.apply([], _.map(POSITEMS, getSupers))); 
     var negTypes = _.uniq([].concat.apply([], _.map(NEGITEMS, getTypes))); 
@@ -495,7 +502,7 @@ function doDiff() {
             'grammar-name' : grammar,
             'kinds'        : JSON.stringify(kinds)
         }
-        requests.push($.post('src/webtypes.py', data));
+        requests.push($.post('../src/webtypes.py', data));
         supers = true;
     }
 
@@ -508,7 +515,7 @@ function doDiff() {
         // check to see if the treebank has already been loaded
         // before making a request to fetch it
         if (treebank.data == undefined)
-            requests.push($.getJSON('www/json/' + treebank.json));
+            requests.push($.getJSON(JSONPATH + '/' + treebank.json));
     }
 
     $.when.apply(null, function (){return requests;}()).done(function(results) {
@@ -536,7 +543,7 @@ function drawTrees($item) {
     for (var i=0; i < item.readings.length; i++) {
         var $svg = $(svgelement('svg')).attr('version', '1.1');
         var $derivation = $item.find('#derivation-'+i).append($svg);
-        var g = render_tree($svg[0], item.string, item.readings[i].tree, LONGLABELS);
+        var g = render_tree($svg[0], item.input, item.readings[i].tree, LONGLABELS);
 
         var gnum = svgelement('g');
         var text = svgelement('text');
@@ -987,10 +994,11 @@ function updateIds(removedElem) {
 function loadData(callback) {
 
     var data = {'query' : 'load-data' }; 
-    var posting = $.post('src/webtypes.py', data);
+    var posting = $.post('../src/webtypes.py', data);
 
     posting.done(function(data) {
-        FANGORNPATH = data.fangorn; 
+        FANGORNPATH = data.fangornpath;
+        JSONPATH = data.jsonpath;
         GRAMMARS = {};
         var $grammarInput = $('#grammar-input');
         var $treebankInput = $('#treebank-input');

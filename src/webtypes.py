@@ -34,7 +34,7 @@ def parse_types_query(form):
     desc_flag = (desc == 'true')
     frags_flag = (fragments == 'true')
     supers_flag = (supers == 'true')
-    grammar = config.load_grammar(arg.grammar)
+    grammar = config.get_grammar(alias)
     return typediff.export_json(pos, neg, grammar, count, frags_flag, supers_flag, desc_flag) 
 
 
@@ -47,16 +47,17 @@ def find_supers_query(form):
 
 def load_data_query():
     result = { 
-        'grammars' : [common.Grammar(g, config.DATAPATH) for g in config.GRAMMARLIST], 
-        'treebanks' : [common.Treebank(t) for t in config.TREEBANKLIST] , 
-        'fangorn' : config.FANGORNPATH
+        'grammars'    : config.load_grammars(), 
+        'treebanks'   : [delphin.Treebank(t) for t in config.TREEBANKLIST] , 
+        'fangornpath' : config.FANGORNPATH,
+        'jsonpath'    : config.JSONPATH,
     }
-    return json.dumps(result, cls=common.JSONEncoder)
+    return json.dumps(result, cls=delphin.JSONEncoder)
 
 
 def find_supers(alias, kinds):
     descendants = {}
-    grammar = config.load_grammar(arg.grammar)
+    grammar = config.get_grammar(alias)
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     types_to_supers = defaultdict(list)
 
@@ -75,7 +76,7 @@ def find_supers(alias, kinds):
     result = { 'success'      : True,
                'typesToSupers': types_to_supers }
  
-    return json.dumps(result, cls=common.JSONEncoder)
+    return json.dumps(result, cls=delphin.JSONEncoder)
 
 
 def test(json_str):

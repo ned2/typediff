@@ -23,7 +23,7 @@ def argparser():
 
 def get_predicted_iids(arg):
     if arg.results is not None:
-        f = open(results_file) as f:
+        f = open(arg.results)
     else:
         f = sys.stdin
 
@@ -34,7 +34,7 @@ def get_predicted_iids(arg):
 
 
 def evaluate(predicted_iids, gold_iids, tot):
-    intersection = predicted_iids.instersection(gold_iids)
+    intersection = predicted_iids.intersection(gold_iids)
     precision = len(intersection)/tot
     recall = len(intersection)/len(gold_iids)
     return precision, recall
@@ -45,7 +45,7 @@ def main():
     query = "select i-id where p-id = {}".format(arg.pid)
     tsdb_results = delphin.tsdb_query(query, arg.profile)
     gold_iids = set(int(x) for x in tsdb_results.split())
-    all_iids = delphin.get_profile_ids(arg.profile):
+    all_iids = delphin.get_profile_ids(arg.profile)
     predicted_iids = get_predicted_iids(arg)
     print evaluate(predicted_iids, gold_iids, len(all_iids)) 
 

@@ -251,7 +251,7 @@ def typediff(pos_input, neg_input, grammar, arg):
 
 def main():
     arg = argparser().parse_args()
-    grammar = config.load_grammar(arg.grammar)
+    grammar = config.get_grammar(arg.grammar)
 
     if '@' in arg.sentences and not (arg.u or arg.i or arg.d):
         arg.d = True

@@ -3,22 +3,22 @@
 <head>
   <meta charset=utf-8 />
   <title>typediff</title>
-  <link rel="stylesheet" type="text/css" media="screen" href="../www/typediff.css"/>
+  <link rel="stylesheet" type="text/css" media="screen" href="typediff.css"/>
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
   <script type="text/javascript">
     if (typeof jQuery == 'undefined') {
-        document.write(unescape("%3Cscript src='../www/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
+        document.write(unescape("%3Cscript src='jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
     }
   </script>
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
   <script>
     if (typeof jQuery.ui == 'undefined') {
-        document.write(unescape("%3Cscript src='../www/jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
+        document.write(unescape("%3Cscript src='jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
     }
   </script>
-  <script type="text/javascript" src="../www/underscore-min.js"></script>
-  <script type="text/javascript" src="../www/typediff.js"></script>
-  <script type="text/javascript" src="../www/render.js"></script>
+  <script type="text/javascript" src="underscore-min.js"></script>
+  <script type="text/javascript" src="typediff.js"></script>
+  <script type="text/javascript" src="render.js"></script>
   <script type="text/html" id="item-template">
     <div class="item">
       <div class="tree-box popup hidden">
@@ -196,7 +196,7 @@
         <div id="numtypes" class="status-value"></div>
         <div></div>
         <div class="status-label">Number of super types:</div>
-        <div id="numsupers" class="status-value"></div>
+        <div id="numsupers" class="status-value">??</div>
         <div class="status-label">Treebank details:</div>
         <div id="treebank-details" class="status-value"></div>
       </div>

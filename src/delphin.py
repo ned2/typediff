@@ -150,13 +150,13 @@ class AceError(Exception):
 
 class TypeStats(object):
     
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.counts = 0
         self.items = 0
 
-    def finalize(self, tot_items):
-        self.idf = math.log(tot_items/(1 + self.items) + 1)
+    def update(self, counts):
+        self.items += 1
+        self.counts += counts
 
 
 class Treebank(object):
@@ -174,13 +174,21 @@ class JSONEncoder(json.JSONEncoder):
         if isinstance(obj, Treebank):
             return obj.__dict__
         if isinstance(obj, Reading):
-            return obj.__dict__
+            data = obj.__dict__
+            data['tree'] = data['json_tree']
+            del data['json_tree']
+            del data['grammar']
+            return data
         if isinstance(obj, Tree):
             return obj.ptb()
         if isinstance(obj, Token):
             return obj.__dict__
         if isinstance(obj, Fragment):
-            return obj.__dict__
+            data = obj.__dict__
+            data['grammar'] = data['grammar'].alias
+            del data['log_lines']
+            del data['logpath']
+            return data
         if isinstance(obj, TypeStats):
             return obj.__dict__
         return json.JSONEncoder.default(self, obj)
@@ -332,10 +340,10 @@ class Reading(object):
 
         self.tree = parse_derivation(derivation, cache=cache_derivations)
 
-        # attributes we'll be populating
         self.lex_entries = Counter()
         self.rules = Counter()
         self.types = Counter()       
+        self.supers = [] 
         self._lextypes = None
         self.tokens = []
         self.subtrees = []
@@ -1216,6 +1224,7 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
                 annotations[iid].append((start, end))
 
     for path in paths:
+        print query
         results = tsdb_query(query, path)
         for result in results.splitlines():
             result = result.decode('utf-8')

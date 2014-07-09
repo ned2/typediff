@@ -9,25 +9,22 @@ import cPickle
 import json
 
 from subprocess import Popen, PIPE
-from collections import Counter
+from collections import Counter, defaultdict
 
 import delphin
-
-# TODO change to relative import
-from config import *
+import config
 
 
-"""
-This script is for working with type statistics from DELPH-IN treebanks. Funcitonality 
-includes collecting treebank statisitcs, saving as pickle files for storage, loading from
-existing pickle file and exporting to text and json formats.
-"""
+"""This script is for working with type statistics from DELPH-IN
+treebanks. Funcitonality includes collecting treebank statisitcs,
+saving as pickle files for storage, loading from existing pickle file
+and exporting to text and json formats."""
 
 
 # TODO: This file needs to be updated to the newer version of typediff in the grammalytics toolkit
 
 BLACKLIST = set()
-SPEECH_PROFILES = set(['vm6', 'vm13', 'vm13', 'vm31', 'vm32', 'ecpa', 'ecoc', 'ecos', 'ecpr'])
+ERG_SPEECH_PROFILES = set(['vm6', 'vm13', 'vm13', 'vm31', 'vm32', 'ecpa', 'ecoc', 'ecos', 'ecpr'])
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -53,8 +50,8 @@ def argparser():
     return argparser
 
 
-def index(profiles, treebank, grammar, speech_grammar=None):
-    type_stats = {}
+def index(profiles, treebank, grammar):
+    type_stats = defaultdict(delphin.TypeStats)
     trees = 0
     failures = []
 
@@ -63,10 +60,8 @@ def index(profiles, treebank, grammar, speech_grammar=None):
         print "processing {}".format(path) 
         profile = os.path.basename(path) 
 
-        if profile in SPEECH_PROFILES and speech_grammar is not None:
-            this_grammar = speech_grammar
-        else:
-            this_grammar = grammar
+        if profile in ERG_SPEECH_PROFILES:
+            grammar = config.get_grammar('erg-speech')
 
         try:
             out = delphin.tsdb_query('select i-id derivation where readings > 0', path)
@@ -83,16 +78,14 @@ def index(profiles, treebank, grammar, speech_grammar=None):
                 continue
 
             print trees, iid
+
             try:
-                process_derivation(derivation, this_grammar, type_stats)
+                process_derivation(derivation, grammar, type_stats)
             except delphin.AceError as e:
                 e.msg = "{}\n{}\n".format(path, iid) + e.msg
                 failures.append(e)
                 print e
             items_seen.add(iid)
-
-    for t in type_stats.values():
-        t.finalize(trees)
 
     num_failures = len(failures)
     print "Processed {} trees".format(trees) 
@@ -102,7 +95,7 @@ def index(profiles, treebank, grammar, speech_grammar=None):
         print '\n'.join([str(e) for e in failures]) 
 
     treebank_str = treebank.replace(' ', '_')
-    filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
+    filename = '{}--{}--{}_new.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
 
     with open(os.path.join(DATAPATH,filename), 'wb') as f:
         cPickle.dump(type_stats, f)
@@ -110,21 +103,16 @@ def index(profiles, treebank, grammar, speech_grammar=None):
 
 def process_derivation(derivation, grammar, type_stats):
     counts = Counter(get_types(derivation, grammar))
+
     for name, count in counts.items():
-        if name not in type_stats:
-            t = delphin.TypeStats(name)
-            type_stats[name] = t
-        else:
-            t = type_stats[name]
-            
-            t.items += 1
-            t.counts += count 
+        ts = type_stats[name]
+        ts.update(count)
 
 
 def get_types(derivation_string, grammar):
     env = dict(os.environ)
     env['LC_ALL'] = 'en_US.UTF-8'
-    args = [TYPIFIERBIN, grammar.dat_path]
+    args = [config.TYPIFIERBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env)
     out, err = process.communicate(input=derivation_string)
 
@@ -215,15 +203,8 @@ def main():
         else:
             profiles.append(arg.profile)
 
-        grammars = get_grammars(GRAMMARLIST)
-        grammar = Grammar(grammars[arg.alias], DATAPATH)
-
-        try:
-            speech_grammar = Grammar(grammars['erg-speech'], DATAPATH)
-        except KeyError:
-            speech_grammar = None
-
-        index(profiles, arg.treebank, grammar, speech_grammar=speech_grammar)
+        grammar = config.get_grammar(arg.grammar)
+        index(profiles, arg.treebank, grammar)
 
     elif arg.command == 'output':
         output(arg.path, arg.type)

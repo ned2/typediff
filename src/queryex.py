@@ -21,7 +21,7 @@ def argparser():
     ap.add_argument("example", nargs='?', metavar="EXAMPLE", help="Query example")
     ap.add_argument("--descendants")
     ap.add_argument("--cutoff", type=float, default=.5)
-    ap.add_argument("--best", type=int)
+    ap.add_argument("--best", type=int, default=1)
     ap.add_argument("--gold", action='store_true')
     return ap
 
@@ -29,7 +29,7 @@ def argparser():
 def do_query(results, grammar, signature):
     found_items = set()
     
-    for iid, readings in results:
+    for iid, readings in results.items():
         hit = True
         for t in signature:
             if t not in readings[0].types:

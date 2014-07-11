@@ -53,8 +53,8 @@ GRAMMARLIST = (
     },
     {
         'alias'     : 'terg',
-        'shortname' : 'Trunk ERG (2013-11-26)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk 2014-04-14)',
+        'shortname' : 'Trunk ERG (2014-07-11)',
+        'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
         'ltdb'      : 'ERG_trunk',
@@ -189,6 +189,6 @@ def get_grammar(alias):
     return None
 
 
-def load_grammars():
+def get_grammars():
     return [_load_grammar(g) for g in GRAMMARLIST]
         

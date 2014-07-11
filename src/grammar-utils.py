@@ -100,10 +100,11 @@ def main():
     if arg.command == "make-data":
         if not os.path.exists(config.DATAPATH):
             os.makedirs(config.DATAPATH)
+
         if len(arg.grammars) == 0:
-            grammars = [config.load_grammar(g['alias']) for g in config.GRAMMARLIST]
+            grammars = config.get_grammars()
         else:
-            grammars = [config.load_grammar(g) for g in arg.grammars]
+            grammars = [config.get_grammar(alias) for alias in arg.grammars]
 
         for grammar in grammars:
             try:

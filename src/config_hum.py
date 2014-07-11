@@ -46,8 +46,8 @@ GRAMMARLIST = (
     },
     {
         'alias'     : 'terg',
-        'shortname' : 'Trunk ERG (2013-11-26)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk 2013-11-26)',
+        'shortname' : 'Trunk ERG (2013-09-24)',
+        'longname'  : 'The LinGO English Resource Grammar (trunk)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
         'ltdb'      : 'ERG_trunk',
     }, 
@@ -141,9 +141,31 @@ TYPES = (
 )
 
 
-# These should only need to be changed if you have a non-standard
-# Typediff configuration.
+# These should only need to be changed if you needed to compile
+# thebinaries for your own environment. 
 TYPIFIERBIN = os.path.join(_SRC_PATH, '..', 'bin', 'typifier')
 DUMPHIERARCHYBIN = os.path.join(_SRC_PATH, '..', 'bin', 'dumphierarchy')
 ACEBIN = os.path.join(_SRC_PATH, '..', 'bin', 'ace')
-JSONPATH = os.path.join(_SRC_PATH, '..', 'www', 'json')
+JSONPATH = 'json'
+
+
+def _load_grammar(g):   
+    if 'ltdb' in g:
+        g['ltdblink'] = LTDBPATH + '/' + g['ltdb']
+    else:
+        g['ltdblink'] = None
+
+    g['aceconfig'] = g['aceconfig'].replace('${LOGONROOT}', LOGONROOT)
+    g['tdlfile'] = g['tdlfile'].replace('${LOGONROOT}', LOGONROOT)
+    return ConfigGrammar(g, DATAPATH)    
+
+
+def get_grammar(alias):
+    for g in GRAMMARLIST:
+        if g['alias'] == alias:
+            return _load_grammar(g)
+    return None
+
+
+def get_grammars():
+    return [_load_grammar(g) for g in GRAMMARLIST]

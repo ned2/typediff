@@ -46,7 +46,7 @@ def find_supers_query(form):
 
 def load_data_query():
     result = { 
-        'grammars'    : config.load_grammars(), 
+        'grammars'    : config.get_grammars(), 
         'treebanks'   : [delphin.Treebank(t) for t in config.TREEBANKLIST] , 
         'fangornpath' : config.FANGORNPATH,
         'jsonpath'    : config.JSONPATH,

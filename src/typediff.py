@@ -86,6 +86,7 @@ def argparser():
     argparser.add_argument("grammar", metavar="GRAMMAR NAME")
     argparser.add_argument("-n", default=10)
     argparser.add_argument("--all", action='store_true')
+    argparser.add_argument("--tagger")
     argparser.add_argument("--frags", action='store_true')
     argparser.add_argument("--supers", action='store_true')
     argparser.add_argument("--json", action='store_true')
@@ -164,14 +165,14 @@ def compare_types(pos_types, neg_types, arg):
 
 def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, tagger):
     hierarchy = delphin.load_hierarchy(grammar.types_path)
-
     parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
                                        dat_path=grammar.dat_path,
                                        count=count,
+                                       tnt=(tagger=='tnt'),
                                        typifier=config.TYPIFIERBIN,
                                        fragments=frags, 
-                                       logpath=config.LOGPATH,
-                                       tnt=(tagger=='tnt')) 
+                                       logpath=config.LOGPATH)
+
     try:
         pos  = [parse(x) for x in pos_input]
         neg  = [parse(x) for x in neg_input]
@@ -265,11 +266,11 @@ def main():
         if s =='@':
             stype = neg
         else:
-            stype.append(s)
+            stype.append(s.decode('utf8'))
                 
     try:
         if arg.json:
-            print export_json(pos, neg, grammar, arg.n, arg.frags, arg.supers, arg.descendants)
+            print export_json(pos, neg, grammar, arg.n, arg.frags, arg.supers, arg.descendants, arg.tagger)
         else:
             print typediff(pos, neg, grammar, arg)
     except(delphin.AceError) as err:

@@ -262,7 +262,7 @@ class Fragment(object):
                 
         process = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
         out, err = process.communicate(input=input_str.encode('utf8'))
-        lines = out.strip().split('\n')
+        lines = out.decode('utf8').strip().splitlines()
         status = lines[0]
         readings = lines[1:]
         self.stderr = err
@@ -491,7 +491,7 @@ class Reading(object):
         if process.returncode != 0:
             raise AceError('typifier', err)
 
-        types, tree = out.split('\n\n')
+        types, tree = out.decode('utf-8').split('\n\n')
         self.err = err
         types = [t for t in types.split() if not t.startswith('"') or 
                  (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
@@ -499,8 +499,8 @@ class Reading(object):
 
         # ACE escapes single quotes with a backslash. The json decoder
         # does not accept this as valid JSON.
-        tree = tree.replace("\\'", "'")
-        self.json_tree = json.loads(tree.strip())
+        tree = tree.replace("\\'", "'").strip()
+        self.json_tree = json.loads(tree.encode('utf8'))
 
     def _lookup_lextypes(self):
         """

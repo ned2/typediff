@@ -210,7 +210,7 @@ function processItems(callback) {
         'count' : $('#count-input').val(),
         'load-descendants': loadDescendants,
         'supers': $('input[name=supers]').prop('checked'),
-        'tagger': $('input[name=tagger]').prop('checked'),
+        'tagger': $("input[name=tagger]:checked").val(),
         'fragments': $('input[name=fragments]').prop('checked'),
     };
         

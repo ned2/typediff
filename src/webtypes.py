@@ -28,10 +28,8 @@ def parse_types_query(form):
     fragments = form.getvalue('fragments') 
     tagger = form.getvalue('tagger')
   
-    pos = pinput.decode('utf-8').strip().split('\n') if pinput is not None else []
-    neg = ninput.decode('utf-8').strip().split('\n') if ninput is not None else []
-    pos = [x.encode('utf-8') for x in pos]
-    neg = [x.encode('utf-8') for x in neg]
+    pos = pinput.decode('utf-8').strip().splitlines() if pinput is not None else []
+    neg = ninput.decode('utf-8').strip().splitlines() if ninput is not None else []
     desc_flag = (desc == 'true')
     frags_flag = (fragments == 'true')
     supers_flag = (supers == 'true')

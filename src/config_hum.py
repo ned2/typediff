@@ -33,6 +33,11 @@ LTDBPATH = '/ltdb/cgi-bin'
 LOGPATH = os.path.join(_SRC_PATH, '..', 'ace.log')
 
 
+# For setting the LOGONROOT with apache, specify it here.  Note that
+# this is not actually required for running the typediff interface and
+# can be left blank.
+LOGONROOT = ''
+
 # Grammars configured for use with typediff. The string '${LOGONROOT}'
 # Will be replaced with the value of the LOGONROOT environment
 # variable.

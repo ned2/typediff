@@ -33,6 +33,11 @@ LTDBPATH = None
 LOGPATH = os.path.join(_SRC_PATH, '..', 'ace.log')
 
 
+# For setting the LOGONROOT with apache, we specify it here.  Note
+# that this is not actually required for running the typediff
+# interface.
+LOGONROOT = ''
+
 # Grammars configured for use with typediff. The string '${LOGONROOT}'
 # Will be replaced with the value of the LOGONROOT environment
 # variable.

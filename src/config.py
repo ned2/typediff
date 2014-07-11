@@ -34,8 +34,9 @@ LTDBPATH = '/ltdb/cgi-bin'
 LOGPATH = os.path.join(_SRC_PATH, '..', 'ace.log')
 
 
-# Required for TnT support in the web app. We can't just use the
-# environment variable because it will be run as the apache user.
+# For setting the LOGONROOT with apache, specify it here.  Note that
+# this is not actually required for running the typediff interface and
+# can be left blank.
 LOGONROOT = '/home/nejl/logon'
 
 

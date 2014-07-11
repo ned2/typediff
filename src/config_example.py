@@ -1,4 +1,5 @@
 import os
+from delphin import ConfigGrammar
 
 
 """
@@ -47,30 +48,38 @@ GRAMMARLIST = (
         'shortname' : 'ERG 1212',
         'longname'  : 'The LinGO English Resource Grammar (1212 release)',
         'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
+        'ltdb'      : 'ERG_1212',
     },
     {
         'alias'     : 'terg',
         'shortname' : 'Trunk ERG',
         'longname'  : 'The LinGO English Resource Grammar',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
+        'ltdb'      : 'ERG_trunk',
     }, 
     {
         'alias'     : 'jacy',
         'shortname' : 'Jacy',
         'longname'  : 'Jacy Japanese Grammar',
         'aceconfig' : '${LOGONROOT}/dfki/jacy/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/dfki/jacy/japanese.tdl',
+        'ltdb'      : 'Jacy_1301'
     }, 
     {
         'alias'     : 'gg',
         'shortname' : 'GG',
         'longname'  : 'GG (German Grammar)',
         'aceconfig' : '${LOGONROOT}/dfki/gg/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/dfki/gg/german.tdl',
     }, 
     {
         'alias'     : 'hag',
         'shortname' : 'HaG',
         'longname'  : 'HaG (Hausa Grammar)',
         'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl' 
+        'tdlfile' : '${LOGONROOT}/llf/hag/hausa.tdl'
     }, 
 )
 

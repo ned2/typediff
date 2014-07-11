@@ -1,4 +1,5 @@
 import os
+from delphin import ConfigGrammar
 
 
 """
@@ -47,13 +48,15 @@ GRAMMARLIST = (
         'shortname' : 'ERG 1212',
         'longname'  : 'The LinGO English Resource Grammar (1212 release)',
         'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
         'ltdb'      : 'ERG_1212',
     },
     {
         'alias'     : 'terg',
-        'shortname' : 'Trunk ERG (2013-09-24)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk)',
+        'shortname' : 'Trunk ERG (2014-07-11)',
+        'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
         'ltdb'      : 'ERG_trunk',
     }, 
     {
@@ -61,37 +64,51 @@ GRAMMARLIST = (
         'shortname' : 'Jacy',
         'longname'  : 'Jacy Japanese Grammar',
         'aceconfig' : '${LOGONROOT}/dfki/jacy/ace/config.tdl',
-        'ltdb'      : 'Jacy_1301',
+        'tdlfile'   : '${LOGONROOT}/dfki/jacy/japanese.tdl',
+        'ltdb'      : 'Jacy_1301'
     }, 
     {
         'alias'     : 'gg',
         'shortname' : 'GG',
         'longname'  : 'GG (German Grammar)',
         'aceconfig' : '${LOGONROOT}/dfki/gg/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/dfki/gg/german.tdl',
     }, 
     {
         'alias'     : 'hag',
         'shortname' : 'HaG',
         'longname'  : 'HaG (Hausa Grammar)',
-        'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl' 
+        'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl',
+        'tdlfile' : '${LOGONROOT}/llf/hag/hausa.tdl'
     }, 
     {
         'alias'     : 'norsource',
         'shortname' : 'NorSource',
         'longname'  : 'NorSource (Norwegian Grammar)',
-        'aceconfig' : '/home/nejl/delphin/grammars/norsource_1.0/ace/norsource_config.tdl' 
+        'aceconfig' : '/home/nejl/delphin/grammars/norsource_1.0/ace/norsource_config.tdl',
+        'tdlfile'   : '/home/nejl/delphin/grammars/norsource_1.0/norsk.tdl',
     }, 
     {
         'alias'     : 'erg-speech',
         'shortname' : 'ERG 1212 (speech)',
         'longname'  : 'The LinGO English Resource Grammar for speech applications (1212 release)',
-        'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config_speech.tdl',
+        'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config-speech.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/erg/speech.tdl',
     },
     {
+        'alias'     : 'erg-wsj',
+        'shortname' : 'ERG 1212 WSJ',
+        'longname'  : 'The LinGO English Resource Grammar (WSJ)',
+        'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config-wsj.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
+        'ltdb'      : 'ERG_1212',
+    }, 
+    {
         'alias'     : 'terg-wsj',
-        'shortname' : 'Trunk ERG WJS (2013-11-26)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk 2013-11-26)',
-        'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config_wsj.tdl',
+        'shortname' : 'Trunk ERG WJS (2014-07-11)',
+        'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11 WSJ)',
+        'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config-wsj.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
         'ltdb'      : 'ERG_trunk',
     }, 
 )

@@ -171,7 +171,7 @@ ACEBIN = os.path.join(_SRC_PATH, '..', 'bin', 'ace')
 JSONPATH = 'json'
 
 
-def load_grammar(g):   
+def _load_grammar(g):   
     if 'ltdb' in g:
         g['ltdblink'] = LTDBPATH + '/' + g['ltdb']
     else:
@@ -185,10 +185,10 @@ def load_grammar(g):
 def get_grammar(alias):
     for g in GRAMMARLIST:
         if g['alias'] == alias:
-            return load_grammar(g)
+            return _load_grammar(g)
     return None
 
 
 def load_grammars():
-    return [load_grammar(g) for g in GRAMMARLIST]
+    return [_load_grammar(g) for g in GRAMMARLIST]
         

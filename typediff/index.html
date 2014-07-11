@@ -4,13 +4,13 @@
   <meta charset=utf-8 />
   <title>typediff</title>
   <link rel="stylesheet" type="text/css" media="screen" href="typediff.css"/>
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script type="text/javascript">
     if (typeof jQuery == 'undefined') {
         document.write(unescape("%3Cscript src='jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
     }
   </script>
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
   <script>
     if (typeof jQuery.ui == 'undefined') {
         document.write(unescape("%3Cscript src='jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
@@ -141,7 +141,7 @@
               </div>
             </div>
           </div>
-          <div class="option-line">
+          <div id="options-line-two" class="option-line">
             <div class="option" title="Toggle whether fragment readings are returned">
               <div class="option-name">Fragments:</div>
               <div class="option-input">
@@ -159,6 +159,13 @@
               <div class="option-input">
                 <span title="use short labels for tree nodes"><input type="radio" name="labels" value="short" checked /> short</span>
                 <span title="use rule names and lex types for tree labels"><input type="radio" name="labels" value="long"/> long</span>
+              </div>
+            </div>
+            <div class="option" title="Choose which tagger to use for the ERG">
+              <div class="option-name">Tagger:</div>
+              <div class="option-input">
+                <span title="use ACE's built in tagger"><input type="radio" name="tagger" value="ace" checked /> ACE</span>
+                <span title="Use the TnT tagger with WSJ model"><input type="radio" name="tagger" value="tnt"/> TnT</span>
               </div>
             </div>
           </div>

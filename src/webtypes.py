@@ -26,7 +26,8 @@ def parse_types_query(form):
     supers = form.getvalue('supers')
     desc = form.getvalue('load-descendants') 
     fragments = form.getvalue('fragments') 
-
+    tagger = form.getvalue('tagger')
+  
     pos = pinput.decode('utf-8').strip().split('\n') if pinput is not None else []
     neg = ninput.decode('utf-8').strip().split('\n') if ninput is not None else []
     pos = [x.encode('utf-8') for x in pos]
@@ -35,7 +36,7 @@ def parse_types_query(form):
     frags_flag = (fragments == 'true')
     supers_flag = (supers == 'true')
     grammar = config.get_grammar(alias)
-    return typediff.export_json(pos, neg, grammar, count, frags_flag, supers_flag, desc_flag) 
+    return typediff.export_json(pos, neg, grammar, count, frags_flag, supers_flag, desc_flag, tagger) 
 
 
 def find_supers_query(form):

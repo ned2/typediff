@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#
+# determine the LOGON root directory, assuming this script resides in a 
+# `bin' sub-directory that is shared across platforms.
+#
+if [ -z "${LOGONROOT}" ]; then
+  path=$(dirname $0)
+  if [ "${path#./}" != "${path}" ]; then
+    path="$(pwd)/${path#./}"
+  fi
+  if [ "${path#/}" = "${path}" ]; then
+    if [ "${path}" = "." ]; then
+      path="$(pwd)";
+    else 
+      path="$(pwd)/${path}"
+    fi
+  fi
+  LOGONROOT="${path%/bin}";
+  export LOGONROOT;
+fi
+
+#
+# include a shared set of shell functions and global parameters, including the
+# architecture identifier .LOGONOS.
+#
+. ${LOGONROOT}/etc/library.bash;
+LOGONOS=linux.x86.32;
+
+#
+# set up dynamic linker search path, so as to find our shared libraries
+#
+if [ "${LOGONOS%%.*}" == "linux" -o "$LOGONOS" == "solaris" ]; then
+
+  #
+  # also, add the OS-specific DELPH-IN library directory to the dynamic linker
+  # path; put ourselves at the front to avoid collisions with other libraries.
+  #
+  if [ -z "${LD_LIBRARY_PATH}" ]; then
+    LD_LIBRARY_PATH=${LOGONROOT}/uio/lib/${LOGONOS};
+  else
+    LD_LIBRARY_PATH=${LOGONROOT}/uio/lib/${LOGONOS}:${LD_LIBRARY_PATH};
+  fi
+  export LD_LIBRARY_PATH;
+fi
+
+exec ${LOGONROOT}/coli/bin/${LOGONOS}/tnt "$@"

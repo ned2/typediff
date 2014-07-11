@@ -67,6 +67,7 @@ function updateUrl() {
     params.push(makeParam('count', $('#count-input').val()));
     params.push(makeParam('treebank', $("#treebank-input").val()));
     params.push(makeParam('labels', $("input[name=labels]:checked").val()));
+    params.push(makeParam('tagger', $("input[name=tagger]:checked").val()));
     params.push(makeParam('mode', $("input[name=mode]:checked").val()));
     params.push(makeParam('supers', $("input[name=supers]").prop('checked')));
     params.push(makeParam('fragments', $("input[name=fragments]").prop('checked')));
@@ -123,6 +124,8 @@ function loadUrlParams() {
             else
                 LONGLABELS = false;
         }
+        if (param =='tagger')
+            $('input[value='+value+']').prop('checked', true);
         else if (param == 'mode') {
             $('input[value='+value+']').prop('checked', true);
             if (value == 'difference') {
@@ -207,6 +210,7 @@ function processItems(callback) {
         'count' : $('#count-input').val(),
         'load-descendants': loadDescendants,
         'supers': $('input[name=supers]').prop('checked'),
+        'tagger': $('input[name=tagger]').prop('checked'),
         'fragments': $('input[name=fragments]').prop('checked'),
     };
         
@@ -567,15 +571,15 @@ function drawTrees($item) {
 
 
 function setNodes(type, state) {
-    $('g').each(function(index, elem) {
+    $('.svg-node').each(function(index, elem) {
         $elem = $(elem);
         var color = state ? 'blue' : 'black';
 
         // note that the title attribute will have lex types as well
         // as the rule entry names, the former being what we want
         if (type == $elem.attr('rule')) {
-            $elem.find('text').css({'fill' : color});
-            $elem.find('line').css({'stroke': color});
+            $elem.find('.svg-node-text').css({'fill' : color});
+            $elem.find('.svg-line').css({'stroke': color});
             if (state) 
                 $elem.find('text').first().css({'font-weight' : 700});
             else
@@ -726,7 +730,7 @@ function setTypeHandlers() {
 
 function setItemHandlers($item) {
     var setTreeHandlers = function() {
-        $item.find('text').each(function(index, elem) {
+        $item.find('.svg-node-text').each(function(index, elem) {
             var $elem = $(elem);
             var str = $elem.attr('label');
             $elem.tooltip({
@@ -815,7 +819,7 @@ function setItemHandlers($item) {
             });
         });
 
-        $item.find('g.node > text').hover(
+        $item.find('.svg-node-text').hover(
             function(event) {
                 var type = $(this).parent().attr('rule');
                 var $type = $('.type.sign').filter(function() { 
@@ -943,7 +947,7 @@ function setItemHandlers($item) {
             $treeBox.show();
 
         // if we've already drawn the trees, return
-        if ($item.find('svg').length != 0) return;
+        if ($item.find('.svg-node').length != 0) return;
 
         drawTrees($item);
         setTreeHandlers();
@@ -1159,6 +1163,10 @@ function setHandlers() {
             $('.type.super').remove();
         }
         
+    });
+
+    $('input[name=tagger]').change(function(event) {
+        updateUrl();        
     });
 
     $('input[name=fragments]').change(function(event) {

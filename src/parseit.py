@@ -352,7 +352,7 @@ def main():
     elif arg.command == 'draw':
             arg.feature = None # just hack this rather than working out when defined
 
-    grammar = config.load_grammar(arg.grammar)
+    grammar = config.get_grammar(arg.grammar)
 
     if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
         grammar.read_tdl()

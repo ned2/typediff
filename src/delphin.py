@@ -231,8 +231,17 @@ class Fragment(object):
         args = [ace_path, '-g', dat_path]
 
         if tnt:
-            env['PATH'] = "{}:{}".format(os.environ['PATH'], LOGONBIN) 
-            model_path = os.path.join(LOGONROOT, 'coli', 'tnt', 'models', 'wsj.tnt') 
+            # If we have a logon installation, set PATH and model path 
+            # to use this. Otherwise use the tnt tagger packaged with grammalytics
+            if os.path.exists(LOGONBIN):
+                env['PATH'] = "{}:{}".format(os.environ['PATH'], LOGONBIN) 
+                model_path = os.path.join(LOGONROOT, 'coli', 'tnt', 'models', 'wsj.tnt') 
+            else:
+                thisdir = os.path.dirname(os.path.realpath(__file__))
+                taggerpath = os.path.join(thisdir, '..', 'tagger')
+                taggerbin = os.path.join(taggerpath, 'bin')
+                env['PATH'] = "{}:{}".format(os.environ['PATH'], taggerbin) 
+                model_path = os.path.join(taggerpath, 'coli', 'tnt', 'models', 'wsj.tnt') 
             args.append('--tnt-model')
             args.append(model_path)
 
@@ -252,7 +261,7 @@ class Fragment(object):
                 args.append('root_strict root_informal')
                 
         process = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
-        out, err = process.communicate(input=input_str)
+        out, err = process.communicate(input=input_str.encode('utf8'))
         lines = out.strip().split('\n')
         status = lines[0]
         readings = lines[1:]
@@ -1224,7 +1233,6 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
                 annotations[iid].append((start, end))
 
     for path in paths:
-        print query
         results = tsdb_query(query, path)
         for result in results.splitlines():
             result = result.decode('utf-8')

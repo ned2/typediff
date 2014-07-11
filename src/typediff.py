@@ -162,7 +162,7 @@ def compare_types(pos_types, neg_types, arg):
     return types
 
 
-def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc):
+def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, tagger):
     hierarchy = delphin.load_hierarchy(grammar.types_path)
 
     parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
@@ -170,7 +170,8 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc):
                                        count=count,
                                        typifier=config.TYPIFIERBIN,
                                        fragments=frags, 
-                                       logpath=config.LOGPATH) 
+                                       logpath=config.LOGPATH,
+                                       tnt=(tagger=='tnt')) 
     try:
         pos  = [parse(x) for x in pos_input]
         neg  = [parse(x) for x in neg_input]

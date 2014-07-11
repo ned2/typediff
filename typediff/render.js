@@ -14,12 +14,14 @@ function line(x1, y1, x2, y2) {
 	l.setAttributeNS(null, "y1", y1);
 	l.setAttributeNS(null, "y2", y2);
 	l.setAttributeNS(null, "style", "stroke: black;");
+    l.setAttributeNS(null, "class", "svg-line");
 	return l;
 }
 
 
 function text(svg, str) {
 	var t = svgelement("text");
+    t.setAttributeNS(null, "class", "svg-node-text");
 	t.appendChild(document.createTextNode(str));
 	svg.appendChild(t);
 	var bbx = t.getBBox();
@@ -83,7 +85,7 @@ function render_tree(svg, str, t, longlabels) {
 	var dtrs_wtot = wtot;
 	var g = svgelement("g");
 	var n = text(svg, label);
-    g.setAttributeNS(null, "class", "node");
+    g.setAttributeNS(null, "class", "svg-node");
     n.setAttributeNS(null, "title", title);
 
     if (t.rule) 

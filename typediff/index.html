@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset=utf-8 />
-  <title>typediff</title>
+  <title>Typediff</title>
   <link rel="stylesheet" type="text/css" media="screen" href="typediff.css"/>
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
   <script type="text/javascript">
@@ -142,12 +142,6 @@
             </div>
           </div>
           <div id="options-line-two" class="option-line">
-            <div class="option" title="Toggle whether fragment readings are returned (ERG only)">
-              <div class="option-name">Fragments:</div>
-              <div class="option-input">
-                <input type="checkbox" name="fragments">
-              </div>
-            </div>
             <div class="option" title="Show the (diffed) super types each type inherits from">
               <div class="option-name">Super types:</div>
               <div class="option-input">
@@ -159,6 +153,12 @@
               <div class="option-input">
                 <span title="use short labels for tree nodes"><input type="radio" name="labels" value="short" checked /> short</span>
                 <span title="use rule names and lex types for tree labels"><input type="radio" name="labels" value="long"/> long</span>
+              </div>
+            </div>
+            <div class="option" title="Toggle whether fragment readings are returned (ERG only)">
+              <div class="option-name">Fragments:</div>
+              <div class="option-input">
+                <input type="checkbox" name="fragments">
               </div>
             </div>
             <div class="option" title="Choose which tagger to use for the ERG">

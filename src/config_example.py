@@ -53,7 +53,7 @@ GRAMMARLIST = (
     },
     {
         'alias'     : 'terg',
-        'shortname' : 'Trunk ERG',
+        'shortname' : 'ERG trunk',
         'longname'  : 'The LinGO English Resource Grammar',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',

@@ -53,7 +53,7 @@ GRAMMARLIST = (
     },
     {
         'alias'     : 'terg',
-        'shortname' : 'Trunk ERG (2014-07-11)',
+        'shortname' : 'ERG trunk (2014-07-11)',
         'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
@@ -105,7 +105,7 @@ GRAMMARLIST = (
     }, 
     {
         'alias'     : 'terg-wsj',
-        'shortname' : 'Trunk ERG WJS (2014-07-11)',
+        'shortname' : 'ERG WJS trunk (2014-07-11)',
         'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11 WSJ)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config-wsj.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',

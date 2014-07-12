@@ -868,7 +868,7 @@ function setItemHandlers($item) {
         doDiff();
     });
 
-    $item.find('.activate-readings').click(function(event) {
+    $item.find('.activate-derivations').click(function(event) {
         var item = getItem($item);
         $item.find('.derivation').addClass('active');
 

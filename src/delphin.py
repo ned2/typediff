@@ -145,7 +145,7 @@ class AceError(Exception):
         self.msg = msg
 
     def __str__(self):
-        return "{} returned:\n{}".format(self.prog, self.msg)
+        return u"{} returned:\n{}".format(self.prog, self.msg)
 
 
 class TypeStats(object):

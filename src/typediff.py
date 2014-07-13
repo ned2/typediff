@@ -179,7 +179,7 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
     except(delphin.AceError) as err:
         data = {
             'succes' : False, 
-            'error'  : str(err),
+            'error'  : err.msg,
             'PATH'   : os.environ['PATH']
         }
 
@@ -274,7 +274,7 @@ def main():
         else:
             print typediff(pos, neg, grammar, arg)
     except(delphin.AceError) as err:
-        sys.stderr.write(str(err))
+        sys.stderr.write(err.msg)
         return 2
 
 

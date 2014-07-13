@@ -117,6 +117,7 @@ class TsdbError(Exception):
     def __init__(self, msg):
         self.msg = msg
 
+    # TODO remove this
     def __str__(self):
         return self.msg
 
@@ -134,16 +135,18 @@ class DerivationError(Exception):
 class TypeNotFoundError(Exception):
     def __init__(self, t):
         self.type = t
-
+        self.msg = "{} not found in the hierarchy.\n".format(t)
+        
+    # TODO remove this
     def __str__(self):
         return "{} not found in the hierarchy.\n".format(self.type)
 
 
 class AceError(Exception):
     def __init__(self, prog, msg):
-        self.prog = prog
-        self.msg = msg
+        self.msg = "{} returned:\n{}".format(prog, msg)
 
+    # TODO remove this
     def __str__(self):
         return u"{} returned:\n{}".format(self.prog, self.msg)
 
@@ -825,7 +828,7 @@ class TypeHierarchy(object):
             try:
                 supers.update(self[name].ancestors())
             except(TypeNotFoundError) as err:
-                sys.stderr.write(str(err))
+                sys.stderr.write(err.msg)
 
         return supers
 
@@ -837,7 +840,7 @@ class TypeHierarchy(object):
             try:
                 children.update(self[name].descendants())
             except(TypeNotFoundError) as err:
-                sys.stderr.write(str(err))
+                sys.stderr.write(err.msg)
 
         return children
 
@@ -1107,7 +1110,7 @@ def lookup_hierarchy(arg):
     elif arg.query == "children":
         found = hierarchy.get_children(candidates)
     
-    print "\n".join(str(t) for t in found)
+    print "\n".join(t.name for t in found)
 
 
 def get_supers(types, hierarchy):

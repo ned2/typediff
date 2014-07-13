@@ -271,7 +271,7 @@ class Fragment(object):
         self.stderr = err
 
         if process.returncode != 0 or out.startswith('SKIP'):
-            ace_error_str = u'\n'.join([status, err])
+            ace_error_str = u'\n'.join([status, err.msg])
             self.log_lines.append(ace_error_str + '\n\n')
             raise AceError('ACE', ace_error_str)
         else: 

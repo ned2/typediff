@@ -775,8 +775,8 @@ function setItemHandlers($item) {
                         var fangornUrl = makeFangornQueryUrl(treebankAlias, '//' + nodeQuery);
                         links.push(linkify(fangornUrl, 'node', 'fangorn search for this node'));
 
-                        if (itemIsLex && grammar.ltdb_link != null) {
-                            links.push(linkify(grammar.ltdb_link+'/description.cgi?type='+label, 'lextypeDB'));
+                        if (itemIsLex && grammar.ltdblink != null) {
+                            links.push(linkify(grammar.ltdblink+'/description.cgi?type='+label, 'lextypeDB'));
                         } else {
                             var makeSubtreeQuery = function(node, query) {
                                 var label = node.find('>text').attr('title');

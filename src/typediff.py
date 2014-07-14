@@ -180,7 +180,6 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
         data = {
             'succes' : False, 
             'error'  : err.msg,
-            'PATH'   : os.environ['PATH']
         }
 
         return json.dumps(data)

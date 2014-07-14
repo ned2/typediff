@@ -1,3 +1,5 @@
+# -* coding:utf-8 -*-
+
 import os
 import sys
 import re
@@ -144,7 +146,7 @@ class TypeNotFoundError(Exception):
 
 class AceError(Exception):
     def __init__(self, prog, msg):
-        self.msg = "{} returned:\n{}".format(prog, msg)
+        self.msg = u"{} returned:\n{}".format(prog, msg)
 
     # TODO remove this
     def __str__(self):
@@ -265,14 +267,17 @@ class Fragment(object):
                 
         process = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
         out, err = process.communicate(input=input_str.encode('utf8'))
-        lines = out.decode('utf8').strip().splitlines()
+        out = out.decode('utf8')
+        err = err.decode('utf8')
+        lines = out.strip().splitlines()
         status = lines[0]
         readings = lines[1:]
         self.stderr = err
 
         if process.returncode != 0 or out.startswith('SKIP'):
-            ace_error_str = u'\n'.join([status, err.msg])
+            ace_error_str = u'\n'.join([status, err])
             self.log_lines.append(ace_error_str + '\n\n')
+            self.write_log()
             raise AceError('ACE', ace_error_str)
         else: 
             self.log_lines.append(out)
@@ -291,8 +296,7 @@ class Fragment(object):
 
         if self.grammar.alias == 'jacy':
             try:
-                import jpn2yy
-                self.yy_input = jpn2yy.jp2yy(self.string)
+                self.yy_input = jp2yy(self.input)
             except (ImportError, RuntimeError, UnicodeDecodeError) as e:
                 # if MeCab is not installed or incorrectly installed do nothing
                 string = 'Error: {}\nCheck if MeCab is installed correctly.\n'
@@ -315,7 +319,7 @@ class Fragment(object):
     def write_log(self):
         try:
             with open(self.logpath, 'a+') as f:
-                f.write('\n'.join(self.log_lines))
+                f.write('\n'.join(self.log_lines).encode('utf8'))
         except IOError:
             # In case apache does not have write permissions
             sys.stderr.write("Cannot write to {}.\n".format(self.logpath))
@@ -1273,6 +1277,41 @@ def get_text_results(lines, grammar, best=1, cutoff=None, lextypes=True,
             return results_dict
 
     return results_dict
+
+
+def jp2yy(sent):
+    """take a Japanese sentence encoded in UTF8 and convert to YY-mode
+    using mecab. Based on code from Francis Bond."""
+    import MeCab
+    
+    m = MeCab.Tagger('-Ochasen')
+    punct = u"!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
+
+    ### YY format: (id, start, end, [link,] path+, form [surface], ipos, lrule+[, {pos p}+])
+    ### set ipos as lemma (just for fun)
+    ### fixme: do the full lattice
+    yid = 0
+    start = 0
+    cfrom = 0
+    cto = 0
+    yy = list()
+    
+    for tok in m.parse(sent.encode('utf8')).split('\n'):
+        if tok and tok != 'EOS':
+            (form, p, lemma, p1, p2, p3) = tok.decode('utf8').split('\t')
+            if form in punct:
+                continue
+            p2 = p2 or 'n'
+            p3 = p3 or 'n'
+            pos = "%s:%s-%s" % (p1, p2, p3)       ## wierd format jacy requires
+            cfrom = sent.find(form, cto)  ## first instance after last token
+            cto = cfrom + len(form)               ## find the end
+            yy.append('(%d, %d, %d, <%d:%d>, 1, "%s", %s, "null", "%s" 1.0)' % \
+                (yid, start, start +1, cfrom, cto, form, 0, pos))
+            yid += 1
+            start += 1
+    return "".join(yy)
+
 
 
 # When module is imported, initialize paths from logon installation

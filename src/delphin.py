@@ -6,7 +6,7 @@ import re
 import math
 import codecs
 import itertools
-import cPickle
+import pickle
 import json
 import time
 
@@ -23,6 +23,13 @@ except ImportError:
         import xml.etree.ElementTree as etree
 
 
+LOGONROOT = None
+LOGONBIN = None
+TSDBHOME = None
+ACEBIN = None
+LOGONREGPATH = None
+
+
 def init_paths(logonroot=None):
     """
     Set various paths. If logonroot argument omitted, uses LOGONROOT
@@ -34,19 +41,22 @@ def init_paths(logonroot=None):
     global ACEBIN
     global LOGONREGPATH
 
-    LOGONROOT = logonroot
-
     if LOGONROOT is None:
         LOGONROOT = os.environ.get('LOGONROOT')
+    else:
+        LOGONROOT = logonroot
 
     if LOGONROOT is None:
         home = os.environ.get('HOME')
         if home is not None:
-            LOGONROOT = os.path.join(home, 'logon')
-        else:
-            sys.stderr.write("Warining: LOGONROOT environment variable not set.")
-            LOGONROOT = ''
+            logon_path = os.path.join(home, 'logon')
+            if os.path.exists(logon_path):
+                LOGONROOT = logon_path
 
+    if LOGONROOT is None:
+        sys.stderr.write("Warining: LOGONROOT environment variable not set.")
+        return 
+        
     LOGONBIN = os.path.join(LOGONROOT, 'bin')
     ACEBIN = os.path.join(LOGONROOT, 'lingo', 'answer', 'bin', 'linux.x86.64', 'ace')
     TSDBHOME = os.environ.get('TSDBHOME')
@@ -69,6 +79,12 @@ GRAMMAR_NAMES = {
 # Virtual profiles found in the logon repository
 # TODO write a funciton to actually read virtual profiles
 VIRTUAL_PROFILES = {
+    'redwoods' : ('Redwoods', ["vm6", "vm13", "vm31", "vm32", "ecoc", "ecos",
+                               "ecpa", "ecpr", "jh0", "jh1", "jh2", "jh3", "jh4",
+                               "jh5", "tg1", "tg2", "ps", "ws01", "ws02", "ws03",
+                               "ws04", "ws05", "ws06", "ws07", "ws08", "ws09",
+                               "ws10", "ws11", "ws12", "sc01", "sc02", "sc03",
+                               "rtc000", "rtc001"]),
     'ws' : ('WeScience', ['ws01', 'ws02', 'ws03', 'ws04', 'ws05', 'ws06', 'ws07',
                           'ws08', 'ws09', 'ws10', 'ws11', 'ws12', 'ws13']),
     'vm' : ('Verbmobil', ['vm6', 'vm13', 'vm31', 'vm32']),
@@ -119,7 +135,6 @@ class TsdbError(Exception):
     def __init__(self, msg):
         self.msg = msg
 
-    # TODO remove this
     def __str__(self):
         return self.msg
 
@@ -139,18 +154,17 @@ class TypeNotFoundError(Exception):
         self.type = t
         self.msg = "{} not found in the hierarchy.\n".format(t)
         
-    # TODO remove this
     def __str__(self):
         return "{} not found in the hierarchy.\n".format(self.type)
 
 
 class AceError(Exception):
-    def __init__(self, prog, msg):
-        self.msg = u"{} returned:\n{}".format(prog, msg)
-
-    # TODO remove this
+    def __init__(self, prog, msg, input=None):
+        self.msg = "{} returned:\n{}".format(prog, msg)
+        self.input = input
+        
     def __str__(self):
-        return u"{} returned:\n{}".format(self.prog, self.msg)
+        return self.msg
 
 
 class TypeStats(object):
@@ -225,63 +239,31 @@ class Fragment(object):
             lextypes = False
 
         self.preprocess()
-        self.parse(ace_path, self.grammar.dat_path, count, fragments, tnt, typifier, cache, lextypes)
-
-        if logpath is not None:
-            self.write_log()
+        self.parse(ace_path, self.grammar.dat_path, count, fragments, tnt,
+                   typifier, cache, lextypes)
+        self.write_log()
 
     def parse(self, ace_path, dat_path, count, fragments, tnt, typifier, cache, lextypes):
-        env = dict(os.environ)
-        env['LC_ALL'] = 'en_US.UTF-8'
-        args = [ace_path, '-g', dat_path]
-
-        if tnt:
-            # If we have a logon installation, set PATH and model path 
-            # to use this. Otherwise use the tnt tagger packaged with grammalytics
-            if os.path.exists(LOGONBIN):
-                env['PATH'] = "{}:{}".format(os.environ['PATH'], LOGONBIN) 
-                model_path = os.path.join(LOGONROOT, 'coli', 'tnt', 'models', 'wsj.tnt') 
+        try:
+            if self.yy_input:
+                input_str = self.yy_mode
+                yy_input = True
             else:
-                thisdir = os.path.dirname(os.path.realpath(__file__))
-                taggerpath = os.path.join(thisdir, '..', 'tagger')
-                taggerbin = os.path.join(taggerpath, 'bin')
-                env['PATH'] = "{}:{}".format(os.environ['PATH'], taggerbin) 
-                model_path = os.path.join(taggerpath, 'coli', 'tnt', 'models', 'wsj.tnt') 
-            args.append('--tnt-model')
-            args.append(model_path)
+                input_str = self.input
+                yy_input = False
+            out, err = ace_parse(input_str, ace_path, self.grammar, count,
+                                 yy_input=yy_input, fragments=fragments, tnt=tnt)
+        except AceError as error:
+            self.log_lines.append(error.msg + '\n\n', input=input_str)
+            self.write_log()
+            raise error
 
-        if count is not None:
-            args.append('-n')
-            args.append(str(count))
-
-        if self.yy_input:
-            args.append('-y')
-            input_str = self.yy_input
-        else:
-            input_str = self.input
-
-        if not fragments:
-            if self.grammar.alias.startswith('erg') or self.grammar.alias.startswith('terg'):
-                args.append('-r')
-                args.append('root_strict root_informal')
-                
-        process = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
-        out, err = process.communicate(input=input_str.encode('utf8'))
-        out = out.decode('utf8')
-        err = err.decode('utf8')
+        self.log_lines.append(out)
+        self.stderr = err
         lines = out.strip().splitlines()
         status = lines[0]
         readings = lines[1:]
-        self.stderr = err
 
-        if process.returncode != 0 or out.startswith('SKIP'):
-            ace_error_str = u'\n'.join([status, err])
-            self.log_lines.append(ace_error_str + '\n\n')
-            self.write_log()
-            raise AceError('ACE', ace_error_str)
-        else: 
-            self.log_lines.append(out)
- 
         self.readings = []
         for i,reading in enumerate(readings):
             mrs, derivation = reading.split(';', 1)
@@ -292,7 +274,7 @@ class Fragment(object):
             self.readings.append(r)
 
     def preprocess(self):
-        self.yy_input = False
+        self.yy_input = None
 
         if self.grammar.alias == 'jacy':
             try:
@@ -317,9 +299,11 @@ class Fragment(object):
         return self.readings[0]
 
     def write_log(self):
+        if self.logpath is None:
+            return
         try:
             with open(self.logpath, 'a+') as f:
-                f.write('\n'.join(self.log_lines).encode('utf8'))
+                f.write('\n'.join(self.log_lines))
         except IOError:
             # In case apache does not have write permissions
             sys.stderr.write("Cannot write to {}.\n".format(self.logpath))
@@ -327,7 +311,6 @@ class Fragment(object):
 
 
 class Reading(object):
-
     def __init__(self, derivation, iid=None, resultid=None, grammar=None, 
                  mrs=None, ptokens=None, lextypes=True, dat_path=None, 
                  typifier=None, cache=False, pspans=[]):
@@ -494,11 +477,13 @@ class Reading(object):
         args = [typifier_path, self.grammar.dat_path]
         process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env, close_fds=True)
         out, err = process.communicate(input=derivation.encode('utf8'))
+        out = out.decode('utf8')
+        err = err.decode('utf8')
 
         if process.returncode != 0:
             raise AceError('typifier', err)
 
-        types, tree = out.decode('utf-8').split('\n\n')
+        types, tree = out.split('\n\n')
         self.err = err
         types = [t for t in types.split() if not t.startswith('"') or 
                  (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
@@ -507,7 +492,7 @@ class Reading(object):
         # ACE escapes single quotes with a backslash. The json decoder
         # does not accept this as valid JSON.
         tree = tree.replace("\\'", "'").strip()
-        self.json_tree = json.loads(tree.encode('utf8'))
+        self.json_tree = json.loads(tree)
 
     def _lookup_lextypes(self):
         """
@@ -516,7 +501,7 @@ class Reading(object):
         """
         self._lextypes = Counter()
 
-        for le, val in self.lex_entries.iteritems():
+        for le, val in self.lex_entries.items():
             try:
                 lextype = self.grammar.lex_lookup(le)
                 self._lextypes[lextype] += val
@@ -554,12 +539,12 @@ class Reading(object):
 
     @property
     def unknowns(self):
-        return Counter({key:val for key,val in self.lextypes.items() 
+        return Counter({key:val for key,val in self.lextypes.items()
                  if key.endswith('-unk_le')})
 
     @property
     def generics(self):
-        return Counter({key:val for key,val in self.lextypes.items() 
+        return Counter({key:val for key,val in self.lextypes.items()
                  if key.endswith('-gen_le')})
 
     @property
@@ -661,8 +646,8 @@ class Grammar(object):
         """Lookup the lextype of a lexical entry."""
         try:
             return self.lex_entries[lex_entry]
-        except KeyError, key:
-            raise LexLookupError(u"Lex entry not found in lexicon: '{0}'".format(lex_entry))
+        except KeyError as key:
+            raise LexLookupError("Lex entry not found in lexicon: '{0}'".format(lex_entry))
 
 
 class ConfigGrammar(Grammar):
@@ -918,10 +903,10 @@ class Tree(object):
         if type(subtree) is Token:
             val = subtree.string.replace('(', '-LRB-')
             val = val.replace(')', '-RRB-')
-            return u'{}'.format(val)
+            return '{}'.format(val)
         else:
-            children = (u'{}'.format(self._ptb(x)) for x in subtree.children)
-            return u'({} {})'.format(subtree.label, u' '.join(children))
+            children = ('{}'.format(self._ptb(x)) for x in subtree.children)
+            return '({} {})'.format(subtree.label, ' '.join(children))
 
     def tokens(self):
         """Get the tokens of this tree."""
@@ -945,7 +930,7 @@ class Tree(object):
         qtree package. Requires the nltk module. See
         http://www.nltk.org/_modules/nltk/tree.html."""
         from nltk import Tree as NLTKTree
-        tree = NLTKTree(self.ptb()) 
+        tree = NLTKTree.fromstring(self.ptb()) 
         return tree.pprint(**kwargs)
 
     def latex(self):
@@ -954,13 +939,13 @@ class Tree(object):
         http://www.nltk.org/_modules/nltk/tree.html."""
         from nltk import Tree as NLTKTree
         string = self.ptb().replace('[', '\[').replace(']', '\]')
-        tree = NLTKTree(string) 
+        tree = NLTKTree.fromstring(string) 
         latex = tree.pprint_latex_qtree()
         return latex.replace('-LRB-', '(').replace('-RRB-', ')')
 
     def draw(self):
         from nltk import Tree as NLTKTree
-        NLTKTree(self.ptb()).draw()
+        NLTKTree.fromstring(self.ptb()).draw()
 
     @property
     def input(self):
@@ -972,10 +957,10 @@ class Tree(object):
 
     def _derivation(self, subtree):
         if type(subtree) is Token:
-            return u'({})'.format(subtree.span)
+            return '({})'.format(subtree.span)
         else:
-            children = (u'{}'.format(self._derivation(x)) for x in subtree.children)
-            return u'({} {})'.format(subtree.span, u' '.join(children))
+            children = ('{}'.format(self._derivation(x)) for x in subtree.children)
+            return '({} {})'.format(subtree.span, ' '.join(children))
 
             
 def parse_derivation(derivation, cache=False):
@@ -1085,6 +1070,55 @@ def parse_error(string, match, expecting):
     raise DerivationError(msg) 
 
 
+def ace_parse(input_str, ace_path, grammar, count, yy_input=False,
+              fragments=False, tnt=False, short_labels=False):
+    env = dict(os.environ)
+    env['LC_ALL'] = 'en_US.UTF-8'
+    args = [ace_path, '-g', grammar.dat_path]
+              
+    if short_labels:
+        args.append('--report-labels')
+
+    if tnt:
+        # If we have a logon installation, set PATH and model path 
+        # to use this. Otherwise use the tnt tagger packaged with grammalytics
+        if os.path.exists(LOGONBIN):
+            env['PATH'] = "{}:{}".format(os.environ['PATH'], LOGONBIN) 
+            model_path = os.path.join(LOGONROOT, 'coli', 'tnt', 'models', 'wsj.tnt') 
+        else:
+            thisdir = os.path.dirname(os.path.realpath(__file__))
+            taggerpath = os.path.join(thisdir, '..', 'tagger')
+            taggerbin = os.path.join(taggerpath, 'bin')
+            env['PATH'] = "{}:{}".format(os.environ['PATH'], taggerbin) 
+            model_path = os.path.join(taggerpath, 'coli', 'tnt', 'models', 'wsj.tnt') 
+        args.append('--tnt-model')
+        args.append(model_path)
+
+    if count is not None:
+        args.append('-n')
+        args.append(str(count))
+
+    if yy_input:
+        args.append('-y')
+        
+    if not fragments and (grammar.alias.startswith('erg') or
+                          grammar.alias.startswith('terg')):
+            args.append('-r')
+            args.append('root_strict root_informal')
+
+    process = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
+    out, err = process.communicate(input=input_str.encode('utf8'))
+    out = out.decode('utf8')
+    err = err.decode('utf8')
+
+    if process.returncode != 0 or out.startswith('SKIP'):
+        ace_error_str = ''.join([out, err])
+        
+        raise AceError('ACE', ace_error_str, input=input_str)
+
+    return out, err
+
+
 def load_hierarchy(xmlfile_path, save_pickle=False):
     """Load the pickled version of the hierarchy. If there is none,
     load the hierarchy and also save a pickle of it if save_pickle is
@@ -1092,12 +1126,12 @@ def load_hierarchy(xmlfile_path, save_pickle=False):
     root = os.path.splitext(xmlfile_path)[0]
     try:
         with open(root+'.pickle', 'rb') as f:
-            hierarchy = cPickle.load(f)
+            hierarchy = pickle.load(f)
     except(IOError) as e:
         hierarchy = TypeHierarchy(xmlfile_path)
         if save_pickle:
             sys.setrecursionlimit(10000)
-            cPickle.dump(hierarchy, open(root+'.pickle', 'wb'))
+            pickle.dump(hierarchy, open(root+'.pickle', 'wb'))
     return hierarchy
 
 
@@ -1114,7 +1148,7 @@ def lookup_hierarchy(arg):
     elif arg.query == "children":
         found = hierarchy.get_children(candidates)
     
-    print "\n".join(t.name for t in found)
+    print("\n".join(t.name for t in found))
 
 
 def get_supers(types, hierarchy):
@@ -1209,8 +1243,8 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
         # This is for querying a thinned profile, where we can simply
         # return all all readings. Note though that we can still find
         # multiple readings in a gold profile. eg when t-active > 1.
-        # This query will return all however, so if just the first is wanted, 
-        # the rest need to be excuded downstream.
+        # This query will return all however, so if just the first is
+        # wanted, the rest need to be excluded downstream.
         query = 'select i-id result-id mrs p-tokens derivation from result where readings > 0'
     else:
         # This query is not appropriate for gold/thinned profiles as
@@ -1242,7 +1276,6 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
     for path in paths:
         results = tsdb_query(query, path)
         for result in results.splitlines():
-            result = result.decode('utf-8')
             bits = result.split(' | ', 4)
             iid = int(bits[0].strip())
             resultid = int(bits[1].strip())
@@ -1262,31 +1295,49 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
     return results_dict
 
 
-def get_text_results(lines, grammar, best=1, cutoff=None, lextypes=True, 
-                     typifier=None, cache=False):
+def get_text_results(lines, grammar, best=1, ace_path=None, lextypes=True,
+                     typifier=None, cache=False, fragments=False):
     results_dict = defaultdict(list)
 
     for i, line in enumerate(lines):
         f = Fragment(line, grammar, count=best, lextypes=lextypes, typifier=typifier, 
-                     cache=cache)
+                     cache=cache, ace_path=ace_path)
 
         for reading in f.readings:
             results_dict[i].append(reading)
 
-        if cutoff is not None and len(results) >= cutoff:
-            return results_dict
-
     return results_dict
+
+
+def get_short_label_results(lines, grammar, best=1, fragments=False, ace_path=None):
+    """Return list of parse results with short label derivation results."""
+    results = defaultdict(list)
+    for i, line in enumerate(lines):
+        # We use ace_parse rather than Fragments, because the Fragment class
+        # assumes that derivations will be full derivations with token
+        # information, whereas the short label output generated by ACE with
+        # --report-labels omits all this.
+        try:
+            out, err = ace_parse(line, ace_path, grammar, best, fragments=fragments,
+                                 tnt=False, short_labels=True)
+            out_lines = out.strip().splitlines()
+            status = out_lines[0]
+            readings = out_lines[1:]
+            
+            for reading in readings:
+                mrs, derivation = reading.split(';', 1)
+                results[i].append(derivation.strip())
+        except AceError as error:
+            results[i] = ['FAILURE: {}'.format(error.input.strip())]
+    return results
 
 
 def jp2yy(sent):
     """take a Japanese sentence encoded in UTF8 and convert to YY-mode
     using mecab. Based on code from Francis Bond."""
     import MeCab
-    
     m = MeCab.Tagger('-Ochasen')
-    punct = u"!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
-
+    punct = "!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
     ### YY format: (id, start, end, [link,] path+, form [surface], ipos, lrule+[, {pos p}+])
     ### set ipos as lemma (just for fun)
     ### fixme: do the full lattice
@@ -1296,15 +1347,15 @@ def jp2yy(sent):
     cto = 0
     yy = list()
     
-    for tok in m.parse(sent.encode('utf8')).split('\n'):
+    for tok in m.parse(sent).split('\n'):
         if tok and tok != 'EOS':
-            (form, p, lemma, p1, p2, p3) = tok.decode('utf8').split('\t')
+            (form, p, lemma, p1, p2, p3) = tok.split('\t')
             if form in punct:
                 continue
             p2 = p2 or 'n'
             p3 = p3 or 'n'
             pos = "%s:%s-%s" % (p1, p2, p3)       ## wierd format jacy requires
-            cfrom = sent.find(form, cto)  ## first instance after last token
+            cfrom = sent.find(form, cto)          ## first instance after last token
             cto = cfrom + len(form)               ## find the end
             yy.append('(%d, %d, %d, <%d:%d>, 1, "%s", %s, "null", "%s" 1.0)' % \
                 (yid, start, start +1, cfrom, cto, form, 0, pos))

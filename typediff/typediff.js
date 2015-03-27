@@ -202,6 +202,7 @@ function processItems(callback) {
     var grammar =  $('#grammar-input').val();
     var loadDescendants = !Boolean(DESCENDANTS[grammar]);
 
+    //could this be improved with $('#form').serializeArray()?
     var data = {
         'query' : 'parse-types', 
         'pos-items' : $('#pos-input').val(), 

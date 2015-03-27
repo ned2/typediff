@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 
 import cgitb
@@ -28,8 +28,8 @@ def parse_types_query(form):
     fragments = form.getvalue('fragments') 
     tagger = form.getvalue('tagger')
   
-    pos = pinput.decode('utf-8').strip().splitlines() if pinput is not None else []
-    neg = ninput.decode('utf-8').strip().splitlines() if ninput is not None else []
+    pos = pinput.strip().splitlines() if pinput is not None else []
+    neg = ninput.strip().splitlines() if ninput is not None else []
     desc_flag = (desc == 'true')
     frags_flag = (fragments == 'true')
     supers_flag = (supers == 'true')
@@ -65,7 +65,7 @@ def find_supers(alias, kinds):
         supers = data['supers']
 
         for s in supers:
-            descendants[s] = set([t.name for t in hierarchy[s].descendants()])
+            descendants[s] = set(t.name for t in hierarchy[s].descendants())
 
         for t in types:
             for s, ds in descendants.items():
@@ -87,14 +87,14 @@ def main():
     form = cgi.FieldStorage()
     query = form.getvalue('query')
 
-    print 'Content-Type: application/json; charset=utf-8\n\n'
+    print('Content-Type: application/json; charset=utf-8\n\n')
 
     if query == 'parse-types':  
-        print parse_types_query(form)
+        print(parse_types_query(form))
     elif query == 'find-supers':
-        print find_supers_query(form)
+        print(find_supers_query(form))
     elif query == 'load-data':
-        print load_data_query()
+        print(load_data_query())
 
 
 if __name__ == "__main__":

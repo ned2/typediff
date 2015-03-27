@@ -1,6 +1,4 @@
-#!/usr/bin/env python2
-
-from __future__ import division
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -44,6 +42,7 @@ MULTILINE_FEATURES = [
 
 # Convert mode features that span only a single line 
 SINGLELINE_FEATURES = [
+    'short-derivation',
     'generic-ratio', 
     'unknown-ratio', 
     'node-ratio', 
@@ -95,6 +94,7 @@ def argparser():
     ap.add_argument("grammar", metavar="GRAMMAR_NAME", help="The alias of a grammar found in config.py")
     ap.add_argument("--gold", action='store_true', help=OPTSHELP['gold'])
     ap.add_argument("--parse", action='store_true', help=OPTSHELP['parse'])
+    ap.add_argument("--fragments", action='store_true')
     ap.add_argument("--best", type=int, default=1, help=OPTSHELP['best'])
     ap.add_argument("--cutoff", type=int, help=OPTSHELP['cutoff'])
     ap.add_argument("--tsql", help=OPTSHELP['tsql'])
@@ -133,11 +133,11 @@ def reading_features(reading, feature):
     if feature == 'lextypes':
         for token in reading.tokens:
             lt = reading.grammar.lex_lookup(token.lex_entry)
-            lines.append(u'{}\t{}'.format(token.string, lt))
+            lines.append('{}\t{}'.format(token.string, lt))
     elif feature == 'rules':
         for rule in reading.rules:
-            sent_start = u'_'.join(t.string for t in reading.tokens[:3])
-            lines.append(u'{}\t{}'.format(sent_start, rule))
+            sent_start = '_'.join(t.string for t in reading.tokens[:3])
+            lines.append('{}\t{}'.format(sent_start, rule))
     elif feature == 'ptb':
         output = reading.ptb()
     elif feature == 'input':
@@ -161,12 +161,12 @@ def reading_features(reading, feature):
             if feature == 'align-errors' and subtree.diff == 0:
                 continue
                 
-            string = u'iid: {}  result-id: {:>2}  diff: {:>2}  match: {}'
+            string = 'iid: {}  result-id: {:>2}  diff: {:>2}  match: {}'
             line = string.format(reading.iid, reading.resultid, subtree.diff, subtree.input)
 
             if DEBUG:
                 reading.tree.draw()
-                print "DEBUG: " + output
+                print("DEBUG: " + output)
                 
             lines.append(line)
     else:
@@ -195,9 +195,13 @@ def extract_backoff_items(path):
 
 def convert_trees(results_dict, feature, align, paths, failtok, best, backoff):
     if not align:
-        results = sorted(results_dict.iteritems(), key=lambda x:x[0])
+        results = sorted(results_dict.items(), key=lambda x:x[0])
         lines = []
         for iid, item in results:
+            if feature == "short-derivation":
+                lines.extend(item)
+                continue
+
             for reading in item[:best]:
                 features = reading_features(reading, feature)
                 if features is not None:
@@ -222,7 +226,7 @@ def convert_trees(results_dict, feature, align, paths, failtok, best, backoff):
     else:
         sep = '\n'
     
-    return sep.join(lines).encode('utf8')
+    return sep.join(lines)
 
 
 def update_reading_counts(reading, feature, counts, ancestor):
@@ -258,8 +262,8 @@ def collection_features(results, feature, ancestor=None):
 
 
 def compare_trees(results_dictA, results_dictB, feature):
-    resultsA = results_dictA.values()
-    resultsB = results_dictB.values()
+    resultsA = list(results_dictA.values())
+    resultsB = list(results_dictB.values())
     countsA = Counter()
     countsB = Counter()
 
@@ -294,12 +298,10 @@ def compare(grammar, arg):
 def draw(results_dict):
     import nltk.draw.tree
     from nltk import Tree as NLTKTree
-    results = sorted(results_dict.iteritems(), key=lambda x:x[0])
+    results = sorted(iter(results_dict.items()), key=lambda x:x[0])
     trees = []
-
     for i,item in results:
         trees.extend(NLTKTree(r.ptb()) for r in item)
-
     nltk.draw.tree.draw_trees(*trees)
 
 
@@ -314,30 +316,31 @@ def get_results(grammar, arg):
 
     if len(arg.paths) == 0 or arg.parse:
         if len(arg.paths) == 0:
+            # read input from standard input
             lines = sys.stdin.readlines()
         else:
+            # read lines from from list of input files
             lines = []
             for path in arg.paths:
                 with open(path) as f:
                     lines.extend(f.readlines())
-
-        results = delphin.get_text_results(lines, grammar, 
-                                           best=arg.best, 
-                                           cutoff=arg.cutoff,
-                                           lextypes=lextypes, 
-                                           typifier=typifier,
-                                           cache=cache)
+        if arg.cutoff is not None:
+            lines = lines[:cutoff]
+            
+        if arg.feature == "short-derivation":
+            results = delphin.get_short_label_results(
+                lines, grammar, best=arg.best, fragments=arg.fragments,
+                ace_path=config.ACEBIN)
+        else:
+            results = delphin.get_text_results(
+                lines, grammar, best=arg.best, ace_path=config.ACEBIN,
+                lextypes=lextypes, typifier=typifier, fragments=arg.fragments,
+                cache=cache)
     else:
-        results = delphin.get_profile_results(arg.paths, 
-                                              best=arg.best, 
-                                              gold=arg.gold, 
-                                              cutoff=arg.cutoff, 
-                                              grammar=grammar,
-                                              lextypes=lextypes,
-                                              typifier=typifier,
-                                              pspans=arg.pspans,
-                                              condition=arg.tsql,
-                                              cache=cache)
+        results = delphin.get_profile_results(
+            arg.paths, best=arg.best, gold=arg.gold, cutoff=arg.cutoff, 
+            grammar=grammar, lextypes=lextypes, typifier=typifier,
+            pspans=arg.pspans, condition=arg.tsql, cache=cache)
     return results
 
 
@@ -350,24 +353,29 @@ def main():
         sys.stderr.write("Align option requires that best = 1.\n")
         return 1
     elif arg.command == 'draw':
-            arg.feature = None # just hack this rather than working out when defined
+        arg.feature = None # just hack this rather than working out when defined
 
     grammar = config.get_grammar(arg.grammar)
-
     if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
         grammar.read_tdl()
         
-    if arg.command == 'compare':
-        print compare(grammar, arg)
-    elif arg.command in ('count', 'convert', 'draw'):
-        results = get_results(grammar, arg)
+    try:
+        # Do the thing!
+        if arg.command == 'compare':
+            print(compare(grammar, arg))
+        elif arg.command in ('count', 'convert', 'draw'):
+            results = get_results(grammar, arg)
 
-        if arg.command == 'count':
-             print collection_features(results.values(), arg.feature, arg.descendants)
-        elif arg.command == 'convert':
-            print convert_trees(results, arg.feature, arg.align, arg.paths, arg.failtok, arg.best, arg.backoff)
-        elif arg.command == 'draw':
-            draw(results)
+            if arg.command == 'count':
+                 print(collection_features(list(results.values()), arg.feature, 
+                                           arg.descendants))
+            elif arg.command == 'convert':
+                print(convert_trees(results, arg.feature, arg.align, arg.paths, 
+                                    arg.failtok, arg.best, arg.backoff))
+            elif arg.command == 'draw':
+                draw(results)
+    except delphin.AceError as e:
+        print(e)
 
     return 0
 

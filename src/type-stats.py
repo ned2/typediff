@@ -18,11 +18,14 @@ import config
 """This script is for working with type statistics from DELPH-IN
 treebanks. Funcitonality includes collecting treebank statisitcs,
 saving as pickle files for storage, loading from existing pickle file
-and exporting to text and json formats."""
+and exporting to text and json formats.
+
+"""
 
 
 BLACKLIST = set()
-ERG_SPEECH_PROFILES = set(['vm6', 'vm13', 'vm13', 'vm31', 'vm32', 'ecpa', 'ecoc', 'ecos', 'ecpr'])
+ERG_SPEECH_PROFILES = set(['vm6', 'vm13', 'vm13', 'vm31', 'vm32', 'ecpa',
+                           'ecoc', 'ecos', 'ecpr'])
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -49,6 +52,8 @@ def argparser():
 
 
 def index(profiles, treebank, grammar):
+    print grammar.dat_path
+
     type_stats = defaultdict(delphin.TypeStats)
     trees = 0
     failures = []
@@ -82,7 +87,7 @@ def index(profiles, treebank, grammar):
             except delphin.AceError as e:
                 e.msg = "{}\n{}\n".format(path, iid) + e.msg
                 failures.append(e)
-                print e
+                sys.stderr.write(str(e)+'\n')
             items_seen.add(iid)
 
     num_failures = len(failures)
@@ -90,12 +95,12 @@ def index(profiles, treebank, grammar):
 
     if num_failures > 0: 
         print "Failed to reconstruct {} trees".format(num_failures) 
-        print '\n'.join([str(e) for e in failures]) 
+        print '\n'.join(str(e) for e in failures) 
 
     treebank_str = treebank.replace(' ', '_')
     filename = '{}--{}--{}_new.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
 
-    with open(os.path.join(DATAPATH,filename), 'wb') as f:
+    with open(os.path.join(config.DATAPATH,filename), 'wb') as f:
         cPickle.dump(type_stats, f)
 
 
@@ -119,7 +124,8 @@ def get_types(derivation_string, grammar):
     
     types, tree = out.split('\n\n')
     err = err
-    return [t for t in types.split() if not t.startswith('"') or (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
+    return [t for t in types.split() if not t.startswith('"') or
+            (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
 
 
 def output(pickle_path, output_type):
@@ -132,8 +138,7 @@ def output(pickle_path, output_type):
     trees = x[2]
     metadata = {'grammar' : grammar_name, 'treebank' : treebank, 'trees' : trees}
 
-    grammars = get_grammars(GRAMMARLIST)
-    grammar = Grammar(grammars[grammar_name], DATAPATH)
+    grammar = config.get_grammar(grammar_name)
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     signs = [x.name for x in hierarchy['sign'].descendants() 
              if not x.name.startswith('glb')]
@@ -153,10 +158,9 @@ def output(pickle_path, output_type):
     
 def json_output(type_stats, metadata):
     filename = "{grammar}--{treebank}--{trees}.json".format(**metadata)
-    path = os.path.join(JSONPATH, filename)
 
-    with open(path, 'w') as f:
-        f.write(json.dumps(type_stats, cls=JSONEncoder))
+    with open(filename, 'w') as f:
+        f.write(json.dumps(type_stats, cls=delphin.JSONEncoder))
 
 
 def txt_output(types, type_stats, metadata, kind):
@@ -199,7 +203,13 @@ def main():
                     continue
                 profiles.append(path)
         else:
-            profiles.append(arg.profile)
+            virtual_path = os.path.join(arg.profile, 'virtual')
+            if os.path.exists(virtual_path):
+                with open(virtual_path) as file:
+                    profiles = [os.path.join(arg.profile, '..', p.strip('"\n'))
+                                for p in file]
+            else:
+                profiles.append(arg.profile)
 
         grammar = config.get_grammar(arg.grammar)
         index(profiles, arg.treebank, grammar)

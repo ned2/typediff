@@ -7,7 +7,7 @@ import MeCab
 import sys
 
 m = MeCab.Tagger('-Ochasen')
-punct = u"!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
+punct = "!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
 
 def jp2yy(sent):
     """take a Japanese sentence encoded in UTF8 and convert to YY-mode
@@ -42,4 +42,4 @@ def jp2yy(sent):
 if __name__ == "__main__":
     import sys
     sent = sys.argv[1]
-    print "".join(jp2yy(sent))
+    print("".join(jp2yy(sent)))

@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import sys
 import os
 import argparse
 import json
-import cPickle
+import pickle
 from itertools import chain
 
 import delphin
@@ -64,21 +64,13 @@ The remainder of the options are only relevant to the command line mode:
 
 --raw
   Don't sort and colorize the list of types.
+
 """
 
 
 # TODO
 # move help text into argparse
 # update various config files to reflect LOGONROOT variable 
-
-# add tnt option to typediff's interface
-# work out best way to get tnt running on hum
-
-# Recreate treebanks with new casing
-
-# update typediff on hum
-
-# send out email to developers email list.
 
 
 def argparser():
@@ -163,7 +155,8 @@ def compare_types(pos_types, neg_types, arg):
     return types
 
 
-def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, tagger):
+def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
+                tagger):
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
                                        dat_path=grammar.dat_path,
@@ -207,7 +200,7 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
 
 
 def typediff(pos_input, neg_input, grammar, arg):
-    parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN, 
+    parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
                                        dat_path=grammar.dat_path,  
                                        count=arg.n,
                                        typifier=config.TYPIFIERBIN,
@@ -265,13 +258,14 @@ def main():
         if s =='@':
             stype = neg
         else:
-            stype.append(s.decode('utf8'))
+            stype.append(s)
                 
     try:
         if arg.json:
-            print export_json(pos, neg, grammar, arg.n, arg.frags, arg.supers, arg.descendants, arg.tagger)
+            print(export_json(pos, neg, grammar, arg.n, arg.frags, arg.supers, 
+                              arg.descendants, arg.tagger))
         else:
-            print typediff(pos, neg, grammar, arg)
+            print(typediff(pos, neg, grammar, arg))
     except(delphin.AceError) as err:
         sys.stderr.write(err.msg)
         return 2

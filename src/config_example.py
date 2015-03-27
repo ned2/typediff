@@ -15,7 +15,7 @@ _SRC_PATH = os.path.dirname(os.path.realpath(__file__))
 # Directory where dat, xml and pickle files are kept.
 # You'll want to change this if you don't want to store
 # large amounts of data in the installation directory.
-DATAPATH  = os.path.join(_SRC_PATH, '..', 'grammar-data')
+DATAPATH = '/home/nejl/data/grammar-data' 
 
 
 # Path to the directory where ace was compiled.  Optionally used to
@@ -79,7 +79,7 @@ GRAMMARLIST = (
         'shortname' : 'HaG',
         'longname'  : 'HaG (Hausa Grammar)',
         'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl' 
-        'tdlfile' : '${LOGONROOT}/llf/hag/hausa.tdl'
+        'tdlfile'   : '${LOGONROOT}/llf/hag/hausa.tdl'
     }, 
 )
 

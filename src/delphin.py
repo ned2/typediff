@@ -254,7 +254,7 @@ class Fragment(object):
             out, err = ace_parse(input_str, ace_path, self.grammar, count,
                                  yy_input=yy_input, fragments=fragments, tnt=tnt)
         except AceError as error:
-            self.log_lines.append(error.msg + '\n\n', input=input_str)
+            self.log_lines.append(error.msg + '\n\n' + input_str)
             self.write_log()
             raise error
 

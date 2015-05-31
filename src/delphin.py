@@ -1075,7 +1075,8 @@ def ace_parse(input_str, ace_path, grammar, count, yy_input=False,
     env = dict(os.environ)
     env['LC_ALL'] = 'en_US.UTF-8'
     args = [ace_path, '-g', grammar.dat_path]
-              
+    alias = grammar.alias
+    
     if short_labels:
         args.append('--report-labels')
 
@@ -1101,10 +1102,13 @@ def ace_parse(input_str, ace_path, grammar, count, yy_input=False,
     if yy_input:
         args.append('-y')
         
-    if not fragments and (grammar.alias.startswith('erg') or
-                          grammar.alias.startswith('terg')):
+    if not fragments:
+        if alias in ('erg1212', 'erg1212-speech'):
             args.append('-r')
             args.append('root_strict root_informal')
+        elif alias.startswith('erg') or alias.startswith('terg'):
+            args.append('-r')
+            args.append('root_strict root_informal root_bridge')
 
     process = Popen(args, stdout=PIPE, stderr=PIPE, stdin=PIPE, env=env)
     out, err = process.communicate(input=input_str.encode('utf8'))

@@ -51,20 +51,20 @@ def argparser():
     return argparser
 
 
-def index(profiles, treebank, grammar):
-    print grammar.dat_path
-
+def index(profiles, treebank, in_grammar):
     type_stats = defaultdict(delphin.TypeStats)
     trees = 0
     failures = []
 
     for path in profiles:
+        grammar = in_grammar
         items_seen = set()
         print "processing {}".format(path) 
         profile = os.path.basename(path) 
 
         if profile in ERG_SPEECH_PROFILES:
-            grammar = config.get_grammar('erg-speech')
+            alias = grammar.alias+'-speech'
+            grammar = config.get_grammar(alias)
 
         try:
             out = delphin.tsdb_query('select i-id derivation where readings > 0', path)
@@ -98,9 +98,9 @@ def index(profiles, treebank, grammar):
         print '\n'.join(str(e) for e in failures) 
 
     treebank_str = treebank.replace(' ', '_')
-    filename = '{}--{}--{}_new.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
+    filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
 
-    with open(os.path.join(config.DATAPATH,filename), 'wb') as f:
+    with open(os.path.join(config.DATAPATH, filename), 'wb') as f:
         cPickle.dump(type_stats, f)
 
 
@@ -170,7 +170,6 @@ def txt_output(types, type_stats, metadata, kind):
     types.sort(reverse=True, key=key_func)
                 
     for name in types:
-        
         try:
             t = type_stats[name]
             items = t.items

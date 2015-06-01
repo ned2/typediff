@@ -45,8 +45,8 @@ LOGONROOT = ''
 GRAMMARLIST = (
     {
         'alias'     : 'erg',
-        'shortname' : 'ERG 1212',
-        'longname'  : 'The LinGO English Resource Grammar (1212 release)',
+        'shortname' : 'ERG 1214',
+        'longname'  : 'The LinGO English Resource Grammar (1214 release)',
         'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
         'ltdb'      : 'ERG_1212',
@@ -90,7 +90,7 @@ TREEBANKLIST = (
         'name'     : 'LinGO Redwoods Treebank 1212',
         'grammars' : ('erg', 'terg', 'terg-wsj', 'erg-speech'),
         'version'  : 'ERG 1212',
-        'trees'    : 50489,
+        'trees'    : 42489,
         'json'     : 'redwoods1212.json'
     },
     {

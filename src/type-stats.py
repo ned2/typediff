@@ -100,7 +100,7 @@ def index(profiles, treebank, in_grammar):
     treebank_str = treebank.replace(' ', '_')
     filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
 
-    with open(os.path.join(config.DATAPATH, filename), 'wb') as f:
+    with open(filename, 'wb') as f:
         cPickle.dump(type_stats, f)
 
 

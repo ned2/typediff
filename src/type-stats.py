@@ -69,26 +69,29 @@ def index(profiles, treebank, in_grammar):
         try:
             out = delphin.tsdb_query('select i-id derivation where readings > 0', path)
         except delphin.TsdbError as e:
+            sys.stderr.write(str(e)+'\n')
             continue
 
         results = out.strip().split('\n')
 
         for result in results:
-            trees += 1
             iid, derivation = result.split(' | ')
 
             if iid in items_seen or iid in BLACKLIST:
                 continue
-
-            print trees, iid
-
+                
             try:
                 process_derivation(derivation, grammar, type_stats)
             except delphin.AceError as e:
                 e.msg = "{}\n{}\n".format(path, iid) + e.msg
                 failures.append(e)
-                sys.stderr.write(str(e)+'\n')
+                with open('type-stats-errors.txt', 'a') as f:
+                    sys.stderr.write(str(e)+'\n')
+                    f.write(str(e).encode('utf8')+'\n\n')
+
             items_seen.add(iid)
+            trees += 1
+            print trees, iid
 
     num_failures = len(failures)
     print "Processed {} trees".format(trees) 
@@ -98,7 +101,7 @@ def index(profiles, treebank, in_grammar):
         print '\n'.join(str(e) for e in failures) 
 
     treebank_str = treebank.replace(' ', '_')
-    filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees-num_failures)
+    filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees)
 
     with open(filename, 'wb') as f:
         cPickle.dump(type_stats, f)

@@ -1259,10 +1259,10 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
         query = 'select i-id result-id mrs p-tokens derivation where result-id <= {}'.format(best - 1)
         
     if condition is not None:
-        # NOTE: just adding 't-active=1' won't give you gold trees,
-        # you'll get the best (n) trees for each item that *has* a
-        # gold tree. To get gold readings, you need to thin the profile and
-        # then use the gold query above.
+        # NOTE: just adding 't-active > 0' won't give you gold trees,
+        # you'll get the best (n) tree(s) for each item that *has* a
+        # gold tree. To get gold readings, you need to thin the
+        # profile and then use the gold query above.
         query += ' and {}'.format(condition)
 
     if pspans is not None:

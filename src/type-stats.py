@@ -52,7 +52,7 @@ def argparser():
 
 
 def index(profiles, treebank, in_grammar):
-    type_stats = defaultdict(delphin.TypeStats)
+    stats_dict = defaultdict(delphin.TypeStats)
     trees = 0
     failures = []
 
@@ -67,13 +67,18 @@ def index(profiles, treebank, in_grammar):
             grammar = config.get_grammar(alias)
 
         try:
-            out = delphin.tsdb_query('select i-id derivation where readings > 0', path)
+            # for treebanked profiles:
+            out = delphin.tsdb_query('select i-id derivation where t-active > 0', path)
+            # for non-treebanked profiles
+            # out = delphin.tsdb_query('select i-id derivation where readings > 0', path)
         except delphin.TsdbError as e:
             sys.stderr.write(str(e)+'\n')
             continue
 
-        results = out.strip().split('\n')
+        if out == '':
+            continue
 
+        results = out.strip().split('\n')
         for result in results:
             iid, derivation = result.split(' | ')
 
@@ -81,7 +86,9 @@ def index(profiles, treebank, in_grammar):
                 continue
                 
             try:
-                process_derivation(derivation, grammar, type_stats)
+                counts = get_types(derivation, grammar)
+                for name, count in counts.items():
+                    stats_dict[name].update(count)
             except delphin.AceError as e:
                 e.msg = "{}\n{}\n".format(path, iid) + e.msg
                 failures.append(e)
@@ -104,15 +111,7 @@ def index(profiles, treebank, in_grammar):
     filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees)
 
     with open(filename, 'wb') as f:
-        cPickle.dump(type_stats, f)
-
-
-def process_derivation(derivation, grammar, type_stats):
-    counts = Counter(get_types(derivation, grammar))
-
-    for name, count in counts.items():
-        ts = type_stats[name]
-        ts.update(count)
+        cPickle.dump(stats_dict, f)
 
 
 def get_types(derivation_string, grammar):
@@ -127,8 +126,9 @@ def get_types(derivation_string, grammar):
     
     types, tree = out.split('\n\n')
     err = err
-    return [t for t in types.split() if not t.startswith('"') or
-            (t.endswith('_rel"') and not t.endswith('unknown_rel"'))]
+    types = (t for t in types.split() if not t.startswith('"') or
+             (t.endswith('_rel"') and not t.endswith('unknown_rel"')))
+    return Counter(types)
 
 
 def output(pickle_path, output_type):

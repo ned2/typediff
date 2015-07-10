@@ -246,7 +246,7 @@ class Fragment(object):
     def parse(self, ace_path, dat_path, count, fragments, tnt, typifier, cache, lextypes):
         try:
             if self.yy_input:
-                input_str = self.yy_mode
+                input_str = self.yy_input
                 yy_input = True
             else:
                 input_str = self.input
@@ -1218,7 +1218,7 @@ def tsdb_query(query, profile):
     if process.returncode != 0:
         raise TsdbError(err)
     
-    return out
+    return out.decode('utf8')
     
 
 def get_profile_ids(*paths):
@@ -1339,6 +1339,11 @@ def get_short_label_results(lines, grammar, best=1, fragments=False, ace_path=No
 def jp2yy(sent):
     """take a Japanese sentence encoded in UTF8 and convert to YY-mode
     using mecab. Based on code from Francis Bond."""
+
+    # Tips for getting MeCab to work:
+    # sudo apt-get install libmecab-dev
+    # sudo apt-get install mecab mecab-ipadic-utf8
+    # pip3 install mecab-python3
     import MeCab
     m = MeCab.Tagger('-Ochasen')
     punct = "!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"

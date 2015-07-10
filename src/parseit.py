@@ -341,6 +341,7 @@ def get_results(grammar, arg):
             arg.paths, best=arg.best, gold=arg.gold, cutoff=arg.cutoff, 
             grammar=grammar, lextypes=lextypes, typifier=typifier,
             pspans=arg.pspans, condition=arg.tsql, cache=cache)
+        print(results)
     return results
 
 

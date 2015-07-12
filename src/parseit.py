@@ -20,6 +20,26 @@ DELPH-IN profiles as well as on the fly parsing from text files and
 standard input.
 
 For usage, run parseit.py --help
+
+To convert a sequence of profiles to MRG files for fangorn:
+
+# todo: re-run with the PTB tokens removed
+
+# deepbank:
+for profile in ~/logon/lingo/erg/tsdb/gold/wsj*; do
+    echo $profile
+    parseit erg convert ptb $profile > "$(basename $profile).mrg"
+done
+
+# redwoods:
+
+# (where redwoods.txt is a text file with profile names of redwoods on
+# each line)
+for profile in $(cat ../redwoods.txt); do
+    echo $profile
+    parseit erg convert ptb ~/logon/lingo/erg/tsdb/gold/$profile > "$profile.mrg"
+; done
+
 """
 
 
@@ -33,15 +53,15 @@ NONTDL_FEATURES = ['rules', 'mrs', 'derivation']
 MULTILINE_FEATURES = [
     'lextypes', 
     'rules', 
-    'derivation',
-    'mrs',
-    'ptb', 
-    'pprint',
-    'latex'
 ]
 
 # Convert mode features that span only a single line 
 SINGLELINE_FEATURES = [
+    'derivation',
+    'mrs',
+    'ptb', 
+    'pprint',
+    'latex',
     'short-derivation',
     'generic-ratio', 
     'unknown-ratio', 
@@ -341,7 +361,6 @@ def get_results(grammar, arg):
             arg.paths, best=arg.best, gold=arg.gold, cutoff=arg.cutoff, 
             grammar=grammar, lextypes=lextypes, typifier=typifier,
             pspans=arg.pspans, condition=arg.tsql, cache=cache)
-        print(results)
     return results
 
 
@@ -358,8 +377,15 @@ def main():
 
     grammar = config.get_grammar(arg.grammar)
     if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
-        grammar.read_tdl()
-        
+        if os.path.basename(arg.paths[0]) in ('vm6', 'vm13', 'vm31', 'vm32'):
+            # note that this program doesn't support mixing speech and non
+            # speech profiles in the one invocation. If you need to use speech
+            # profiles, just run with only speech or only non-speech profiles. 
+            
+            grammar.read_tdl(speech=True)
+        else:
+            grammar.read_tdl(speech=False)
+
     try:
         # Do the thing!
         if arg.command == 'compare':

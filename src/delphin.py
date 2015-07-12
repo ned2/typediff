@@ -570,14 +570,14 @@ class Grammar(object):
         for lexfile in lexfiles:
             try:
                 self.read_entryfile(lexfile, self.lex_entries)
-            except IOError:
-                pass
+            except IOError as e:
+                sys.stderr.write(str(e) + '\n')
 
         for rulefile in rulefiles:
             try:
                 self.read_entryfile(rulefile, self.rule_entries)
-            except IOError:
-                pass
+            except IOError as e:
+                sys.stderr.write(str(e) + '\n')
 
     def load_tdlfile(self, speech):
         """
@@ -613,11 +613,10 @@ class Grammar(object):
                         rulefiles.append(filename)
                     elif entry_type in ('lex-entry', 'generic-lex-entry'):
                         lexfiles.append(filename)
-
         if speech:
-            self.lexfiles.extend(os.path.join('speech', f) for f in 
-                                   os.listdir(os.path.join(self.path, 'speech'))
-                                   if f.endswith('.tdl'))
+            lexfiles.extend(os.path.join('speech', f) for f in 
+                            os.listdir(os.path.join(self.path, 'speech'))
+                            if f.endswith('.tdl'))
 
         return lexfiles, rulefiles
 
@@ -864,7 +863,7 @@ class Tree(object):
         """
         Initial processing of tree, extracting tokens and all nodes,
         adjusting the label of penultimate nodes to be lextypes if a
-        lex_lookup funciton is specified.
+        lex_lookup function is specified.
         """
         nodes = []
         tokens = []
@@ -940,7 +939,7 @@ class Tree(object):
         from nltk import Tree as NLTKTree
         string = self.ptb().replace('[', '\[').replace(']', '\]')
         tree = NLTKTree.fromstring(string) 
-        latex = tree.pprint_latex_qtree()
+        latex = tree.pformat_latex_qtree()
         return latex.replace('-LRB-', '(').replace('-RRB-', ')')
 
     def draw(self):
@@ -985,11 +984,17 @@ def parse_derivation(derivation, cache=False):
                 parse_error(der_string, match, '(') 
             chars = span.split('"', 2)[1]
             chunks = span.split()
-            from_char = int(chunks[chunks.index('+FROM')+1].replace(escape_str, ''))
+
+            try:
+                from_char = int(chunks[chunks.index('+FROM')+1].replace(escape_str, ''))
+            except ValueError:
+                # re-entrency thing found in ERG 1214 gold trees
+                from_char = int(chunks[chunks.index('+FROM')+1].replace(escape_str, '').split('=')[-1])
+
             # for multi word tokens, we need to get the *last* +TO value
             list_rindex = lambda x: len(chunks) - chunks[-1::-1].index(x) - 1
             to_char = int(chunks[list_rindex('+TO')+1].replace(escape_str, ''))
-            #print chars, from_char, to_char
+
             lex = stack[-1]
             if cache:
                 cachespan = span[1:].strip().replace(escape_str, '\\"')

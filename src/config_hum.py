@@ -45,20 +45,27 @@ LOGONROOT = ''
 GRAMMARLIST = (
     {
         'alias'     : 'erg',
-        'shortname' : 'ERG 1212',
-        'longname'  : 'The LinGO English Resource Grammar (1212 release)',
+        'shortname' : 'ERG 1214',
+        'longname'  : 'The LinGO English Resource Grammar (1214 release)',
         'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
-        'ltdb'      : 'ERG_1212',
+        'ltdb'      : 'ERG_1214',
     },
     {
         'alias'     : 'terg',
-        'shortname' : 'ERG trunk (2014-07-11)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11)',
+        'shortname' : 'ERG trunk (2015-03-11)',
+        'longname'  : 'The LinGO English Resource Grammar (trunk 2015-06-20)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
-        'ltdb'      : 'ERG_trunk',
     }, 
+    {
+        'alias'     : 'erg1212',
+        'shortname' : 'ERG 1212',
+        'longname'  : 'The LinGO English Resource Grammar (1212 release)',
+        'aceconfig' : '${LOGONROOT}/lingo/erg1212/ace/config.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/erg1212/english.tdl',
+        'ltdb'      : 'ERG_1212',
+    },
     {
         'alias'     : 'jacy',
         'shortname' : 'Jacy',
@@ -79,7 +86,7 @@ GRAMMARLIST = (
         'shortname' : 'HaG',
         'longname'  : 'HaG (Hausa Grammar)',
         'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl',
-        'tdlfile' : '${LOGONROOT}/llf/hag/hausa.tdl'
+        'tdlfile'   : '${LOGONROOT}/llf/hag/hausa.tdl'
     }, 
     {
         'alias'     : 'norsource',
@@ -89,47 +96,69 @@ GRAMMARLIST = (
         'tdlfile'   : '/home/nejl/delphin/grammars/norsource_1.0/norsk.tdl',
     }, 
     {
+        'alias'     : 'erg-wsj',
+        'shortname' : 'ERG 1214 WSJ',
+        'longname'  : 'The LinGO English Resource Grammar (WSJ)',
+        'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config-wsj.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
+        'ltdb'      : 'ERG_1214',
+    }, 
+    {
         'alias'     : 'erg-speech',
-        'shortname' : 'ERG 1212 (speech)',
-        'longname'  : 'The LinGO English Resource Grammar for speech applications (1212 release)',
+        'shortname' : 'ERG 1214 (speech)',
+        'longname'  : 'The LinGO English Resource Grammar for speech applications (1214 release)',
         'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config-speech.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/erg/speech.tdl',
     },
     {
-        'alias'     : 'erg-wsj',
-        'shortname' : 'ERG 1212 WSJ',
-        'longname'  : 'The LinGO English Resource Grammar (WSJ)',
-        'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config-wsj.tdl',
-        'tdlfile'   : '${LOGONROOT}/lingo/erg/english.tdl',
-        'ltdb'      : 'ERG_1212',
-    }, 
-    {
         'alias'     : 'terg-wsj',
-        'shortname' : 'ERG WJS trunk (2014-07-11)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk 2014-07-11 WSJ)',
+        'shortname' : 'ERG trunk WJS (2015-05-31)',
+        'longname'  : 'The LinGO English Resource Grammar (trunk 2015-03-11 WJS)',
         'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config-wsj.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
-        'ltdb'      : 'ERG_trunk',
     }, 
+    {
+        'alias'     : 'terg-speech',
+        'shortname' : 'ERG trunk (2015-03-11 -- speech)',
+        'longname'  : 'The LinGO English Resource Grammar for speech applications (trunk 2015-06-20)',
+        'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config-speech.tdl',
+        'tdlfile'   : '${LOGONROOT}/lingo/terg/speech.tdl',
+    },
 )
 
 
 TREEBANKLIST = (
     {
-        'alias'    : 'redwoods1212',
-        'name'     : 'LinGO Redwoods Treebank 1212',
-        'grammars' : ('erg', 'terg', 'terg-wsj', 'erg-speech'),
+        'alias'    : 'redwoods1214',
+        'name'     : 'LinGO Redwoods 1214',
+        'grammars' : ('erg', 'erg-wsj', 'erg-speech', 'terg','terg-wsj', 'terg-speech'),
         'version'  : 'ERG 1212',
-        'trees'    : 50489,
-        'json'     : 'redwoods1212.json'
+        'trees'    : 39519,
+        'json'     : 'redwoods_1214.json'
+    },
+    {
+        'alias'    : 'redwoods1212',
+        'name'     : 'LinGO Redwoods 1212',
+        'grammars' : ('erg1212', 'erg1212-wsj', 'erg1212-speech'),
+        'version'  : 'ERG 1212',
+        'trees'    : 39592,
+        'json'     : 'redwoods_1212.json'
+    },
+    {
+        'alias'    : 'deepbank1_1',
+        'name'     : 'DeepBank 1.1',
+        'grammars' : ('erg', 'erg-wsj', 'erg-speech'),
+        'version'  : '1.1',
+        'trees'    : 38730,
+        'json'     : 'deepbank_1_1.json'
     },
     {
         'alias'    : 'deepbank1',
         'name'     : 'DeepBank 1.0',
-        'grammars' : ('erg', 'terg', 'terg-wsj', 'erg-speech'),
+        'grammars' : ('erg1212', 'erg1212-wsj', 'erg1212-speech'),
         'version'  : '1.0',
-        'trees'    : 42648,
-        'json'     : 'deepbank1.json'
+        'trees'    : 38511,
+        'json'     : 'deepbank_1.json'
     },
     {
         'alias'    : 'tanaka',

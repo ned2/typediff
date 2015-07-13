@@ -302,7 +302,7 @@ class Fragment(object):
         if self.logpath is None:
             return
         try:
-            with open(self.logpath, 'a+') as f:
+            with open(self.logpath, mode='a+', encoding='utf-8') as f:
                 f.write('\n'.join(self.log_lines))
         except IOError:
             # In case apache does not have write permissions

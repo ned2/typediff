@@ -15,8 +15,9 @@ var POSCOUNTER = 0;
 var NEGCOUNTER = 0;
 var DESCENDANTS = {};
 var FADELENGTH = 400;
+var WEBTYPES_SCRIPT = 'src/webtypes.py'; 
 
-
+    
 function linkify(url, text, title) { 
     if (title == undefined) title = '';
     return '<a title="' + title + '" href="' + encodeURI(url) + '">' + text + '</a>'
@@ -215,7 +216,7 @@ function processItems(callback) {
         'fragments': $('input[name=fragments]').prop('checked'),
     };
         
-    var posting = $.post('../src/webtypes.py', data);
+    var posting = $.post(WEBTYPES_SCRIPT, data);
     posting.done(function(data) {
         if (data.success) {
             if (data.descendants)
@@ -507,7 +508,7 @@ function doDiff() {
             'grammar-name' : grammar,
             'kinds'        : JSON.stringify(kinds)
         }
-        requests.push($.post('../src/webtypes.py', data));
+        requests.push($.post(WEBTYPES_SCRIPT, data));
         supers = true;
     }
 
@@ -999,7 +1000,7 @@ function updateIds(removedElem) {
 function loadData(callback) {
 
     var data = {'query' : 'load-data' }; 
-    var posting = $.post('../src/webtypes.py', data);
+    var posting = $.post(WEBTYPES_SCRIPT, data);
 
     posting.done(function(data) {
         FANGORNPATH = data.fangornpath;

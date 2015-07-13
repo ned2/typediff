@@ -138,7 +138,7 @@ TYPES = (
 TYPIFIERBIN = os.path.join(_SRC_PATH, '..', 'bin', 'typifier')
 DUMPHIERARCHYBIN = os.path.join(_SRC_PATH, '..', 'bin', 'dumphierarchy')
 ACEBIN = os.path.join(_SRC_PATH, '..', 'bin', 'ace')
-JSONPATH = 'json'
+JSONPATH = 'www/json'
 
 
 def _load_grammar(g):   

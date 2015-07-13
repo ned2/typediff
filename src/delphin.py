@@ -1353,7 +1353,7 @@ def jp2yy(sent):
     import MeCab
     try:
         m = MeCab.Tagger('-Ochasen')
-    except RunTimeError:
+    except RuntimeError:
         m = MeCab.Tagger('-Ochasen -d/var/lib/mecab/dic/ipadic-utf8/')
     punct = "!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
     ### YY format: (id, start, end, [link,] path+, form [surface], ipos, lrule+[, {pos p}+])

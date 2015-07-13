@@ -279,7 +279,7 @@ class Fragment(object):
         if self.grammar.alias == 'jacy':
             try:
                 self.yy_input = jp2yy(self.input)
-            except (ImportError, RuntimeError, UnicodeDecodeError) as e:
+            except ImportError as e:
                 # if MeCab is not installed or incorrectly installed do nothing
                 string = 'Error: {}\nCheck if MeCab is installed correctly.\n'
                 msg = string.format(str(e))
@@ -1351,7 +1351,10 @@ def jp2yy(sent):
     # sudo apt-get install mecab mecab-ipadic-utf8
     # pip3 install mecab-python3
     import MeCab
-    m = MeCab.Tagger('-Ochasen')
+    try:
+        m = MeCab.Tagger('-Ochasen')
+    except RunTimeError:
+        m = MeCab.Tagger('-Ochasen -d/var/lib/mecab/dic/ipadic-utf8/')
     punct = "!\"!&'()*+,-−./;<=>?@[\]^_`{|}~。！？…．　○●◎＊☆★◇◆"
     ### YY format: (id, start, end, [link,] path+, form [surface], ipos, lrule+[, {pos p}+])
     ### set ipos as lemma (just for fun)

@@ -145,7 +145,7 @@ TREEBANKLIST = (
         'json'     : 'redwoods_1212.json'
     },
     {
-        'alias'    : 'deepbank1_1',
+        'alias'    : 'deepbank1.1',
         'name'     : 'DeepBank 1.1',
         'grammars' : ('erg', 'erg-wsj', 'erg-speech'),
         'version'  : '1.1',

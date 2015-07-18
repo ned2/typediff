@@ -86,20 +86,36 @@ GRAMMARLIST = (
 
 TREEBANKLIST = (
     {
-        'alias'    : 'redwoods1212',
-        'name'     : 'LinGO Redwoods Treebank 1212',
-        'grammars' : ('erg', 'terg', 'terg-wsj', 'erg-speech'),
+        'alias'    : 'redwoods1214',
+        'name'     : 'LinGO Redwoods 1214',
+        'grammars' : ('erg', 'erg-wsj', 'erg-speech', 'terg','terg-wsj', 'terg-speech'),
         'version'  : 'ERG 1212',
-        'trees'    : 42489,
-        'json'     : 'redwoods1212.json'
+        'trees'    : 39519,
+        'json'     : 'redwoods_1214.json'
+    },
+    {
+        'alias'    : 'redwoods1212',
+        'name'     : 'LinGO Redwoods 1212',
+        'grammars' : ('erg1212', 'erg1212-wsj', 'erg1212-speech'),
+        'version'  : 'ERG 1212',
+        'trees'    : 39592,
+        'json'     : 'redwoods_1212.json'
+    },
+    {
+        'alias'    : 'deepbank1.1',
+        'name'     : 'DeepBank 1.1',
+        'grammars' : ('erg', 'erg-wsj', 'erg-speech'),
+        'version'  : '1.1',
+        'trees'    : 38730,
+        'json'     : 'deepbank_1_1.json'
     },
     {
         'alias'    : 'deepbank1',
         'name'     : 'DeepBank 1.0',
-        'grammars' : ('erg', 'terg', 'terg-wsj', 'erg-speech'),
+        'grammars' : ('erg1212', 'erg1212-wsj', 'erg1212-speech'),
         'version'  : '1.0',
-        'trees'    : 42648,
-        'json'     : 'deepbank1.json'
+        'trees'    : 38511,
+        'json'     : 'deepbank_1.json'
     },
     {
         'alias'    : 'tanaka',

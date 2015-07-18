@@ -38,7 +38,7 @@ done
 for profile in $(cat ../redwoods.txt); do
     echo $profile
     parseit erg convert ptb ~/logon/lingo/erg/tsdb/gold/$profile > "$profile.mrg"
-; done
+done
 
 """
 
@@ -60,6 +60,7 @@ SINGLELINE_FEATURES = [
     'derivation',
     'mrs',
     'ptb', 
+    'ptb-fangorn', 
     'pprint',
     'latex',
     'short-derivation',
@@ -160,6 +161,8 @@ def reading_features(reading, feature):
             lines.append('{}\t{}'.format(sent_start, rule))
     elif feature == 'ptb':
         output = reading.ptb()
+    elif feature == 'ptb-fangorn':
+        output = "({})".format(reading.ptb())
     elif feature == 'input':
         output = reading.input
     elif feature == 'mrs':
@@ -392,7 +395,6 @@ def main():
             print(compare(grammar, arg))
         elif arg.command in ('count', 'convert', 'draw'):
             results = get_results(grammar, arg)
-
             if arg.command == 'count':
                  print(collection_features(list(results.values()), arg.feature, 
                                            arg.descendants))

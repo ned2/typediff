@@ -900,13 +900,12 @@ class Tree(object):
 
     def _ptb(self, subtree):
         if type(subtree) is Token:
-            val = subtree.string
-            #val = subtree.string.replace('(', '-LRB-')
-            #val = val.replace(')', '-RRB-')
-            return '{}'.format(val)
+            val = subtree.string.replace('(', '-LRB-')
+            val = val.replace(')', '-RRB-')
+            return '{} '.format(val)
         else:
             children = ('{}'.format(self._ptb(x)) for x in subtree.children)
-            return '({} {})'.format(subtree.label, ' '.join(children))
+            return '({} {})'.format(subtree.label.upper(), ' '.join(children))
 
     def tokens(self):
         """Get the tokens of this tree."""

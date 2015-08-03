@@ -96,6 +96,13 @@ GRAMMARLIST = (
         'tdlfile'   : '/home/nejl/delphin/grammars/norsource_1.0/norsk.tdl',
     }, 
     {
+        'alias'     : 'indra',
+        'shortname' : 'INDRA',
+        'longname'  : 'INDRA (Indonesian Grammar)',
+        'aceconfig' : '/home/nejl/delphin/grammars/INDRA/ace/config.tdl',
+        'tdlfile'   : '/home/nejl/delphin/grammars/INDRA/indonesian.tdl',
+    }, 
+    {
         'alias'     : 'erg-wsj',
         'shortname' : 'ERG 1214 WSJ',
         'longname'  : 'The LinGO English Resource Grammar (WSJ)',

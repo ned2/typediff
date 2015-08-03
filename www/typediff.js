@@ -19,15 +19,15 @@ var WEBTYPES_SCRIPT = 'src/webtypes.py';
 
     
 function linkify(url, text, title) { 
-    if (title == undefined) title = '';
-    return '<a title="' + title + '" href="' + encodeURI(url) + '">' + text + '</a>'
+    if (title === undefined) title = '';
+    return '<a title="' + title + '" href="' + encodeURI(url) + '">' + text + '</a>';
 }
 
 function makeFangornQueryUrl(treebank, query) {
     return FANGORNPATH + '/search?corpus=' + treebank + '&query=' + query.toUpperCase(); 
 }
 
-function isERG(grammar) { return grammar.match('t?erg') != null;}
+function isERG(grammar) { return grammar.match('t?erg') !== null;}
 function getItemId($item) { return parseInt($item.attr('id').split('-')[2]) }
 function getItemType($item) { return $item.attr('id').split('-')[0] }
 function getItems(type) { return (type == 'pos') ? POSITEMS : NEGITEMS; }
@@ -96,7 +96,7 @@ function loadUrlParams() {
     var hash = decodeURI(window.location.hash);
     var params = hash.replace(/^#/, '').split('&');
 
-    if (params.length == 0 || params[0] == "")
+    if (params.length === 0 || params[0] === "")
         return;
 
     var Ainput = [];
@@ -114,10 +114,10 @@ function loadUrlParams() {
         var param = fields[0];
         var value = fields[1];
 
-        if (param == '' || value == '')
+        if (param == '' || value === '')
             continue;
         if (param =='count')
-            $('#count-input').val(value)
+            $('#count-input').val(value);
         else if (param == 'labels') {
             $('input[value='+value+']').prop('checked', true);
             if (value == 'long')

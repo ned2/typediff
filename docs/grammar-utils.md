@@ -1,8 +1,8 @@
 # grammar-utils.py
 
-This script currently only performs one function, which is to create
-the various data files needed for the running of the tools found in
-the grammalytics toolkit.  Other functions may be added in the future.
+This script creates the various data files needed for the running of
+the tools found in the grammalytics toolkit.  Other functions may be
+added in the future.
 
 
 ## How to run

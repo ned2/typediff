@@ -103,6 +103,13 @@ GRAMMARLIST = (
         'tdlfile'   : '/home/nejl/delphin/grammars/INDRA/indonesian.tdl',
     }, 
     {
+        'alias'     : 'zhs',
+        'shortname' : 'Zhong (zhs)',
+        'longname'  : 'Zhong (Sinplified Mandarin Chinese)',
+        'aceconfig' : '/home/nejl/phd/delphin/grammars/zhong/cmn/zhs/ace/config.tdl',
+        'tdlfile'   : '/home/nejl/phd/delphin/grammars/zhong/cmn/zhs/zhs.tdl',
+    },
+    {
         'alias'     : 'erg-wsj',
         'shortname' : 'ERG 1214 WSJ',
         'longname'  : 'The LinGO English Resource Grammar (WSJ)',

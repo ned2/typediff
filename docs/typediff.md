@@ -20,7 +20,6 @@ the required data from ACE.
 
 ## How it Works
 
-
 Users enter any number of input items into the A items set and the B
 items set. Each input item is parsed (with ACE) and then for each
 selected reading, every type that appears in the full AVM is
@@ -40,7 +39,7 @@ to the B items to filter out noisy types from the A items.
 Input to explore the right-node-raising construction might be:
 
     A: We relied on and hired consultants.
-    B: We relied on consultants and we hired consultants.
+    B: We relied on consultants and hired consultants.
 
 Typediff is both a command line tool and also has a browser-based
 interface. The downside to the command line tool is that you are
@@ -76,6 +75,17 @@ running, however you may find that you need to perform further
 steps...
 
 
+### Jacy Segmentation
+
+If you want segmentation for Jacy to work you'll need to install the
+MeCab and the Python MeCab bindings. On Ubuntu, the following will hopefully
+get this working:
+
+$ sudo apt-get install libmecab-dev
+$ sudo apt-get install mecab mecab-ipadic-utf8
+$ sudo pip3 install mecab-python3
+
+
 ### Compiling ACE binaries
 
 Typediff uses ACE along with a couple of other binaries that use ACE
@@ -88,13 +98,6 @@ http://sweaglesw.org/linguistics/ace/ for alternative 64bit binaries,
 and ACE source. Instructions for how to compile the other binaries can
 be found at the top of typifier.c. You'll then need to modify the various 
 binary paths in config.py.
-
-
-### Jacy Segmentation
-
-If you want segmentation for Jacy to work you'll need to install the
-Python MeCab bindings. On Ubuntu, installing the packages python-mecab
-and mecab-ipadic-utf8 should suffice.
 
 
 ### Web server setup

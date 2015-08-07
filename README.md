@@ -4,9 +4,7 @@ Typediff
 A tool for exploring derivations produced by DELPH-IN HPSG grammars.
 The DELPH-IN consortium is a worldwide collaboration that develops
 open source tools and resources for efficient and deep processing of
-natural language.  For more information, visit
-http://www.delph-in.net.
-
+natural language.  For more information visit http://www.delph-in.net.
 
 Typediff enables users to interactively compare and contrast the
 resultant analyses of sets of input text. By comparing similar

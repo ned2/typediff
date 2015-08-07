@@ -28,8 +28,9 @@ def load_grammar(gparams):
     else:
         gparams['ltdblink'] = None
 
-    gparams['aceconfig'] = gparams['aceconfig'].replace('${LOGONROOT}', config.LOGONROOT)
-    gparams['tdlfile'] = gparams['tdlfile'].replace('${LOGONROOT}', config.LOGONROOT)
+    if config.LOGONROOT is not None:
+        gparams['aceconfig'] = gparams['aceconfig'].replace('${LOGONROOT}', config.LOGONROOT)
+        gparams['tdlfile'] = gparams['tdlfile'].replace('${LOGONROOT}', config.LOGONROOT)
     return ConfigGrammar(gparams, config.DATAPATH)    
 
 

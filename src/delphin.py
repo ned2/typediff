@@ -40,7 +40,7 @@ def init_paths(logonroot=None):
     global ACEBIN
     global LOGONREGPATH
 
-    if LOGONROOT is None:
+    if logonroot is None:
         LOGONROOT = os.environ.get('LOGONROOT')
     else:
         LOGONROOT = logonroot

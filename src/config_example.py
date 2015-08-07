@@ -6,37 +6,36 @@ This file contains configuration information that typediff needs to
 run, as well as options which can be customized.
 """
 
-# The path to the src directory in the typediff program. Needed for
-# other defaults. You no not need to change this.
-_SRC_PATH = os.path.dirname(os.path.realpath(__file__))
-
-
 # Directory where dat, xml and pickle files are kept.
 # You'll want to change this if you don't want to store
 # large amounts of data in the installation directory.
-DATAPATH = '/home/nejl/data/grammar-data' 
+DATAPATH  = '/home/nejl/data/grammar-data'
 
 
-# Path to the directory where ace was compiled.  Optionally used to
-# build the ERG image from so that unknown word handling is enabled.
-ACESRC = None  
+# Required for running grammar-utils.py make-data command.
+LOGONROOT = None
 
 
 # URL prefix of other apps Typediff can interface with
 FANGORNPATH = None
 LTDBPATH = None
 
+# Path to ACE source directory which has been compiiled. Optionally
+# used to build the ERG image so that unknown word handling is
+# enabled.
+ACESRC = None
+
+
+# The path to the directory of the typediff program. Needed for other
+# defaults. You should not need to change this.
+TYPEDIFF_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
+
 
 # Path where ACE output will be logged to. This is useful to change if
 # your web server does not have write access to the typediff
 # directory. 
-LOGPATH = os.path.join(_SRC_PATH, '..', 'ace.log')
+LOGPATH = os.path.join(TYPEDIFF_PATH, 'ace.log')
 
-
-# For setting the LOGONROOT with apache, we specify it here.  Note
-# that this is not actually required for running the typediff
-# interface.
-LOGONROOT = ''
 
 # Grammars configured for use with typediff. The string '${LOGONROOT}'
 # Will be replaced with the value of the LOGONROOT environment
@@ -77,7 +76,7 @@ GRAMMARLIST = (
         'alias'     : 'hag',
         'shortname' : 'HaG',
         'longname'  : 'HaG (Hausa Grammar)',
-        'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl' 
+        'aceconfig' : '${LOGONROOT}/llf/hag/ace/config.tdl',
         'tdlfile'   : '${LOGONROOT}/llf/hag/hausa.tdl'
     }, 
 )

@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 
 import delphin
 import config
+import gram
 import stats
 
 
@@ -378,7 +379,7 @@ def main():
     elif arg.command == 'draw':
         arg.feature = None # just hack this rather than working out when defined
 
-    grammar = config.get_grammar(arg.grammar)
+    grammar = gram.get_grammar(arg.grammar)
     if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
         if os.path.basename(arg.paths[0]) in ('vm6', 'vm13', 'vm31', 'vm32'):
             # note that this program doesn't support mixing speech and non

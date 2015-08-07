@@ -10,6 +10,7 @@ import cPickle
 
 import delphin
 import config
+import gram
 
 
 """
@@ -102,9 +103,9 @@ def main():
             os.makedirs(config.DATAPATH)
 
         if len(arg.grammars) == 0:
-            grammars = config.get_grammars()
+            grammars = gram.get_grammars()
         else:
-            grammars = [config.get_grammar(alias) for alias in arg.grammars]
+            grammars = [gram.get_grammar(alias) for alias in arg.grammars]
 
         for grammar in grammars:
             try:

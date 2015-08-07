@@ -1,5 +1,4 @@
 import os
-from delphin import ConfigGrammar
 
 
 """
@@ -212,25 +211,3 @@ TYPIFIERBIN = os.path.join(_SRC_PATH, '..', 'bin', 'typifier')
 DUMPHIERARCHYBIN = os.path.join(_SRC_PATH, '..', 'bin', 'dumphierarchy')
 ACEBIN = os.path.join(_SRC_PATH, '..', 'bin', 'ace')
 JSONPATH = 'www/json'
-
-
-def _load_grammar(g):   
-    if 'ltdb' in g:
-        g['ltdblink'] = LTDBPATH + '/' + g['ltdb']
-    else:
-        g['ltdblink'] = None
-
-    g['aceconfig'] = g['aceconfig'].replace('${LOGONROOT}', LOGONROOT)
-    g['tdlfile'] = g['tdlfile'].replace('${LOGONROOT}', LOGONROOT)
-    return ConfigGrammar(g, DATAPATH)    
-
-
-def get_grammar(alias):
-    for g in GRAMMARLIST:
-        if g['alias'] == alias:
-            return _load_grammar(g)
-    return None
-
-
-def get_grammars():
-    return [_load_grammar(g) for g in GRAMMARLIST]

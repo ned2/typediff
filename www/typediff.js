@@ -15,7 +15,7 @@ var POSCOUNTER = 0;
 var NEGCOUNTER = 0;
 var DESCENDANTS = {};
 var FADELENGTH = 400;
-var WEBTYPES_SCRIPT = 'src/webtypes.py'; 
+var WEBTYPES_SCRIPT = 'src/webtypes.cgi'; 
 
     
 function linkify(url, text, title) { 

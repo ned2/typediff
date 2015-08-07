@@ -9,6 +9,7 @@ from itertools import chain
 
 import delphin
 import config
+import gram
 
 
 """typediff.py
@@ -245,7 +246,7 @@ def typediff(pos_input, neg_input, grammar, arg):
 
 def main():
     arg = argparser().parse_args()
-    grammar = config.get_grammar(arg.grammar)
+    grammar = gram.get_grammar(arg.grammar)
 
     if '@' in arg.sentences and not (arg.u or arg.i or arg.d):
         arg.d = True

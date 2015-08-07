@@ -13,7 +13,6 @@ import time
 from collections import Counter, defaultdict
 from subprocess import Popen, PIPE
 
-
 try:
     from lxml import etree
 except ImportError:
@@ -72,7 +71,7 @@ GRAMMAR_NAMES = {
     'gg'   : 'GG',
     'jacy' : 'Jacy',
     'srg'  : 'SRG',
-    'hag'  : 'Hausa Gramma',
+    'hag'  : 'Hausa Grammar',
 }
 
 
@@ -188,8 +187,6 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, set):
             return list(obj)
-        if isinstance(obj, ConfigGrammar):
-            return obj.json()
         if isinstance(obj, Treebank):
             return obj.__dict__
         if isinstance(obj, Reading):
@@ -210,6 +207,8 @@ class JSONEncoder(json.JSONEncoder):
             return data
         if isinstance(obj, TypeStats):
             return obj.__dict__
+        if hasattr(obj, 'json'):
+            return obj.json()
         return json.JSONEncoder.default(self, obj)
 
 
@@ -649,23 +648,6 @@ class Grammar(object):
             raise LexLookupError("Lex entry not found in lexicon: '{0}'".format(lex_entry))
 
 
-class ConfigGrammar(Grammar):
-    """Models grammars specified in config.py."""
-    def __init__(self, params, datapath):
-        for param, val in params.items():
-            setattr(self, param, val)
-
-        self.path = os.path.dirname(self.tdlfile)
-        self.dat_path = os.path.join(datapath, self.alias + '.dat')
-        self.types_path = os.path.join(datapath, self.alias + '.xml')
-        self.pickle_path = os.path.join(datapath, self.alias + '.pickle')
-                    
-    def json(self):
-        """Used for json serializing instances of this class."""
-        attrs = ('alias', 'shortname', 'longname', 'ltdblink')
-        return {attr : getattr(self, attr) for attr in attrs} 
-
-        
 class LogonGrammar(Grammar):
     """
     Models grammars found in the LOGON repository, 

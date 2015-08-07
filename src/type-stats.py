@@ -64,7 +64,7 @@ def index(profiles, treebank, in_grammar):
 
         if profile in ERG_SPEECH_PROFILES:
             alias = grammar.alias+'-speech'
-            grammar = config.get_grammar(alias)
+            grammar = gram.get_grammar(alias)
 
         try:
             # for treebanked profiles:
@@ -141,7 +141,7 @@ def output(pickle_path, output_type):
     trees = x[2]
     metadata = {'grammar' : grammar_name, 'treebank' : treebank, 'trees' : trees}
 
-    grammar = config.get_grammar(grammar_name)
+    grammar = gram.get_grammar(grammar_name)
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     signs = [x.name for x in hierarchy['sign'].descendants() 
              if not x.name.startswith('glb')]
@@ -213,7 +213,7 @@ def main():
             else:
                 profiles.append(arg.profile)
 
-        grammar = config.get_grammar(arg.grammar)
+        grammar = gram.get_grammar(arg.grammar)
         index(profiles, arg.treebank, grammar)
 
     elif arg.command == 'output':

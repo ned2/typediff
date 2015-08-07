@@ -109,6 +109,20 @@ GRAMMARLIST = (
         'tdlfile'   : '/home/nejl/phd/delphin/grammars/zhong/cmn/zhs/zhs.tdl',
     },
     {
+        'alias'     : 'zht',
+        'shortname' : 'Zhong (zht)',
+        'longname'  : 'Zhong (Traditional Mandarin Chinese)',
+        'aceconfig' : '/home/nejl/phd/delphin/grammars/zhong/cmn/zht/ace/config.tdl',
+        'tdlfile'   : '/home/nejl/phd/delphin/grammars/zhong/cmn/zht/zht.tdl',
+    },
+    {
+        'alias'     : 'yue',
+        'shortname' : 'Zhong (yue)',
+        'longname'  : 'Zhong (Cantonese Chinese)',
+        'aceconfig' : '/home/nejl/phd/delphin/grammars/zhong/cmn/zht/ace/config.tdl',
+        'tdlfile'   : '/home/nejl/phd/delphin/grammars/zhong/cmn/zht/zht.tdl',
+    },
+    {
         'alias'     : 'erg-wsj',
         'shortname' : 'ERG 1214 WSJ',
         'longname'  : 'The LinGO English Resource Grammar (WSJ)',
@@ -122,20 +136,6 @@ GRAMMARLIST = (
         'longname'  : 'The LinGO English Resource Grammar for speech applications (1214 release)',
         'aceconfig' : '${LOGONROOT}/lingo/erg/ace/config-speech.tdl',
         'tdlfile'   : '${LOGONROOT}/lingo/erg/speech.tdl',
-    },
-    {
-        'alias'     : 'terg-wsj',
-        'shortname' : 'ERG trunk WJS (2015-05-31)',
-        'longname'  : 'The LinGO English Resource Grammar (trunk 2015-03-11 WJS)',
-        'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config-wsj.tdl',
-        'tdlfile'   : '${LOGONROOT}/lingo/terg/english.tdl',
-    }, 
-    {
-        'alias'     : 'terg-speech',
-        'shortname' : 'ERG trunk (2015-03-11 -- speech)',
-        'longname'  : 'The LinGO English Resource Grammar for speech applications (trunk 2015-06-20)',
-        'aceconfig' : '${LOGONROOT}/lingo/terg/ace/config-speech.tdl',
-        'tdlfile'   : '${LOGONROOT}/lingo/terg/speech.tdl',
     },
 )
 

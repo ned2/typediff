@@ -90,10 +90,15 @@ installation, assuming we cloned typediff into ~/typediff.
    $ sudo ln -s ~/typediff /var/www/html/
 
 3. Add a Directory entry in the apache config file
-   /etc/apache2/sites-enabled/000-default.conf inside the
-   VirtualHost entry. Something like this should hopefully work:
+   /etc/apache2/sites-enabled/000-default.conf inside the VirtualHost
+   entry. You can edit this file with the following command:
 
-    <Directory /var/www/html/typediff/>
+   $ sudo nano /etc/apache2/sites-enabled/000-default.conf
+
+   Something like the following should hopefully work:
+
+   ```
+   <Directory /var/www/html/typediff/>
         AllowOverride None
         Order allow,deny
         allow from all
@@ -101,6 +106,7 @@ installation, assuming we cloned typediff into ~/typediff.
         AddHandler cgi-script .cgi
         DirectoryIndex index.html
     </Directory>
+   ```
 
 4. Make sure that your Apache installation has the CGI module loaded.
    There should be a symlink at the following path:

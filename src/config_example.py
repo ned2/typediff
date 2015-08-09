@@ -149,7 +149,7 @@ TYPES = (
 
 # These should only need to be changed if you needed to compile
 # thebinaries for your own environment. 
-TYPIFIERBIN = os.path.join(_SRC_PATH, '..', 'bin', 'typifier')
-DUMPHIERARCHYBIN = os.path.join(_SRC_PATH, '..', 'bin', 'dumphierarchy')
-ACEBIN = os.path.join(_SRC_PATH, '..', 'bin', 'ace')
+TYPIFIERBIN = os.path.join(TYPEDIFF_PATH, 'bin', 'typifier')
+DUMPHIERARCHYBIN = os.path.join(TYPEDIFF_PATH, 'bin', 'dumphierarchy')
+ACEBIN = os.path.join(TYPEDIFF_PATH, 'bin', 'ace')
 JSONPATH = 'www/json'

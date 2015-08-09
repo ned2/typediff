@@ -1190,7 +1190,7 @@ function setHandlers() {
             $('#submit-items-button').trigger('click');
         } else if (keyCode === 10 || keyCode == 13 && event.altKey) {
             $('#pos-input').val("We relied on and hired consultants.");
-            $('#neg-input').val("We relied on consultants and we hired consultants.");
+            $('#neg-input').val("We relied on consultants and hired consultants.");
             $('#submit-items-button').trigger('click');
         }
     });

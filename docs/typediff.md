@@ -87,51 +87,39 @@ installation, assuming we cloned typediff into ~/typediff.
 
 1. Install Apache:
 
-   ```
-   $ sudo apt-get install apache2
-   ```
+    $ sudo apt-get install apache2
 
 2. Create symlink to Typediff path in Ubuntu's default directory for
    serving web documents:
 
-   ```
-   $ sudo ln -s ~/typediff /var/www/html/
-   ```
+    $ sudo ln -s ~/typediff /var/www/html/
 
 3. Add a Directory entry in the apache config file
    /etc/apache2/sites-enabled/000-default.conf inside the VirtualHost
    entry. You can edit this file with the following command:
 
-   ```
-   $ sudo nano /etc/apache2/sites-enabled/000-default.conf
-   ```
+    $ sudo nano /etc/apache2/sites-enabled/000-default.conf
    
    Something like the following should hopefully work:
 
-   ```
-   <Directory /var/www/html/typediff/>
-        AllowOverride None
-        Order allow,deny
-        allow from all
-        Options +ExecCGI
-        AddHandler cgi-script .cgi
-        DirectoryIndex index.html
-    </Directory>
-   ```
+    <Directory /var/www/html/typediff/>
+         AllowOverride None
+         Order allow,deny
+         allow from all
+         Options +ExecCGI
+         AddHandler cgi-script .cgi
+         DirectoryIndex index.html
+     </Directory>
 
 4. Make sure that your Apache installation has the CGI module loaded.
    There should be a symlink at the following path:
    /etc/apache2/mods-enabled/cgi.load. If not, create one like so:
 
-   ```
-   $ sudo ln -s /etc/apache2/mods-available/cgi.load /etc/apache2/mods-enabled/
-   ```
+    $ sudo ln -s /etc/apache2/mods-available/cgi.load /etc/apache2/mods-enabled/
    
 5. Restart Apache:
 
-   ```
-   $ sudo service apache2 restart
-   ```
+    $ sudo service apache2 restart
 
 6. If all has worked, you should be able to see Typediff up and
    running at http://localhost/typediff.
@@ -140,9 +128,9 @@ If you want to make this installation available online (not just on
 your local machine) it would also be worth enabling gzip compression
 by adding the following option to the Typediff Directory:
 
-    ```
+
     AddOutputFilterByType DEFLATE text/html text/css text/plain application/json application/javascript
-    ```
+
 
 This will make the fairly sizeable serialized data that comes back
 from the server *much* smaller. You may also need to create symlinks

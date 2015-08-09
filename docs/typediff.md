@@ -87,7 +87,7 @@ installation, assuming we cloned typediff into ~/typediff.
 2. Create symlink to Typediff path in Ubuntu's default directory for
    serving web documents:
 
-   $ sudo ln -s ~/typediff /var/www/html/
+       $ sudo ln -s ~/typediff /var/www/html/
 
 3. Add a Directory entry in the apache config file
    /etc/apache2/sites-enabled/000-default.conf inside the VirtualHost

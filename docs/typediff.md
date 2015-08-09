@@ -63,11 +63,16 @@ and has currently only been tested on Google Chrome and Firefox.
    dumps of the type hierarchy for each grammar. You can generate
    these yourself or you can run the following command:
  
-       $ src/grammar-utils.py make-data
+   ```
+   $ src/grammar-utils.py make-data [gram]
+   ```
 
    This will create all the data required by typediff in the directory
    specified by the DATAPATH parameter in config.py. See
-   [grammar-utils.md](grammar-utils.md) for further details.
+   [grammar-utils.md](grammar-utils.md) for further details.  The
+   optional [gram] grammar alais parameter restricts the script to
+   only generating data for the grammar specified by relevant grammar
+   alias.
 
 
 The above steps should hopefully be sufficient to get Typediff
@@ -82,19 +87,25 @@ installation, assuming we cloned typediff into ~/typediff.
 
 1. Install Apache:
 
+   ```
    $ sudo apt-get install apache2
+   ```
 
 2. Create symlink to Typediff path in Ubuntu's default directory for
    serving web documents:
 
-       $ sudo ln -s ~/typediff /var/www/html/
+   ```
+   $ sudo ln -s ~/typediff /var/www/html/
+   ```
 
 3. Add a Directory entry in the apache config file
    /etc/apache2/sites-enabled/000-default.conf inside the VirtualHost
    entry. You can edit this file with the following command:
 
+   ```
    $ sudo nano /etc/apache2/sites-enabled/000-default.conf
-
+   ```
+   
    Something like the following should hopefully work:
 
    ```
@@ -112,11 +123,15 @@ installation, assuming we cloned typediff into ~/typediff.
    There should be a symlink at the following path:
    /etc/apache2/mods-enabled/cgi.load. If not, create one like so:
 
-   sudo ln -s /etc/apache2/mods-available/cgi.load /etc/apache2/mods-enabled/
-
+   ```
+   $ sudo ln -s /etc/apache2/mods-available/cgi.load /etc/apache2/mods-enabled/
+   ```
+   
 5. Restart Apache:
 
+   ```
    $ sudo service apache2 restart
+   ```
 
 6. If all has worked, you should be able to see Typediff up and
    running at http://localhost/typediff.
@@ -125,7 +140,9 @@ If you want to make this installation available online (not just on
 your local machine) it would also be worth enabling gzip compression
 by adding the following option to the Typediff Directory:
 
-   AddOutputFilterByType DEFLATE text/html text/css text/plain application/json application/javascript
+    ```
+    AddOutputFilterByType DEFLATE text/html text/css text/plain application/json application/javascript
+    ```
 
 This will make the fairly sizeable serialized data that comes back
 from the server *much* smaller. You may also need to create symlinks
@@ -140,10 +157,11 @@ If you want segmentation for Jacy to work you'll need to install the
 MeCab and the Python MeCab bindings. On Ubuntu, the following will hopefully
 get this working:
 
-$ sudo apt-get install libmecab-dev
-$ sudo apt-get install mecab mecab-ipadic-utf8
-$ sudo pip3 install mecab-python3
-
+```
+ $ sudo apt-get install libmecab-dev
+ $ sudo apt-get install mecab mecab-ipadic-utf8
+ $ sudo pip3 install mecab-python3
+```
 
 ### Compiling ACE binaries
 

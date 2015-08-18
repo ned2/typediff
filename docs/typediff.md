@@ -83,7 +83,7 @@ steps...
 ### Suggested Apache setup on Ubuntu
 
 Here is one way to get Typediff being served up on an Ubuntu
-installation, assuming we cloned typediff into ~/typediff.
+installation, assuming we cloned the Typediff repository into `~/typediff`.
 
 1. Install Apache:
 

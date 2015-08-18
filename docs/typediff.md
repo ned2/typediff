@@ -98,7 +98,7 @@ installation, assuming we cloned typediff into ~/typediff.
    $ sudo ln -s ~/typediff /var/www/html/
    ```
 
-3. Add a Directory entry in the apache config file
+3. Add the following Directory entries to the apache config file
    /etc/apache2/sites-enabled/000-default.conf inside the VirtualHost
    entry. You can edit this file with the following command:
 
@@ -109,13 +109,13 @@ installation, assuming we cloned typediff into ~/typediff.
    Something like the following should hopefully work:
 
    ```
+    <Directory /var/www/html>
+        Options FollowSymLinks
+    </Directory>
+   
    <Directory /var/www/html/typediff/>
-        AllowOverride None
-        Order allow,deny
-        allow from all
         Options +ExecCGI
-        AddHandler cgi-script .cgi
-        DirectoryIndex index.html
+        AddHandler cgi-script .cgi .py
     </Directory>
    ```
 

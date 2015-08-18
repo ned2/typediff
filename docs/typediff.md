@@ -174,6 +174,6 @@ binary paths in config.py.
 
 ### Web server setup
 
-For the web interface, you might want to double check that your
+For connecting to Typediff on a remote server you might want to double check that your
 web server is compressing application/json data, as the data that is
 sent from the server can be quite bulky.

@@ -35,7 +35,13 @@ body {
 
 .highlight { font-weight: 700 }
 
-#container { margin: 0 1em }
+#container {
+    display: table;
+}
+
+.pane-row {
+    display: table-row;
+}
 
 #options {
     display: inline-block;
@@ -294,24 +300,29 @@ input[type=text], input[type=submit], select {
     margin: 1em auto 0 auto;
 }
 
-.type-line { margin: .3em auto }
+#output-box {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 0 4px;
+}
+
+.type-line { display: table-row }
 
 .type {
+    display: table-cell;
     font-family: "Courier New", Courier, monospace;
     font-size: 105%;
     border-radius: 10px;
     border: 2px solid black;
-    width: 77%;
-    float: left;
+    width: 100%;
     padding: 0.15em .5em;
-
 }
 
 .type.active { font-weight: 700 }
 
 .super { 
     border: 2px dashed black;
-    width: 65%;
+    opacity: 0.8;
 }
 
 .sign.type:not(.super) { cursor: pointer }
@@ -321,13 +332,9 @@ input[type=text], input[type=submit], select {
     box-shadow: 0px 0px 6px;
 }
 
-.stat { 
-    display: inline-block;
+.items-stat { 
+    display: table-cell;
     font-family: "Courier New", Courier, monospace;
     text-align: right;
-}
-
-.items-stat { 
-    width: 14%;
-    float: right;
+    padding-right: 1em;
 }

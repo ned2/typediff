@@ -1060,7 +1060,8 @@ def parse_error(string, match, expecting):
 def ace_parse(input_str, ace_path, grammar, count, yy_input=False,
               fragments=False, tnt=False, short_labels=False):
     env = dict(os.environ)
-    env['LC_ALL'] = 'en_US.UTF-8'
+    #env['LC_ALL'] = 'en_US.UTF-8'
+    #env['LANG'] = 'en_US.UTF-8'
     args = [ace_path, '-g', grammar.dat_path]
     alias = grammar.alias
     

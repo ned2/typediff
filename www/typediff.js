@@ -367,13 +367,18 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
             else
                 var items = typeStats.items*100/treebank.trees;
      
-            var itemsElem = $('<div>', {'class' : 'stat items-stat', 
-                                        'text'  : items.toFixed(2)+'%',
-                                        'title' : 'percent of trees in treebank this type is found in'});
-            typeLine.append(itemsElem);
-        }
+            var stringNum = items.toFixed(2)+'%';
 
-        typeLine.append($('<div>', {'style' : 'clear:both'}));
+            if (stringNum.length == 5)
+                stringNum = '0' + stringNum;
+        } else {
+            var stringNum = '';
+        }
+            
+        var itemsElem = $('<div>', {'class' : 'items-stat', 
+                                    'text'  : stringNum,
+                                    'title' : 'percent of trees in treebank this type is found in'});
+        typeLine.prepend(itemsElem);
         return typeLine;
     };
 

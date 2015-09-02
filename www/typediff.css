@@ -35,14 +35,6 @@ body {
 
 .highlight { font-weight: 700 }
 
-#container {
-    display: table;
-}
-
-.pane-row {
-    display: table-row;
-}
-
 #options {
     display: inline-block;
     vertical-align: top;
@@ -59,10 +51,12 @@ body {
 
 .right-pane {
     width: 39%;
-    float: right;
 }
 
-.pane { display: inline-block }
+.pane {
+    display: inline-block;
+    vertical-align: top;
+}
 
 .pane-content { margin: 1em }
 

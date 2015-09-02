@@ -83,7 +83,7 @@ steps...
 ### Suggested Apache setup on Ubuntu
 
 Here is one way to get Typediff being served up on an Ubuntu
-installation, assuming we cloned typediff into ~/typediff.
+installation, assuming we cloned the Typediff repository into `~/typediff`.
 
 1. Install Apache:
 
@@ -98,7 +98,7 @@ installation, assuming we cloned typediff into ~/typediff.
    $ sudo ln -s ~/typediff /var/www/html/
    ```
 
-3. Add a Directory entry in the apache config file
+3. Add the following Directory entry to the apache config file
    /etc/apache2/sites-enabled/000-default.conf inside the VirtualHost
    entry. You can edit this file with the following command:
 
@@ -106,16 +106,11 @@ installation, assuming we cloned typediff into ~/typediff.
    $ sudo nano /etc/apache2/sites-enabled/000-default.conf
    ```
    
-   Something like the following should hopefully work:
-
+   Directory entry:
    ```
    <Directory /var/www/html/typediff/>
-        AllowOverride None
-        Order allow,deny
-        allow from all
         Options +ExecCGI
-        AddHandler cgi-script .cgi
-        DirectoryIndex index.html
+        AddHandler cgi-script .cgi .py
     </Directory>
    ```
 
@@ -179,6 +174,6 @@ binary paths in config.py.
 
 ### Web server setup
 
-For the web interface, you might want to double check that your
+For connecting to Typediff on a remote server you might want to double check that your
 web server is compressing application/json data, as the data that is
 sent from the server can be quite bulky.

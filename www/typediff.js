@@ -356,9 +356,11 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
                                 'title' : titlet,
                                 'style' : style, 
                                });
-
-        var typeLine = $('<div>', {'class' : 'type-line'}).append(inner);
-
+        if (superOf)
+            var typeLine = $('<div>', {'class' : 'type-line super'}).append(inner);
+        else
+            var typeLine = $('<div>', {'class' : 'type-line'}).append(inner);
+        
         if (treebank.data && !superOf) {
             var typeStats = treebank.data[type];
 
@@ -1165,9 +1167,12 @@ function setHandlers() {
         updateUrl();
 
         if (SUPERS && haveItems()) { 
-            clearState(loadUrlParams);
+            if ($('.type-line.super').length > 0)
+                $('.type-line.super').show();                
+            else
+                clearState(loadUrlParams);
         } else {
-            $('.type.super').remove();
+            $('.type-line.super').hide();
         }
         
     });

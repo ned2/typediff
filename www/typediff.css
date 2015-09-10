@@ -46,11 +46,11 @@ body {
 }
 
 .left-pane {
-    width: 65%;
+    width: 61%;
 }
 
 .right-pane {
-    width: 34%;
+    width: 38%;
 }
 
 .pane {
@@ -58,7 +58,7 @@ body {
     vertical-align: top;
 }
 
-.pane-content { margin: 1em }
+.pane-content { margin: 0.5em }
 
 .pane-header {
     text-align: center;
@@ -300,6 +300,11 @@ input[type=text], input[type=submit], select {
     border-spacing: 0 4px;
 }
 
+#output-pane-contents {
+    height: 70vh;
+    overflow-y: auto;
+}
+
 .type-line { display: table-row }
 
 .type {
@@ -314,7 +319,7 @@ input[type=text], input[type=submit], select {
 
 .type.active { font-weight: 700 }
 
-.super { 
+.type.super { 
     border: 2px dashed black;
     opacity: 0.8;
 }

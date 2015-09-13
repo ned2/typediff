@@ -11,12 +11,13 @@
 
 var POSITEMS = Array();
 var NEGITEMS = Array();
+var ALLITEMS = [POSITEMS, NEGITEMS];
 var POSCOUNTER = 0;
 var NEGCOUNTER = 0;
 var DESCENDANTS = {};
 var FADELENGTH = 400;
 var WEBTYPES_SCRIPT = 'src/webtypes.cgi'; 
-
+var ACTIVE_TYPES = [];
     
 function linkify(url, text, title) { 
     if (title === undefined) title = '';
@@ -252,7 +253,7 @@ function processItemResults(newItems, type) {
         items.push(item);
         $item.find('.text').text(item.input).attr('title', item.input);
         $item.find('.number').text(counter+1);
-        $item.find('.num-parses').text(readings + pluralize(' parse', readings));
+        $item.find('.num-trees').text(readings + pluralize(' tree', readings));
         $item.attr('id', id);
         itemSection.show();
         itemSection.find('.item-list').append($item);
@@ -463,7 +464,7 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
 function doDiff() {
     if (!haveItems()) return;
 
-    deactivateNodes('_ALL_');
+    setNodes('_ALL_', 'black');
     
     // We need to know which grammar we're working with in order to
     // get the correct list of descendants of 'sign' and 'synsem'
@@ -579,30 +580,6 @@ function drawTrees($item) {
 }
 
 
-function setNodes(type, state) {
-    $('.svg-node').each(function(index, elem) {
-        $elem = $(elem);
-        var color = state ? 'blue' : 'black';
-
-        // note that the title attribute will have lex types as well
-        // as the rule entry names, the former being what we want
-        if (type == $elem.attr('rule')) {
-            $elem.find('.svg-node-text').css({'fill' : color});
-            $elem.find('.svg-line').css({'stroke': color});
-            if (state) 
-                $elem.find('text').first().css({'font-weight' : 700});
-            else
-                $elem.find('text').first().css({'font-weight' : 100});
-        }
-        if (type == '_ALL_') { 
-            $elem.find('text').css({'fill' : color});
-            $elem.find('line').css({'stroke': color});
-            if (!state) $elem.find('text').css({'font-weight' : 100});
-        }
-    });
-}
-
-
 function removeSubTrees(trees) {
     if (trees.length < 2) 
         return;
@@ -696,43 +673,82 @@ function highlightSpans(type) {
 }
 
 
-function activateNodes(type) { setNodes(type, true); } 
+function toggleTrees() {
+    // TODO: update the trebox to provide an indication
+    // of the number of trees matching criteria
 
-
-function deactivateNodes(type) { 
-    setNodes(type, false); 
-    $('.sign.type.active').each(function(index, elem) {
-        activateNodes($(elem).html());
+    var types = _.map($('.type.active'), function (x) {return x.innerHTML});
+    $('.derivation').each(function(index, elem) {
+        var $derivation = $(elem);
+        var derivation = getDerivation($derivation);
+        var found = true;
+        for (var i=0; i < types.length; i++) {
+            var type = types[i]; 
+            if (!_.has(derivation.types, type)) {
+                found = false;
+                $derivation.hide();
+                break;
+            }
+        }
+        if (found)
+            $derivation.show();
     });
-}; 
+
+    $('.item').each(function(index, elem){
+        var $item = $(elem); 
+        var numActive = $item.find('.derivation').filter(function() {
+            return $(this).css('display') !== 'none';
+        }).size();
+        var string = numActive + pluralize(' tree', numActive);
+        $item.find('.tree-count').html(string);
+        $item.find('.num-trees').html(string);
+    });
+}
+
+
+function setNodes(type, color) {
+    $('.svg-node').each(function(index, elem) {
+        $elem = $(elem);
+        //if we're highlighting a node, embolden it's text
+        var weight = color == 'black' ? 100 : 700;
+        
+        // note that the title attribute will have lex types as well
+        // as the rule entry names, the former being what we want
+        if (type == $elem.attr('rule') || type == '_ALL_') {
+            $elem.find('.svg-node-text').css({'fill' : color});
+            $elem.find('.svg-line').css({'stroke': color});
+            $elem.find('text').first().css({'font-weight' : weight});
+        }
+    });
+}
+
+
+function updateNodes() {
+    setNodes('_ALL_', 'black');
+    $('.sign.type.active').each(function(index, elem) {
+        setNodes($(elem).html(), 'blue');
+    });
+}
 
 
 function setTypeHandlers() {
     $('.sign.type').hover(
         function(event) {
-            $this = $(this);
-            if (!$this.hasClass('active')) 
-                activateNodes($this.html());
-            highlightSpans($this.html());
+            var type = $(this).html();
+            setNodes(type, 'red');            
+            highlightSpans(type);
         }, 
         function(event) {
-            $this = $(this);
-            if (!$this.hasClass('active')) 
-                deactivateNodes($this.html());
+            updateNodes();
             resetSpans();
         }
     );
         
-    $('.sign.type').click(function(event) {
+    $('.type:not(.super)').click(function(event) {
         event.stopPropagation();
-        var $this = $(this);
-        if ($this.hasClass('active')) {
-            $this.removeClass('active');
-            deactivateNodes($this.html());
-        } else {
-            $this.addClass('active');
-            activateNodes($this.html());
-        }
+        $(this).toggleClass('active');
+        updateNodes();
+        toggleTrees();
     });
 }
 
@@ -815,7 +831,7 @@ function setItemHandlers($item) {
                     }
                     return lines.join('');
                 },
-                close: function( event, ui ) {
+                close: function(event, ui ) {
                     ui.tooltip.hover(
                         function () {
                             $(this).stop(true).fadeTo(400, 1); 
@@ -831,19 +847,11 @@ function setItemHandlers($item) {
         $item.find('.svg-node-text').hover(
             function(event) {
                 var type = $(this).parent().attr('rule');
-                var $type = $('.type.sign').filter(function() { 
-                    return $(this).html() == type; 
-                }).first();
-                if (!$type.hasClass('active')) 
-                    activateNodes(type);
+                setNodes(type, 'red');
             }, 
             function(event) {
                 var type = $(this).parent().attr('rule');
-                var $type = $('.type.sign').filter(function() { 
-                    return $(this).html() == type; 
-                }).first();
-                if (!$type.hasClass('active')) 
-                    deactivateNodes(type);
+                updateNodes();
             }
         );
     }
@@ -895,6 +903,20 @@ function setItemHandlers($item) {
             item.readings[i].active = false;
         }
         doDiff();
+    });
+
+    $item.find('.toggle-tree-box').click(function(event) {
+        var $this = $(this);
+        var val = $this.val();
+        var $treeBox = $item.find('.tree-box:first');
+        
+        $treeBox.toggleClass('max');
+
+        if (val == 'Maximise') {
+            $this.val('Minimize')
+        } else {
+            $this.val('Maximise')
+        }
     });
 
     $item.find('.copy-item').click(function(event) {
@@ -961,11 +983,9 @@ function setItemHandlers($item) {
         drawTrees($item);
         setTreeHandlers();
 
-        // in case one of the types is active and we need to highlight
-        // the nodes.
-        $('.sign.type.active').each(function(index, elem) {
-            activateNodes($(elem).html());
-        });
+        // in case some of the types are already active
+        updateNodes();
+        toggleTrees();
     });
 
 

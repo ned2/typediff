@@ -192,10 +192,15 @@ input[type=text], input[type=submit], select {
  }
 
 .tree-box { 
-    max-width: 57%; 
+    max-width: 59%; 
     max-height: 85%;
-    left: 1.5%;
+    left: 1%;
+    right: 1%;
     top: 9%;
+}
+
+.tree-box.max {
+    max-width: 98%;
 }
 
 .mrs-box {
@@ -207,6 +212,10 @@ input[type=text], input[type=submit], select {
 
 .mrs-box .mrs {
     font-family: "Courier New", Courier, monospace;
+}
+
+.tree-count {
+    float: right;
 }
 
 .ui-tooltip {
@@ -238,7 +247,7 @@ input[type=text], input[type=submit], select {
 
 .tree-actions { margin: .5em; }
 
-.num-parses {
+.num-trees {
     font-size: 85%;
     float: right;
     margin-right: 0.5em;
@@ -324,9 +333,9 @@ input[type=text], input[type=submit], select {
     opacity: 0.8;
 }
 
-.sign.type:not(.super) { cursor: pointer }
+.type:not(.super) { cursor: pointer }
 
-.sign.type:not(.super):hover { 
+.type:not(.super):hover { 
     cursor: pointer;
     box-shadow: 0px 0px 6px;
 }

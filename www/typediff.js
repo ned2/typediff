@@ -554,28 +554,40 @@ function doDiff() {
 function drawTrees($item) {
     var item = getItem($item);
 
+    // Note that we have to make the derivation visible in case it was
+    // previously hidden, otherwise the dimensions of the created SVG
+    // won't be calculated correctly.
     for (var i=0; i < item.readings.length; i++) {
         var $svg = $(svgelement('svg')).attr('version', '1.1');
         var $derivation = $item.find('#derivation-'+i).append($svg);
-        var g = render_tree($svg[0], item.input, item.readings[i].tree, LONGLABELS);
+        var wasHidden = $derivation.is(':hidden');
+        $derivation.show();
 
+        var g = render_tree($svg[0], item.input, item.readings[i].tree, LONGLABELS);
+        var $g = $(g);
+
+        // make an SVG element with the tree number
         var gnum = svgelement('g');
         var text = svgelement('text');
-        var $g = $(g);
         var starty = $g.children().first().attr('y');
         $g.attr('transform', 'translate(0,'+starty+')');
         text.setAttributeNS(null, "x", 0);
         text.setAttributeNS(null, "y", starty);
-        text.appendChild(document.createTextNode((i + 1) + '.'));
+        text.appendChild(document.createTextNode((i+1) + '.'));
         gnum.appendChild(text);
-        g.appendChild(gnum);
+
+        // add the tree number and then the tree to the SVG
         $svg.append(gnum)
         $svg.append(g);
 
+        // update the SVG element dimensions with the dimensions
+        // calculated from the the child elements
         var bbox = g.getBBox();
         $svg.height(bbox.height + parseInt(starty));
         $svg.width(bbox.width);
-        $derivation.width(bbox.width);
+
+        if (wasHidden)
+            $derivation.hide();
     }
 }
 
@@ -643,7 +655,6 @@ function highlightSpans(type) {
         if (!trees.length) 
             return;
 
-        $item.css({'background-color': '#A6C1FF'});
         var $text = $item.find('.text');
         var text = $text.attr('title');
         var prev = 0;
@@ -674,9 +685,6 @@ function highlightSpans(type) {
 
 
 function toggleTrees() {
-    // TODO: update the trebox to provide an indication
-    // of the number of trees matching criteria
-
     var types = _.map($('.type.active'), function (x) {return x.innerHTML});
     $('.derivation').each(function(index, elem) {
         var $derivation = $(elem);
@@ -708,9 +716,9 @@ function toggleTrees() {
 
 function setNodes(type, color) {
     $('.svg-node').each(function(index, elem) {
-        $elem = $(elem);
         //if we're highlighting a node, embolden it's text
-        var weight = color == 'black' ? 100 : 700;
+        var weight = color != 'black' ? 700 : 100;
+        var $elem = $(elem);
         
         // note that the title attribute will have lex types as well
         // as the rule entry names, the former being what we want
@@ -732,15 +740,45 @@ function updateNodes() {
 
 
 function setTypeHandlers() {
-    $('.sign.type').hover(
+
+    $('.type').hover(
         function(event) {
-            var type = $(this).html();
-            setNodes(type, 'red');            
-            highlightSpans(type);
+            var $this = $(this);
+            var type = $this.html();
+            // highlight items with this type:
+            $('.item').each(function(index, element) {
+                // for each item, if any of its active derivations has
+                // 'type' in derivation.types, set its background
+                // '#A6C1FF'
+
+                var $item = $(element);
+                $item.find('.derivation.active').each(function(index, element) {                    
+                    var derivation = getDerivation($(element));
+                    if (_.has(derivation.types, type)) {
+                        $item.css({'background-color': '#A6C1FF'});
+                        return false;
+                    }
+                });
+            });
+
+            if ($this.hasClass('sign')) {
+                // this is a sign type so highlight all corresponding
+                // subtrees then highlight corresponding span in
+                // surface string
+                setNodes(type, 'red');            
+                highlightSpans(type);
+            }
         }, 
         function(event) {
-            updateNodes();
-            resetSpans();
+            // restore background
+            $('.item').css({'background-color': 'white'});
+
+            // restore tree subtrees to original colour and remove
+            // surface string highlighting
+            if ($(this).hasClass('sign')) {
+                updateNodes();
+                resetSpans();
+            }
         }
     );
         
@@ -874,13 +912,15 @@ function setItemHandlers($item) {
         }
 
         if (!event.ctrlKey) {
+            // Control was not held (which would make the toggle
+            // additive), so deactivate all *other* trees.
             $item.find('.derivation').removeClass('active');
             for (var i=0; i < item.readings.length; i++) {
                 item.readings[i].active = false;
             }
         }            
 
-        derivation.active = !item.readings[id].active;
+        derivation.active = !derivation.active;
         $derivation.toggleClass('active');
         doDiff();
     });
@@ -969,23 +1009,22 @@ function setItemHandlers($item) {
         // because rendering is messed up if we do it earlier?)
         event.stopPropagation();
         var $treeBox = $item.find('.tree-box');
-        var alreadyOpen = $treeBox.is(':visible');
         $('.popup').hide();
 
-        if (alreadyOpen)
+        if ($treeBox.is(':visible'))
             $treeBox.hide();
         else
             $treeBox.show();
 
         // if we've already drawn the trees, return
-        if ($item.find('.svg-node').length != 0) return;
+        if ($item.find('.svg-node').length != 0)
+            return;
 
         drawTrees($item);
         setTreeHandlers();
 
         // in case some of the types are already active
         updateNodes();
-        toggleTrees();
     });
 
 

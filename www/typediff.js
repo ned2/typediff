@@ -251,6 +251,7 @@ function processItemResults(newItems, type) {
         var itemSection = $(['#',type,'-items'].join(''));
 
         items.push(item);
+        $item.find('.hidden').hide();
         $item.find('.text').text(item.input).attr('title', item.input);
         $item.find('.number').text(counter+1);
         $item.find('.num-trees').text(readings + pluralize(' tree', readings));
@@ -464,7 +465,10 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
 function doDiff() {
     if (!haveItems()) return;
 
-    setNodes('_ALL_', 'black');
+    $('.locked').each(function(index, elem) {
+        elem.classList.remove('locked');
+    });
+
     
     // We need to know which grammar we're working with in order to
     // get the correct list of descendants of 'sign' and 'synsem'
@@ -714,25 +718,60 @@ function toggleTrees() {
 }
 
 
+function isElementInViewport (el) {
+    //special bonus for those using jQuery
+    if (typeof jQuery === "function" && el instanceof jQuery) {
+        el = el[0];
+    }
+
+    var rect = el.getBoundingClientRect();
+
+    return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+    );
+}
+
+
 function setNodes(type, color) {
+    //if we're highlighting a node, embolden it's text
+    var weight = color != 'black' ? 700 : 100;
     $('.svg-node').each(function(index, elem) {
-        //if we're highlighting a node, embolden it's text
-        var weight = color != 'black' ? 700 : 100;
+        if (color == 'red' && !isElementInViewport(elem))
+            return;
+            
         var $elem = $(elem);
         
+        // use classList.add etc because jQuery does not
+        // support modifying properties of SVG elements
+        // this will change in jQuery3
+        if (color == 'red') {
+            var func = function(index, elem) {
+                elem.classList.add('highlighted');
+            }
+        } else if (color == 'blue') {
+            var func = function(index, elem) {
+                elem.classList.add('locked');
+            }
+        }
         // note that the title attribute will have lex types as well
         // as the rule entry names, the former being what we want
-        if (type == $elem.attr('rule') || type == '_ALL_') {
-            $elem.find('.svg-node-text').css({'fill' : color});
-            $elem.find('.svg-line').css({'stroke': color});
-            $elem.find('text').first().css({'font-weight' : weight});
+        if (type == $elem.attr('rule')) {
+            $elem.find('.svg-node-text').each(func);
+            $elem.find('.svg-line').each(func);
+            $elem.find('text').first().each(func);
         }
     });
 }
 
 
-function updateNodes() {
-    setNodes('_ALL_', 'black');
+function updateSignNodes() {
+    $('.locked').each(function(index, elem) {
+        elem.classList.remove('locked');
+    });
+        
     $('.sign.type.active').each(function(index, elem) {
         setNodes($(elem).html(), 'blue');
     });
@@ -776,7 +815,9 @@ function setTypeHandlers() {
             // restore tree subtrees to original colour and remove
             // surface string highlighting
             if ($(this).hasClass('sign')) {
-                updateNodes();
+                $('.highlighted').each(function(index, elem) {
+                    elem.classList.remove('highlighted');
+                });
                 resetSpans();
             }
         }
@@ -784,8 +825,8 @@ function setTypeHandlers() {
         
     $('.type:not(.super)').click(function(event) {
         event.stopPropagation();
-        $(this).toggleClass('active');
-        updateNodes();
+        if ($(this).toggleClass('active').hasClass('sign'))
+            updateSignNodes();
         toggleTrees();
     });
 }
@@ -889,7 +930,9 @@ function setItemHandlers($item) {
             }, 
             function(event) {
                 var type = $(this).parent().attr('rule');
-                updateNodes();
+                $('.highlighted').each(function(index, elem) {
+                    elem.classList.remove('highlighted');
+                });
             }
         );
     }
@@ -1024,7 +1067,7 @@ function setItemHandlers($item) {
         setTreeHandlers();
 
         // in case some of the types are already active
-        updateNodes();
+        updateSignNodes();
     });
 
 
@@ -1278,6 +1321,8 @@ function setHandlers() {
 
 
 $(document).ready(function(){
+
+    $('.hidden').hide();
 
     // Initialize globals that have their defaults set via the HTML
     // perhaps this should just be set here.

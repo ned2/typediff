@@ -14,7 +14,6 @@ body {
     box-shadow: 2px 2px 5px rgba(0,0,0,.5);
     border-radius: 0 0 0 10px;
     padding: 1em;
-    display: none;
 }
 
 #help-tab {
@@ -126,6 +125,25 @@ body {
 
 .text .active { color: red; }
 
+.locked.svg-node-text {
+    fill : blue;
+    font-weight : bold;
+}
+
+
+/* Styping SVG trees */ 
+
+.svg-line { stroke : black; }
+
+.locked.svg-line { stroke : blue; }
+
+.highlighted.svg-node-text {
+    fill : red;
+    font-weight : bold;
+}
+
+.highlighted.svg-line { stroke : red; }
+
 .item:hover { 
     cursor: pointer;
     box-shadow: 0 0 5px #aaa;
@@ -218,6 +236,8 @@ input[type=text], input[type=submit], select {
     float: right;
 }
 
+/* Tool Tip stuff */
+
 .ui-tooltip {
     border-radius: 5px;
 	border: 1px solid #aaa;
@@ -245,6 +265,8 @@ input[type=text], input[type=submit], select {
     vertical-align: bottom;
 }
 
+
+
 .tree-actions { margin: .5em; }
 
 .num-trees {
@@ -256,7 +278,6 @@ input[type=text], input[type=submit], select {
 .del:hover,.disable:hover { color: rgba(0, 0, 0, 0.5) }
 
 .clear { clear: both }
-.hidden { display: none }
 
 .popup {
     position: fixed;

@@ -10,7 +10,6 @@ import config
 import gram
 import stats
 
-
 """parseit.py
 Author: Ned Letcher
 https://github.com/ned2/grammalytics
@@ -380,16 +379,17 @@ def main():
         arg.feature = None # just hack this rather than working out when defined
 
     grammar = gram.get_grammar(arg.grammar)
-    if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
-        if os.path.basename(arg.paths[0]) in ('vm6', 'vm13', 'vm31', 'vm32'):
-            # note that this program doesn't support mixing speech and non
-            # speech profiles in the one invocation. If you need to use speech
-            # profiles, just run with only speech or only non-speech profiles. 
-            
-            grammar.read_tdl(speech=True)
-        else:
-            grammar.read_tdl(speech=False)
-
+    #if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
+        #if os.path.basename(arg.paths[0]) in ('vm6', 'vm13', 'vm31', 'vm32'):
+        #    # note that this program doesn't support mixing speech and non
+        #    # speech profiles in the one invocation. If you need to use speech
+        #    # profiles, just run with only speech or only non-speech profiles. 
+        #    
+        #    grammar.read_tdl(speech=True)
+        #else:
+        #    grammar.read_tdl(speech=False)
+    grammar.read_tdl(speech=False)
+        
     try:
         # Do the thing!
         if arg.command == 'compare':

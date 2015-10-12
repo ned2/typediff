@@ -4,6 +4,10 @@
   <meta charset=utf-8 />
   <title>Typediff</title>
   <link rel="stylesheet" type="text/css" media="screen" href="www/typediff.css"/>
+  <!-- Note that jQuery 3.0 will require updated version of jQuery UI:
+      https://github.com/jquery/jquery-ui/commit/b3a9b13a218cd90b7cf67be5d5f8ad6e76c557b0
+  <script type="text/javascript" src="www/jquery-3.0.0-alpha1.js"></script>
+  -->
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
   <script type="text/javascript">
     if (typeof jQuery == 'undefined') {
@@ -51,7 +55,7 @@
 </head>
 <body>
 <div id="help-box">
-  <div id="help-content">
+  <div id="help-content" class="hidden">
     <p>Typediff is a tool to allow you to quickly explore types
        used in the processing of utterances by DELPH-IN
        grammars. Typediff uses ACE for parsing.</p>

@@ -13,7 +13,6 @@ function line(x1, y1, x2, y2) {
 	l.setAttributeNS(null, "x2", x2);
 	l.setAttributeNS(null, "y1", y1);
 	l.setAttributeNS(null, "y2", y2);
-	l.setAttributeNS(null, "style", "stroke: black;");
     l.setAttributeNS(null, "class", "svg-line");
 	return l;
 }

@@ -254,7 +254,6 @@ function processItemResults(newItems, type) {
         $item.find('.hidden').hide();
         $item.find('.text').text(item.input).attr('title', item.input);
         $item.find('.number').text(counter+1);
-        //$item.find('.num-trees').text(readings + pluralize(' tree', readings));
         updateTreeCounts($item, readings);
         $item.attr('id', id);
         itemSection.show();
@@ -692,7 +691,6 @@ function highlightSpans(type) {
 function updateTreeCounts($item, count) {
     var string = count + pluralize(' tree', count);
     $item.find('.tree-count').html(string);
-    $item.find('.num-trees').html(string);
 }
 
 

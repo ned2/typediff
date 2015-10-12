@@ -232,10 +232,6 @@ input[type=text], input[type=submit], select {
     font-family: "Courier New", Courier, monospace;
 }
 
-.tree-count {
-    float: right;
-}
-
 /* Tool Tip stuff */
 
 .ui-tooltip {
@@ -269,11 +265,15 @@ input[type=text], input[type=submit], select {
 
 .tree-actions { margin: .5em; }
 
-.num-trees {
+.item>.tree-count {
     font-size: 85%;
-    float: right;
     margin-right: 0.5em;
 }
+
+.tree-count {
+    float: right;
+}
+
 
 .del:hover,.disable:hover { color: rgba(0, 0, 0, 0.5) }
 

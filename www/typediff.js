@@ -254,7 +254,8 @@ function processItemResults(newItems, type) {
         $item.find('.hidden').hide();
         $item.find('.text').text(item.input).attr('title', item.input);
         $item.find('.number').text(counter+1);
-        $item.find('.num-trees').text(readings + pluralize(' tree', readings));
+        //$item.find('.num-trees').text(readings + pluralize(' tree', readings));
+        updateTreeCounts($item, readings);
         $item.attr('id', id);
         itemSection.show();
         itemSection.find('.item-list').append($item);
@@ -688,6 +689,13 @@ function highlightSpans(type) {
 }
 
 
+function updateTreeCounts($item, count) {
+    var string = count + pluralize(' tree', count);
+    $item.find('.tree-count').html(string);
+    $item.find('.num-trees').html(string);
+}
+
+
 function toggleTrees() {
     var types = _.map($('.type.active'), function (x) {return x.innerHTML});
     $('.derivation').each(function(index, elem) {
@@ -711,9 +719,8 @@ function toggleTrees() {
         var numActive = $item.find('.derivation').filter(function() {
             return $(this).css('display') !== 'none';
         }).size();
-        var string = numActive + pluralize(' tree', numActive);
-        $item.find('.tree-count').html(string);
-        $item.find('.num-trees').html(string);
+
+        updateTreeCounts($item, numActive);
     });
 }
 

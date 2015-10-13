@@ -724,50 +724,48 @@ function toggleTrees() {
 
 
 function isElementInViewport (el) {
-    //special bonus for those using jQuery
+    // Taken from http://stackoverflow.com/a/7557433
+    // but with the boundary tests changed to capture elements that
+    // continue over the edge of the viewport.
+    
     if (typeof jQuery === "function" && el instanceof jQuery) {
         el = el[0];
     }
 
     var rect = el.getBoundingClientRect();
 
+    // element is not actually visible
+    if (rect.bottom == 0 && rect.right == 0 && rect.top == 0 && rect.left == 0)
+        return false;
+
+    var height = (window.innerHeight || document.documentElement.clientHeight);
+    var width = (window.innerWidth || document.documentElement.clientWidth);
+
     return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && /*or $(window).height() */
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth) /*or $(window).width() */
+        rect.bottom >= 0 &&
+        rect.right >= 0 &&
+        rect.top <= height && 
+        rect.left <= width 
     );
 }
 
 
-function setNodes(type, color) {
-    //if we're highlighting a node, embolden it's text
-    var weight = color != 'black' ? 700 : 100;
-    $('.svg-node').each(function(index, elem) {
-        if (color == 'red' && !isElementInViewport(elem))
+function setNodes(type, status) {
+    // status should be either 'locked' or 'highlighted'
+    // use classList.add etc because jQuery does not
+    // support modifying properties of SVG elements
+    // this will change in jQuery3.
+    
+    var func = function(index, elem) {elem.classList.add(status);};
+
+    $('.derivation:visible').find('[rule='+type+']').each(function(index, elem) {
+        if (status == 'highlighted' && !isElementInViewport(elem))
             return;
             
         var $elem = $(elem);
-        
-        // use classList.add etc because jQuery does not
-        // support modifying properties of SVG elements
-        // this will change in jQuery3
-        if (color == 'red') {
-            var func = function(index, elem) {
-                elem.classList.add('highlighted');
-            }
-        } else if (color == 'blue') {
-            var func = function(index, elem) {
-                elem.classList.add('locked');
-            }
-        }
-        // note that the title attribute will have lex types as well
-        // as the rule entry names, the former being what we want
-        if (type == $elem.attr('rule')) {
-            $elem.find('.svg-node-text').each(func);
-            $elem.find('.svg-line').each(func);
-            $elem.find('text').first().each(func);
-        }
+        $elem.find('.svg-node-text').each(func);
+        $elem.find('.svg-line').each(func);
+        $elem.find('text').first().each(func);
     });
 }
 
@@ -778,7 +776,7 @@ function updateSignNodes() {
     });
         
     $('.sign.type.active').each(function(index, elem) {
-        setNodes($(elem).html(), 'blue');
+        setNodes($(elem).html(), 'locked');
     });
 }
 
@@ -792,8 +790,7 @@ function setTypeHandlers() {
             // highlight items with this type:
             $('.item').each(function(index, element) {
                 // for each item, if any of its active derivations has
-                // 'type' in derivation.types, set its background
-                // '#A6C1FF'
+                // 'type' in derivation.types, update its background
 
                 var $item = $(element);
                 $item.find('.derivation.active').each(function(index, element) {                    
@@ -809,7 +806,7 @@ function setTypeHandlers() {
                 // this is a sign type so highlight all corresponding
                 // subtrees then highlight corresponding span in
                 // surface string
-                setNodes(type, 'red');            
+                setNodes(type, 'highlighted');            
                 highlightSpans(type);
             }
         }, 
@@ -931,7 +928,7 @@ function setItemHandlers($item) {
         $item.find('.svg-node-text').hover(
             function(event) {
                 var type = $(this).parent().attr('rule');
-                setNodes(type, 'red');
+                setNodes(type, 'highlighted');
             }, 
             function(event) {
                 var type = $(this).parent().attr('rule');

@@ -322,7 +322,7 @@ function organizeKinds(diffs, grammar) {
                     kinds.other[xtype].push(t);
                     break;
                 }
-                if (_.contains(DESCENDANTS[grammar][kind], t)) {
+                if (_.includes(DESCENDANTS[grammar][kind], t)) {
                     kinds[kind][xtype].push(t);
                     break;
                 }
@@ -753,9 +753,12 @@ function setNodes(type, status) {
     // status should be either 'locked' or 'highlighted'
     // use classList.add etc because jQuery does not
     // support modifying properties of SVG elements
-    // this will change in jQuery3.
+    // (actually jquery 2.2.0 now supports it)
     
     var func = function(index, elem) {elem.classList.add(status);};
+    
+    // escape '*' found in type names
+    type = type.replace( /(\*)/g, '\\$1' );
 
     $('.derivation:visible').find('[rule='+type+']').each(function(index, elem) {
         if (status == 'highlighted' && !isElementInViewport(elem))
@@ -926,7 +929,9 @@ function setTreeHandlers($item) {
     $item.find('.svg-node-text').hover(
         function(event) {
             var type = $(this).parent().attr('rule');
-            setNodes(type, 'highlighted');
+            if (type != undefined) {
+                setNodes(type, 'highlighted');
+            }
         }, 
         function(event) {
             var type = $(this).parent().attr('rule');

@@ -127,7 +127,6 @@ body {
 
 .locked.svg-node-text {
     fill : blue;
-    font-weight : bold;
 }
 
 
@@ -139,7 +138,6 @@ body {
 
 .highlighted.svg-node-text {
     fill : red;
-    font-weight : bold;
 }
 
 .highlighted.svg-line { stroke : red; }
@@ -210,9 +208,9 @@ input[type=text], input[type=submit], select {
  }
 
 .tree-box { 
-    max-width: 59%; 
+    max-width: 59.5%; 
     max-height: 85%;
-    left: 1%;
+    left: 0.5%;
     right: 1%;
     top: 9%;
 }

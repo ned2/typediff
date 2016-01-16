@@ -248,7 +248,7 @@ function processItemResults(newItems, type) {
         var readings = item.readings.length;
         var counter = incrCounter(type);
         var id = type+'-item-'+counter;
-        var itemSection = $(['#',type,'-items'].join(''));
+        var $itemSection = $(['#',type,'-items'].join(''));
 
         items.push(item);
         $item.find('.hidden').hide();
@@ -256,8 +256,8 @@ function processItemResults(newItems, type) {
         $item.find('.number').text(counter+1);
         updateTreeCounts($item, readings);
         $item.attr('id', id);
-        itemSection.show();
-        itemSection.find('.item-list').append($item);
+        $itemSection.show();
+        $itemSection.find('.item-list').append($item);
 
         var $treeBox = $item.find('.tree-box');
 
@@ -469,7 +469,6 @@ function doDiff() {
         elem.classList.remove('locked');
     });
 
-    
     // We need to know which grammar we're working with in order to
     // get the correct list of descendants of 'sign' and 'synsem'
     // types etc as well as which supertypes come above which types in
@@ -834,112 +833,112 @@ function setTypeHandlers() {
 }
 
 
-function setItemHandlers($item) {
-    var setTreeHandlers = function() {
-        $item.find('.svg-node-text').each(function(index, elem) {
-            var $elem = $(elem);
-            var str = $elem.attr('label');
-            $elem.tooltip({
-                tooltipClass : 'node-label',
-                content : function() {
-                    var $this = $(this);
-                    var grammar = GRAMMARS[$item.attr('grammar')];
-                    var label = $this.attr('title');
-                    var rule = $this.parent().attr('rule');      
-                    var itemIsLex = label == rule;
-                    var treebankAlias = $('select[name=treebank-name]').val();                    
-                    var haveTreebank = treebankAlias != 'none'
+function setTreeHandlers($item) {
+    $item.find('.svg-node-text').each(function(index, elem) {
+        var $elem = $(elem);
+        var str = $elem.attr('label');
+        $elem.tooltip({
+            tooltipClass : 'node-label',
+            content : function() {
+                var $this = $(this);
+                var grammar = GRAMMARS[$item.attr('grammar')];
+                var label = $this.attr('title');
+                var rule = $this.parent().attr('rule');      
+                var itemIsLex = label == rule;
+                var treebankAlias = $('select[name=treebank-name]').val();                    
+                var haveTreebank = treebankAlias != 'none'
 
-                    var makeDiv = function(name, value) {
-                        return '<div class="ttline"><div class="ttname">'+name+'</div><div class="ttval">'+value+'</div></div>';
-                    }
-
-                    var lines = [makeDiv('Label', label)];
-
-                    if (!itemIsLex) {
-                        lines.push(makeDiv('Type', rule));
-                    }
-
-                    if (haveTreebank) {
-                        var treebank = TREEBANKS[treebankAlias];
-                        var ruleStats = treebank.data[rule];
-
-                        if (ruleStats == undefined)
-                            var items = 0;
-                        else
-                            var items = treebank.data[rule].items;
-
-                        var coverage = items*100/treebank.trees; 
-                        lines.push(makeDiv('Coverage', coverage.toFixed(2)+'%'));
-
-                        if (LONGLABELS)
-                            var nodeQuery = rule;
-                        else
-                            var nodeQuery = label;
-
-                        var links = [];  
-                        var fangornUrl = makeFangornQueryUrl(treebankAlias, '//' + nodeQuery);
-                        links.push(linkify(fangornUrl, 'node', 'fangorn search for this node'));
-
-                        if (itemIsLex && grammar.ltdblink != null) {
-                            links.push(linkify(grammar.ltdblink+'/description.cgi?type='+label, 'lextypeDB'));
-                        } else {
-                            var makeSubtreeQuery = function(node, query) {
-                                var label = node.find('>text').attr('title');
-                                var rule = $this.attr('rule');
-
-                                if (LONGLABELS)
-                                    var nodeQuery = rule;
-                                else
-                                    var nodeQuery = label;
-                                
-                                var daughters = node.find('>g');
-                                if (daughters.length == 0) {
-                                    return query;
-                                } else if (daughters.length == 1) {
-                                    return query + '/' + nodeQuery + makeSubtreeQuery(daughters, '');
-                                } else if (daughters.length == 2) {
-                                    var left = makeSubtreeQuery($(daughters[0]), '');
-                                    var right = makeSubtreeQuery($(daughters[1]), '');
-                                    return query + '/' + nodeQuery + '[' + left + ']' + right;
-                                }
-                            };
-                            var subtreeQuery = makeSubtreeQuery($this.parent(), '/');
-                            var fangornUrl = makeFangornQueryUrl(treebankAlias, subtreeQuery);
-                            links.push(linkify(fangornUrl, 'subtree', 'Fangorn search for this subtree'));
-                        }
-                        lines.push(makeDiv('Links', links.join(' ')));
-                    }
-                    return lines.join('');
-                },
-                close: function(event, ui ) {
-                    ui.tooltip.hover(
-                        function () {
-                            $(this).stop(true).fadeTo(400, 1); 
-                        },
-                        function () {
-                            $(this).fadeOut("400", function(){ $(this).remove(); })
-                        }
-                    );
+                var makeDiv = function(name, value) {
+                    return '<div class="ttline"><div class="ttname">'+name+'</div><div class="ttval">'+value+'</div></div>';
                 }
-            });
-        });
 
-        $item.find('.svg-node-text').hover(
-            function(event) {
-                var type = $(this).parent().attr('rule');
-                setNodes(type, 'highlighted');
-            }, 
-            function(event) {
-                var type = $(this).parent().attr('rule');
-                $('.highlighted').each(function(index, elem) {
-                    elem.classList.remove('highlighted');
-                });
+                var lines = [makeDiv('Label', label)];
+
+                if (!itemIsLex) {
+                    lines.push(makeDiv('Type', rule));
+                }
+
+                if (haveTreebank) {
+                    var treebank = TREEBANKS[treebankAlias];
+                    var ruleStats = treebank.data[rule];
+
+                    if (ruleStats == undefined)
+                        var items = 0;
+                    else
+                        var items = treebank.data[rule].items;
+
+                    var coverage = items*100/treebank.trees; 
+                    lines.push(makeDiv('Coverage', coverage.toFixed(2)+'%'));
+
+                    if (LONGLABELS)
+                        var nodeQuery = rule;
+                    else
+                        var nodeQuery = label;
+
+                    var links = [];  
+                    var fangornUrl = makeFangornQueryUrl(treebankAlias, '//' + nodeQuery);
+                    links.push(linkify(fangornUrl, 'node', 'fangorn search for this node'));
+
+                    if (itemIsLex && grammar.ltdblink != null) {
+                        links.push(linkify(grammar.ltdblink+'/description.cgi?type='+label, 'lextypeDB'));
+                    } else {
+                        var makeSubtreeQuery = function(node, query) {
+                            var label = node.find('>text').attr('title');
+                            var rule = $this.attr('rule');
+
+                            if (LONGLABELS)
+                                var nodeQuery = rule;
+                            else
+                                var nodeQuery = label;
+
+                            var daughters = node.find('>g');
+                            if (daughters.length == 0) {
+                                return query;
+                            } else if (daughters.length == 1) {
+                                return query + '/' + nodeQuery + makeSubtreeQuery(daughters, '');
+                            } else if (daughters.length == 2) {
+                                var left = makeSubtreeQuery($(daughters[0]), '');
+                                var right = makeSubtreeQuery($(daughters[1]), '');
+                                return query + '/' + nodeQuery + '[' + left + ']' + right;
+                            }
+                        };
+                        var subtreeQuery = makeSubtreeQuery($this.parent(), '/');
+                        var fangornUrl = makeFangornQueryUrl(treebankAlias, subtreeQuery);
+                        links.push(linkify(fangornUrl, 'subtree', 'Fangorn search for this subtree'));
+                    }
+                    lines.push(makeDiv('Links', links.join(' ')));
+                }
+                return lines.join('');
+            },
+            close: function(event, ui ) {
+                ui.tooltip.hover(
+                    function () {
+                        $(this).stop(true).fadeTo(400, 1); 
+                    },
+                    function () {
+                        $(this).fadeOut("400", function(){ $(this).remove(); })
+                    }
+                );
             }
-        );
-    }
+        });
+    });
 
-    setTreeHandlers();
+    $item.find('.svg-node-text').hover(
+        function(event) {
+            var type = $(this).parent().attr('rule');
+            setNodes(type, 'highlighted');
+        }, 
+        function(event) {
+            var type = $(this).parent().attr('rule');
+            $('.highlighted').each(function(index, elem) {
+                elem.classList.remove('highlighted');
+            });
+        }
+    );
+}
+
+
+function setItemHandlers($item) {
 
     $item.find('.derivation').click(function(event) {
         var $derivation = $(this);
@@ -1024,6 +1023,7 @@ function setItemHandlers($item) {
 
         $newItem.find('.popup').hide();
         setItemHandlers($newItem);
+        setTreeHandlers($newItem);
         newItems.push(newItem);
         $newItem.attr('id', newType+'-item-'+ i).find('.number').html(i+1);
         doDiff();
@@ -1066,7 +1066,7 @@ function setItemHandlers($item) {
             return;
 
         drawTrees($item);
-        setTreeHandlers();
+        setTreeHandlers($item);
 
         // in case some of the types are already active
         updateSignNodes();

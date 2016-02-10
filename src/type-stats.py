@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 
 import delphin
 import config
-
+import gram
 
 """This script is for working with type statistics from DELPH-IN
 treebanks. Funcitonality includes collecting treebank statisitcs,
@@ -90,22 +90,25 @@ def index(profiles, treebank, in_grammar):
                 for name, count in counts.items():
                     stats_dict[name].update(count)
             except delphin.AceError as e:
-                e.msg = "{}\n{}\n".format(path, iid) + e.msg
+                e.other_data.append(iid)
+                e.other_data.append(path)
                 failures.append(e)
-                with open('type-stats-errors.txt', 'a') as f:
-                    sys.stderr.write(str(e)+'\n')
-                    f.write(str(e).encode('utf8')+'\n\n')
+                sys.stderr.write(str(e) + '\n')
+            else:
+                items_seen.add(iid)
+                trees += 1
+                print trees, iid
 
-            items_seen.add(iid)
-            trees += 1
-            print trees, iid
-
-    num_failures = len(failures)
     print "Processed {} trees".format(trees) 
 
+    num_failures = len(failures)
     if num_failures > 0: 
         print "Failed to reconstruct {} trees".format(num_failures) 
-        print '\n'.join(str(e) for e in failures) 
+        print "See type-stats-errors.txt for details."
+
+        with open('type-stats-errors.txt', 'w') as f:
+            errors_str = '\n'.join(str(e) for e in failures)
+            f.write(errors_str.encode('utf8')+'\n\n')
 
     treebank_str = treebank.replace(' ', '_')
     filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees)
@@ -119,7 +122,7 @@ def get_types(derivation_string, grammar):
     env['LC_ALL'] = 'en_US.UTF-8'
     args = [config.TYPIFIERBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env)
-    out, err = process.communicate(input=derivation_string)
+    out, err = process.communicate(input=derivation_string.encode('utf8'))
 
     if err != '':
         raise delphin.AceError('typifier', err)

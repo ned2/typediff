@@ -161,9 +161,10 @@ class AceError(Exception):
     def __init__(self, prog, msg, input=None):
         self.msg = "{} returned:\n{}".format(prog, msg)
         self.input = input
-        
+        self.other_data = []
+
     def __str__(self):
-        return self.msg
+        return self.msg + '\n'.join(self.other_data)
 
 
 class TypeStats(object):

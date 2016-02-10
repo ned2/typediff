@@ -29,8 +29,8 @@ function makeFangornQueryUrl(treebank, query) {
 }
 
 function isERG(grammar) { return grammar.match('t?erg') !== null;}
-function getItemId($item) { return parseInt($item.attr('id').split('-')[2]) }
-function getItemType($item) { return $item.attr('id').split('-')[0] }
+function getItemId($item) { return parseInt($item.attr('id').split('-')[2]); }
+function getItemType($item) { return $item.attr('id').split('-')[0]; }
 function getItems(type) { return (type == 'pos') ? POSITEMS : NEGITEMS; }
 function getItem($item) { return getItems(getItemType($item))[getItemId($item)]; }
 function getDerivationId($deriv) { return parseInt($deriv.attr('id').split('-')[1]); }
@@ -64,7 +64,7 @@ function updateUrl() {
 
     var makeParam = function(param, value) {
         return [param, '=', value].join('');
-    }
+    };
 
     params.push(makeParam('count', $('#count-input').val()));
     params.push(makeParam('treebank', $("#treebank-input").val()));
@@ -214,7 +214,7 @@ function processItems(callback) {
         'load-descendants': loadDescendants,
         'supers': $('input[name=supers]').prop('checked'),
         'tagger': $("input[name=tagger]:checked").val(),
-        'fragments': $('input[name=fragments]').prop('checked'),
+        'fragments': $('input[name=fragments]').prop('checked')
     };
         
     var posting = $.post(WEBTYPES_SCRIPT, data);
@@ -328,7 +328,7 @@ function organizeKinds(diffs, grammar) {
                 }
             }
         }
-    }
+    };
     
     organize('types', kinds);
 
@@ -435,14 +435,14 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
             $status.prev().hide();
             $status.hide();
         }
-    }
+    };
 
     var posGrammars = _.map($('#pos-items .item'), function(x) { 
         return $(x).attr('grammar'); });
     var negGrammars = _.map($('#neg-items .item'), function(x) { 
         return $(x).attr('grammar'); });
-    addGrammarStatus(posGrammars, $('#pos-grammar'))
-    addGrammarStatus(negGrammars, $('#neg-grammar'))
+    addGrammarStatus(posGrammars, $('#pos-grammar'));
+    addGrammarStatus(negGrammars, $('#neg-grammar'));
     $('#numtypes').text(diffs.types.length);
 
     if (SUPERS)
@@ -518,7 +518,7 @@ function doDiff() {
             'query'        : 'find-supers',
             'grammar-name' : grammar,
             'kinds'        : JSON.stringify(kinds)
-        }
+        };
         requests.push($.post(WEBTYPES_SCRIPT, data));
         supers = true;
     }
@@ -580,7 +580,7 @@ function drawTrees($item) {
         gnum.appendChild(text);
 
         // add the tree number and then the tree to the SVG
-        $svg.append(gnum)
+        $svg.append(gnum);
         $svg.append(g);
 
         // update the SVG element dimensions with the dimensions
@@ -601,7 +601,7 @@ function removeSubTrees(trees) {
 
     var treeSubsumes = function(t1, t2) { 
         return t2.from >= t1.from && t2.to <= t1.to; 
-    }
+    };
 
     for (var i=1; i < trees.length; i++) {
         if (treeSubsumes(trees[i], trees[i-1])) {
@@ -631,7 +631,7 @@ function findTree(value, tree) {
     while (stack.length > 0) {
         var t = stack.pop();
         if (t.rule == value || t.label == value) 
-            found.push(t)
+            found.push(t);
         for(var x in t.daughters) 
             stack.push(t.daughters[x]);
     }
@@ -801,6 +801,7 @@ function setTypeHandlers() {
                         $item.css({'background-color': '#A6C1FF'});
                         return false;
                     }
+                    return true;
                 });
             });
 
@@ -849,11 +850,11 @@ function setTreeHandlers($item) {
                 var rule = $this.parent().attr('rule');      
                 var itemIsLex = label == rule;
                 var treebankAlias = $('select[name=treebank-name]').val();                    
-                var haveTreebank = treebankAlias != 'none'
+                var haveTreebank = treebankAlias != 'none';
 
                 var makeDiv = function(name, value) {
                     return '<div class="ttline"><div class="ttname">'+name+'</div><div class="ttval">'+value+'</div></div>';
-                }
+                };
 
                 var lines = [makeDiv('Label', label)];
 
@@ -904,6 +905,7 @@ function setTreeHandlers($item) {
                                 var right = makeSubtreeQuery($(daughters[1]), '');
                                 return query + '/' + nodeQuery + '[' + left + ']' + right;
                             }
+                            // TODO missing return value here
                         };
                         var subtreeQuery = makeSubtreeQuery($this.parent(), '/');
                         var fangornUrl = makeFangornQueryUrl(treebankAlias, subtreeQuery);
@@ -919,7 +921,7 @@ function setTreeHandlers($item) {
                         $(this).stop(true).fadeTo(400, 1); 
                     },
                     function () {
-                        $(this).fadeOut("400", function(){ $(this).remove(); })
+                        $(this).fadeOut("400", function(){ $(this).remove(); });
                     }
                 );
             }
@@ -1002,9 +1004,9 @@ function setItemHandlers($item) {
         $treeBox.toggleClass('max');
 
         if (val == 'Maximise') {
-            $this.val('Minimize')
+            $this.val('Minimize');
         } else {
-            $this.val('Maximise')
+            $this.val('Maximise');
         }
     });
 
@@ -1138,7 +1140,7 @@ function loadData(callback) {
             var treebank = data.treebanks[i]; 
             TREEBANKS[treebank.alias] = treebank;
             $treebankInput.append($('<option>', { 'value' : treebank.alias,
-                                                  'html'  : treebank.name, 
+                                                  'html'  : treebank.name
                                                }));
         }
 
@@ -1233,7 +1235,7 @@ function setHandlers() {
             return;
 
         clearState();
-        window.location.hash = ''
+        window.location.hash = '';
     });
 
     $('input[name=labels]').change(function(event) {

@@ -1,5 +1,5 @@
-DAUGHTER_HSPACE=10
-DAUGHTER_VSPACE=20
+var DAUGHTER_HSPACE = 10;
+var DAUGHTER_VSPACE = 20;
 
 
 function svgelement(type) {

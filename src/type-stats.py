@@ -1,11 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import division 
 
 import sys
 import os
 import argparse
-import cPickle
+import pickle
 import json
 
 from subprocess import Popen, PIPE
@@ -21,6 +21,10 @@ saving as pickle files for storage, loading from existing pickle file
 and exporting to text and json formats.
 
 """
+
+# TODO: change index mode to create json. remove pickling entirely
+# this then means output mode should become text mode. which I don't
+# really need, but hey why not keep it.
 
 
 BLACKLIST = set()
@@ -59,7 +63,7 @@ def index(profiles, treebank, in_grammar):
     for path in profiles:
         grammar = in_grammar
         items_seen = set()
-        print "processing {}".format(path) 
+        print("processing {}".format(path))
         profile = os.path.basename(path) 
 
         if profile in ERG_SPEECH_PROFILES:
@@ -97,14 +101,14 @@ def index(profiles, treebank, in_grammar):
             else:
                 items_seen.add(iid)
                 trees += 1
-                print trees, iid
+                print(trees, iid)
 
-    print "Processed {} trees".format(trees) 
+    print("Processed {} trees".format(trees))
 
     num_failures = len(failures)
     if num_failures > 0: 
-        print "Failed to reconstruct {} trees".format(num_failures) 
-        print "See type-stats-errors.txt for details."
+        print("Failed to reconstruct {} trees".format(num_failures))
+        print("See type-stats-errors.txt for details.")
 
         with open('type-stats-errors.txt', 'w') as f:
             errors_str = '\n'.join(str(e) for e in failures)
@@ -114,7 +118,7 @@ def index(profiles, treebank, in_grammar):
     filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees)
 
     with open(filename, 'wb') as f:
-        cPickle.dump(stats_dict, f)
+        pickle.dump(stats_dict, f)
 
 
 def get_types(derivation_string, grammar):
@@ -136,7 +140,7 @@ def get_types(derivation_string, grammar):
 
 def output(pickle_path, output_type):
     with open(pickle_path, 'rb') as f:
-        type_stats = cPickle.load(f)
+        type_stats = pickle.load(f)
 
     x = os.path.splitext(os.path.basename(pickle_path))[0].split('--')
     grammar_name = x[0]

@@ -18,7 +18,15 @@ var DESCENDANTS = {};
 var FADELENGTH = 400;
 var WEBTYPES_SCRIPT = 'src/webtypes.cgi'; 
 var ACTIVE_TYPES = [];
-    
+
+// these should match the corresponding checkboxes in HTML
+var LONGLABELS = false;
+var SUPERS = false;
+
+var COMPARE = _.difference;
+var GROUP_OP = _.intersection;
+
+
 function linkify(url, text, title) { 
     if (title === undefined) title = '';
     return '<a title="' + title + '" href="' + encodeURI(url) + '">' + text + '</a>';
@@ -57,6 +65,19 @@ function toggleItemType($item) {
 }
 
 
+function updateCompare(operator){
+    $("#extra-group-operator .set-operator").removeClass('enabled');
+    $("#extra-group-operator .set-operator[data-operator='"+operator+"']").addClass('enabled');
+
+    if (operator == 'difference')
+        COMPARE = _.difference;
+    else if (operator == 'intersection') 
+        COMPARE = _.intersection;
+    else if (operator == 'union') 
+        COMPARE = _.union;
+}
+
+
 function updateUrl() {
     if (!haveItems()) return;
 
@@ -66,11 +87,13 @@ function updateUrl() {
         return [param, '=', value].join('');
     };
 
+    var operator = $('#extra-group-operator .set-operator.enabled').data('operator');
+
     params.push(makeParam('count', $('#count-input').val()));
     params.push(makeParam('treebank', $("#treebank-input").val()));
     params.push(makeParam('labels', $("input[name=labels]:checked").val()));
     params.push(makeParam('tagger', $("input[name=tagger]:checked").val()));
-    params.push(makeParam('mode', $("input[name=mode]:checked").val()));
+    params.push(makeParam('mode', operator));
     params.push(makeParam('supers', $("input[name=supers]").prop('checked')));
     params.push(makeParam('fragments', $("input[name=fragments]").prop('checked')));
 
@@ -115,9 +138,10 @@ function loadUrlParams() {
         var param = fields[0];
         var value = fields[1];
 
-        if (param == '' || value === '')
+        if (param === '' || value === '')
             continue;
-        if (param =='count')
+
+        if (param == 'count')
             $('#count-input').val(value);
         else if (param == 'labels') {
             $('input[value='+value+']').prop('checked', true);
@@ -125,31 +149,20 @@ function loadUrlParams() {
                 LONGLABELS = true;
             else
                 LONGLABELS = false;
-        }
-        if (param =='tagger')
+        } else if (param =='tagger') {
             $('input[value='+value+']').prop('checked', true);
-        else if (param == 'mode') {
-            $('input[value='+value+']').prop('checked', true);
-            if (value == 'difference') {
-                COMPARE = _.difference;
-            } else if (value == 'intersection') {
-                COMPARE = _.intersection;
-            } else if (value == 'union') {
-                COMPARE = _.union;            
-            }
-        }
-        else if (param == 'treebank')
+        } else if (param == 'mode') {
+            updateCompare(value);
+        } else if (param == 'treebank') {
             $('#treebank-input').val(value);
-        else if (param == 'supers') {
+        } else if (param == 'supers') {
             var val = JSON.parse(value);
             SUPERS = val;
             $('input[name=supers]').prop('checked', val);
-        }
-        else if (param == 'fragments') {
+        } else if (param == 'fragments') {
             var val = JSON.parse(value);
             $('input[name=fragments]').prop('checked', val);
-        }
-        else if (param == 'Agrammar') {
+        } else if (param == 'Agrammar') {
             var Agrammar = value;
             $('#grammar-input').val(value);
         } else if (param == 'Bgrammar') {
@@ -157,10 +170,11 @@ function loadUrlParams() {
             var currGram = $('#grammar-input').val();
             if (currGram != null)
                 $('#grammar-input').val(value);
-        } else if (param == 'A')
+        } else if (param == 'A') {
             var Ainput = value.split('|||');
-        else if (param == 'B')
+        } else if (param == 'B') {
             var Binput = value.split('|||');
+        }
     }
 
     if (!(Agrammar || Bgrammar))
@@ -204,7 +218,6 @@ function processItems(callback) {
     var grammar =  $('#grammar-input').val();
     var loadDescendants = !Boolean(DESCENDANTS[grammar]);
 
-    //could this be improved with $('#form').serializeArray()?
     var data = {
         'query' : 'parse-types', 
         'pos-items' : $('#pos-input').val(), 
@@ -228,13 +241,28 @@ function processItems(callback) {
             processItemResults(data['pos-items'], 'pos');
             processItemResults(data['neg-items'], 'neg');
             $('#pos-input, #neg-input').val('');
+            setOperator();
             doDiff();
-            if (callback) callback();
+            if (callback)
+                callback();
         } else {
             showStatusBox('#fail-box').html(data.error.replace(/\n/g, '<br/>'));
             updateButtons();
         }
     });
+}
+
+
+function setOperator(){
+    // if both, set to set difference; show options
+    // otherwise, set to union; hide options
+    if (POSITEMS.length && NEGITEMS.length) {
+        updateCompare("difference");
+        $("#extra-group-operator").show();
+    } else {
+        updateCompare("union");
+        $("#extra-group-operator").hide();
+    }
 }
 
 
@@ -482,7 +510,7 @@ function doDiff() {
         if (item.disabled) {
             return [];
         } else {
-            return [].concat.apply([], _.map(item.readings, function(x) {
+            return _.concat.apply([], _.map(item.readings, function(x) {
                 return x.active ? Object.keys(x.types) : []; 
             }));
         }
@@ -492,16 +520,17 @@ function doDiff() {
         if (item.disabled) {
             return [];
         } else {
-            return [].concat.apply([], _.map(item.readings, function(x) {
+            return _.concat.apply([], _.map(item.readings, function(x) {
                 return x.active ? x.supers : []; 
             }));
         }
     };
     
-    var posTypes = _.uniq([].concat.apply([], _.map(POSITEMS, getTypes))); 
-    var posSupers = _.uniq([].concat.apply([], _.map(POSITEMS, getSupers))); 
-    var negTypes = _.uniq([].concat.apply([], _.map(NEGITEMS, getTypes))); 
-    var negSupers = _.uniq([].concat.apply([], _.map(NEGITEMS, getSupers))); 
+
+    var posTypes = _.uniq(GROUP_OP.apply([], _.map(POSITEMS, getTypes))); 
+    var posSupers = _.uniq(GROUP_OP.apply([], _.map(POSITEMS, getSupers))); 
+    var negTypes = _.uniq(GROUP_OP.apply([], _.map(NEGITEMS, getTypes))); 
+    var negSupers = _.uniq(GROUP_OP.apply([], _.map(NEGITEMS, getSupers))); 
 
     var diffs = {'types' : COMPARE(posTypes, negTypes),  
                  'supers' : COMPARE(posSupers, negSupers) };
@@ -1094,7 +1123,8 @@ function setItemHandlers($item) {
 
             if (!havePosItems()) $('#pos-items').hide();
             if (!haveNegItems()) $('#neg-items').hide();
-
+            setOperator();
+            
             if (!haveItems()) 
                 $('#clear-button').trigger('click');
             else
@@ -1156,6 +1186,7 @@ function clearState(callback) {
     POSCOUNTER = 0;
     NEGCOUNTER = 0;
     updateButtons();
+
     var things = '#fail-box, #success-box, #pos-items, #neg-items'; 
     
     if (!callback) {
@@ -1175,7 +1206,8 @@ function clearState(callback) {
         $('.item').remove();
         $('#output-box').empty();
         callback();
-   }
+    }
+    setOperator();
 }
 
 
@@ -1259,20 +1291,6 @@ function setHandlers() {
         }
     });
                                  
-    $('input[name=mode]').change(function(event) {
-        var mode = $(this).val();
-        updateUrl();
-
-        if (mode == 'difference') {
-            COMPARE = _.difference;
-        } else if (mode == 'intersection') {
-            COMPARE = _.intersection;
-        } else if (mode == 'union') {
-            COMPARE = _.union;            
-        }
-        doDiff();
-    });
-
     $('input[name=supers]').change(function(event) {
         SUPERS = $(this).prop('checked');
         updateUrl();
@@ -1326,21 +1344,22 @@ function setHandlers() {
         event.stopPropagation();
     });
 
+    $(".set-operator").click(function(){
+        $this = $(this);
+
+        if ($this.hasClass('enabled'))
+            return;
+        
+        updateCompare($this.data('operator'));
+        updateUrl();
+        doDiff();
+    });
 }
 
 
 $(document).ready(function(){
-
     $('.hidden').hide();
-
-    // Initialize globals that have their defaults set via the HTML
-    // perhaps this should just be set here.
-    COMPARE = _[$('input[name=mode]:checked').val()];
-    SUPERS = $('input[name=supers]').prop('checked');
-    LONGLABELS = $('input[name=labels][value=long]').prop('checked');
-
     loadData(loadUrlParams);
-
     setHandlers();
-
+    updateCompare("union");
 });

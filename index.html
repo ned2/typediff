@@ -174,16 +174,6 @@
                 <span title="Use the TnT tagger with WSJ model (ERG only)"><input type="radio" name="tagger" value="tnt"/> TnT</span>
               </div>
             </div>
-          </div>
-          <div class="option-line">
-            <div class="option">
-              <div class="option-name">Mode:</div>
-              <div class="option-input">
-                <span title="show types used to process A items but not used to process B items"><input type="radio" name="mode" value="difference" checked /> difference</span>
-                <span title="show types used in the processing of both A and B items"><input type="radio" name="mode" value="intersection"/> intersection</span>
-                <span title="show types used in the processing of all items"><input type="radio" name="mode" value="union" /> union</span>
-              </div>
-            </div>
           </div> 
           <div id="actions" class="option-line">
             <input id="add-items-button" type="submit" value="Add Items"/>
@@ -222,6 +212,11 @@
       <div id="pos-items" class="item-type hidden">
         <div class="item-type-header">A ITEMS</div>
         <div class="item-list"></div>
+      </div>
+      <div id="extra-group-operator" class="hidden">
+          <div class="set-operator" data-operator="difference" title="show types used to process A items but not used to process B items">−</div>
+          <div class="set-operator" data-operator="intersection" title="show types used in the processing of both A and B items">∩</div>
+          <div class="set-operator" data-operator="union" title="show types used in the processing of all items">∪</div>
       </div>
       <div id="neg-items" class="item-type hidden">
         <div class="item-type-header">B ITEMS</div>

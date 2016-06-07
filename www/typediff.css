@@ -104,9 +104,27 @@ body {
 
 .error { color: red }
 
-#neg-items { margin-top: 2em }
+#pos-items {margin-bottom: 1em}
 
-.item-type-header { margin-top: .5em }
+#extra-group-operator{
+    margin: auto;
+    width: 4em;
+    font-weight: 500;
+    font-size: 2em;
+}
+
+.set-operator {
+    width: 1em;
+    text-align: center;
+    display: inline-block;
+}
+
+.set-operator.enabled {
+    background-color: lightgray;
+    border-radius: 10px;
+}
+
+.set-operator:hover {cursor: pointer}
 
 .item {
     border: solid 2px black;

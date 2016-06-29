@@ -43,7 +43,7 @@ def parse_types_query(form):
 def find_supers_query(form):
     alias = form.getvalue('grammar-name')
     types = json.loads(form.getvalue('types'))
-    supers = json.loads(form.getvalue('types'))
+    supers = json.loads(form.getvalue('supers'))
     return find_supers(alias, types, supers)
 
 
@@ -58,33 +58,23 @@ def load_data_query():
 
 
 def find_supers(alias, types, supers):
-    # looks like this flattens kinds. Could just do this for all type/supertype
-    # ie for all supertypes get descendents
-    # then for all types, see what they are subtypes of
-
+    # For each type provided, work out which of its supertypes
+    # we are interested in -- ie are present after the diff
+    
     descendants = {} # {supertype: set of descendents}
     grammar = gram.get_grammar(alias)
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     types_to_supers = defaultdict(list)
 
-    for kind, data in kinds.items():
-        types = data['types']
-        supers = data['supers']
-        print("", file=sys.stderr)
-        print(len(types), len(supers), file=sys.stderr)
-        print("", file=sys.stderr)
+    for s in supers:
+        descendants[s] = set(t.name for t in hierarchy[s].descendants())
 
-        for s in supers:
-            descendants[s] = set(t.name for t in hierarchy[s].descendants())
-
-        for t in types:
-            for s, ds in descendants.items():
-                if t in ds:
-                    types_to_supers[t].append([s, hierarchy[s].depth])
-
-    result = {'typesToSupers': types_to_supers}
- 
-    return json.dumps(result, cls=delphin.JSONEncoder)
+    for this_type in types:
+        for s, ds in descendants.items():
+            if this_type in ds:
+                types_to_supers[this_type].append([s, hierarchy[s].depth])
+            
+    return json.dumps({'typesToSupers': types_to_supers} , cls=delphin.JSONEncoder)
 
 
 def test(json_str):

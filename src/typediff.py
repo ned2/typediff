@@ -190,8 +190,11 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
 
     if load_desc:
         descendants = lambda x: set(t.name for t in hierarchy[x].descendants())
-        types = ('sign', 'head', 'synsem', 'cat', 'relation', 'predsort') 
-        data['descendants'] = {t:descendants(t) for t in types}
+        kinds = [name for name, col in config.TYPES if name != 'other']
+        data['descendants'] = {}
+        for kind in kinds:
+            for t in descendants(kind):
+                data['descendants'][t] = kind
     else:
         data['descendants'] = False
 

@@ -351,10 +351,8 @@ input[type=text], input[type=submit], select {
     overflow-y: auto;
 }
 
-.type-line { display: table-row }
 
 .type {
-    display: table-cell;
     font-family: "Courier New", Courier, monospace;
     font-size: 105%;
     border-radius: 10px;

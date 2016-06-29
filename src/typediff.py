@@ -195,8 +195,7 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
     else:
         data['descendants'] = False
 
-    data['typeOrdering'] = [t for t, tc, wc in config.TYPES] 
-    data['typeColors'] = {t:wc for t, tc, wc in config.TYPES}
+    data['typeData'] = {t:{'rank':i+1, 'col':col} for i, (t, col) in enumerate(config.TYPES)} 
     return json.dumps(data, cls=delphin.JSONEncoder)
 
 

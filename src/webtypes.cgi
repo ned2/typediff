@@ -13,6 +13,7 @@ import config
 import delphin
 import gram
 
+
 # Probably running with Apache, so set environment variable will not
 # be set; set LOGONROOT manually.
 delphin.init_paths(logonroot=config.LOGONROOT)
@@ -41,9 +42,9 @@ def parse_types_query(form):
 
 def find_supers_query(form):
     alias = form.getvalue('grammar-name')
-    kinds = form.getvalue('kinds')
-    kinds = json.loads(kinds)
-    return find_supers(alias, kinds)
+    types = json.loads(form.getvalue('types'))
+    supers = json.loads(form.getvalue('types'))
+    return find_supers(alias, types, supers)
 
 
 def load_data_query():
@@ -56,8 +57,12 @@ def load_data_query():
     return json.dumps(result, cls=delphin.JSONEncoder)
 
 
-def find_supers(alias, kinds):
-    descendants = {}
+def find_supers(alias, types, supers):
+    # looks like this flattens kinds. Could just do this for all type/supertype
+    # ie for all supertypes get descendents
+    # then for all types, see what they are subtypes of
+
+    descendants = {} # {supertype: set of descendents}
     grammar = gram.get_grammar(alias)
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     types_to_supers = defaultdict(list)
@@ -65,6 +70,9 @@ def find_supers(alias, kinds):
     for kind, data in kinds.items():
         types = data['types']
         supers = data['supers']
+        print("", file=sys.stderr)
+        print(len(types), len(supers), file=sys.stderr)
+        print("", file=sys.stderr)
 
         for s in supers:
             descendants[s] = set(t.name for t in hierarchy[s].descendants())
@@ -74,8 +82,7 @@ def find_supers(alias, kinds):
                 if t in ds:
                     types_to_supers[t].append([s, hierarchy[s].depth])
 
-    result = { 'success'      : True,
-               'typesToSupers': types_to_supers }
+    result = {'typesToSupers': types_to_supers}
  
     return json.dumps(result, cls=delphin.JSONEncoder)
 

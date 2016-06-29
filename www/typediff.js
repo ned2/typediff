@@ -24,7 +24,7 @@ var LONGLABELS = false;
 var SUPERS = false;
 
 var COMPARE = _.difference;
-var GROUP_OP = _.intersection;
+var GROUP_OP = _.union;
 
 
 function linkify(url, text, title) { 
@@ -236,8 +236,7 @@ function processItems(callback) {
             if (data.descendants)
                 DESCENDANTS[grammar] = data.descendants;
 
-            TYPEORDERING = data.typeOrdering;
-            TYPECOLORS = data.typeColors;
+            TYPEDATA = data.typeData;
             processItemResults(data['pos-items'], 'pos');
             processItemResults(data['neg-items'], 'neg');
             $('#pos-input, #neg-input').val('');
@@ -334,18 +333,20 @@ function updateButtons() {
 
 function organizeKinds(diffs, grammar) {
     // build up a data structure that looks like this:
-    // kind = { 'sign' : { 'types' : [...], 'supers' : [...] },
+    // kinds = { 'sign' : { 'types' : [...], 'supers' : [...] },
     //          'head' : { 'types' : [...], 'supers' : [...] }, ...}
+
+    // maybe change this to: 'type': 
     var kinds = {'other' : { 'types' : [], 'supers' : [] }};
+    var types = Object.keys(TYPEDATA);
+    for (var i=0; i < types.length; i++)
+        kinds[types[i]] = { 'types' : [], 'supers' : [] };
     
-    for (var i=0; i < TYPEORDERING.length; i++)
-        kinds[TYPEORDERING[i]] = { 'types' : [], 'supers' : [] };
-    
-    var organize = function(xtype, kinds) {
+    function organize(xtype, kinds) {
         for (var i=0; i < diffs[xtype].length; i++) {
             var t = diffs[xtype][i];
-            for (var j=0; j < TYPEORDERING.length; j++) {
-                var kind = TYPEORDERING[j];
+            for (var j=0; j < types.length; j++) {
+                var kind = types[j];
                 if (kind == 'other') {
                     kinds.other[xtype].push(t);
                     break;
@@ -356,22 +357,28 @@ function organizeKinds(diffs, grammar) {
                 }
             }
         }
-    };
+    }
     
     organize('types', kinds);
 
-    if (SUPERS) 
+    if (SUPERS) {
         organize('supers', kinds);
-
+    }
     return kinds;
 }
 
 
-function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
-    /* add the types to the output box */
-    var outputBox = $('#output-box').empty();
+function postDiff(diffs, kinds, itemCounts, grammar, typesToSupers, treebank) {
+    /* create a new table with output types */
 
-    var makeNode = function(type, kind, superOf) {
+    var outputPane = $('#output-pane-contents').empty(); 
+    var table = $('<table>').
+            attr({id:'#type-table'}).
+            html('<thead><tr><th>kind</th><th>Items</th><th>Treebank</th><th>Type</th></tr></thead>').
+            appendTo(outputPane);
+    var tbody = $('<tbody>').appendTo(table);
+    
+    function makeNode(type, kind, superOf) {
         if (superOf) {
             var classt = ['type', kind, 'super'].join(' ');
             var titlet = [kind, 'type; supertype of', superOf].join(' ');
@@ -380,16 +387,16 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
             var titlet = [kind, 'type'].join(' ');
         }
 
-        var style = 'background: ' + TYPECOLORS[kind];
-        var inner = $('<div>', {'class' : classt,
+        var style = 'background: ' + TYPEDATA[kind].col;
+        var inner = $('<td>', {'class' : classt,
                                 'text'  : type,
                                 'title' : titlet,
-                                'style' : style, 
+                                'style' : style 
                                });
         if (superOf)
-            var typeLine = $('<div>', {'class' : 'type-line super'}).append(inner);
+            var typeLine = $('<tr>', {'class' : 'type-line super'}).append(inner);
         else
-            var typeLine = $('<div>', {'class' : 'type-line'}).append(inner);
+            var typeLine = $('<tr>', {'class' : 'type-line'}).append(inner);
         
         if (treebank.data && !superOf) {
             var typeStats = treebank.data[type];
@@ -407,42 +414,44 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
             var stringNum = '';
         }
             
-        var itemsElem = $('<div>', {'class' : 'items-stat', 
-                                    'text'  : stringNum,
-                                    'title' : 'percent of trees in treebank this type is found in'});
-        typeLine.prepend(itemsElem);
+        var treebankCount = $('<td>', {
+            class : 'items-stat', 
+            text : stringNum,
+            title : 'percent of trees in treebank this type is found in'});
+        var itemCount = $('<td>', {
+            class : 'items-stat', 
+            text : itemCounts[type],
+            title : 'number of positive items found in'});
+        var typeKind = $('<td>', {
+            text : kind,
+            "data-order" : TYPEDATA[kind].rank});
+
+        typeLine.prepend(treebankCount);
+        typeLine.prepend(itemCount);
+        typeLine.prepend(typeKind);
         return typeLine;
     };
 
-    for (var i=0; i < TYPEORDERING.length; i++) {
-        var kind = TYPEORDERING[i];
+    //for type in types:
+    //tbody.append(makeNode(type, typeKinds[type], false));    
+
+    var kindList = Object.keys(TYPEDATA); 
+    console.log(kindList);
+
+    for (var i=0; i < kindList.length; i++) {
+        var kind = kindList[i];
         var types = kinds[kind].types;
-
-        if (treebank.data) {
-            var sortOrder = $("input[name=sort]:checked").val();
-            var sortedTypes = _.sortBy(types, function(x) {
-                var typeStats = treebank.data[x]; 
-
-                if (typeStats == undefined)
-                    var val =  0;
-                else 
-                    var val = typeStats.items;                      
-                return val;
-            });
-        } else {
-            var sortedTypes = types;
-        }
-
-        for (var j=0; j < sortedTypes.length; j++) { 
-            var type = sortedTypes[j];
-            outputBox.append(makeNode(type, kind, false));
+        debugger
+        for (var j=0; j < types.length; j++) { 
+            var type = types[j];
+            tbody.append(makeNode(type, kind, false));
 
             if (typesToSupers && typesToSupers[type]) {
                 var supers = typesToSupers[type];
                 var sortedSupers = _.sortBy(supers, function(x) {
                     return -x[1];});
                 for (var k=0; k < supers.length; k++) {
-                    outputBox.append(makeNode(sortedSupers[k][0], kind, type));
+                    tbody.append(makeNode(sortedSupers[k][0], kind, type));
                 }
             }
         }
@@ -487,6 +496,12 @@ function postDiff(diffs, kinds, grammar, typesToSupers, treebank) {
     setTypeHandlers();
     updateButtons();
     updateUrl();
+    table.DataTable({
+        paging:false,
+        orderFixed: [0,'asc'],
+        fixedHeader: true,
+//        columnDefs: [{ "visible": false, "targets": 0 }]
+    });
 }
 
 
@@ -506,6 +521,8 @@ function doDiff() {
     // worth the effort.
     var grammar = $('.item').attr('grammar');
 
+
+    // get the types from all active readings in an item
     var getTypes = function(item) { 
         if (item.disabled) {
             return [];
@@ -516,6 +533,7 @@ function doDiff() {
         }
     };
 
+    // get the types from all active readings in an item
     var getSupers = function(item) { 
         if (item.disabled) {
             return [];
@@ -527,14 +545,54 @@ function doDiff() {
     };
     
 
-    var posTypes = _.uniq(GROUP_OP.apply([], _.map(POSITEMS, getTypes))); 
-    var posSupers = _.uniq(GROUP_OP.apply([], _.map(POSITEMS, getSupers))); 
-    var negTypes = _.uniq(GROUP_OP.apply([], _.map(NEGITEMS, getTypes))); 
-    var negSupers = _.uniq(GROUP_OP.apply([], _.map(NEGITEMS, getSupers))); 
+    // I need to count up the number of sentences that each type occurs in.  ie:
+    // when I aggregate the types for a list of item I need to count them up not
+    // just unique them. will _.countBy work?
 
-    var diffs = {'types' : COMPARE(posTypes, negTypes),  
-                 'supers' : COMPARE(posSupers, negSupers) };
-    var kinds = organizeKinds(diffs, grammar); 
+    // so remove uniq, and just count up instead of GROUP_OP?
+    // then this data needs to be added to the diffs object somehow
+
+    // map getTypes over ITEMS to get a list of list of types
+    // [[t1,t2,t3], [t1,t2,t3]] each sublist corresponding to an item
+    // need to convert this to a an object with types and item counts as values
+
+
+
+    
+    // list of lists of types; each sublist corresponding to an item
+    // var itemsTypes = _.map(POSITEMS, getTypes);
+    // var itemCounts = {};
+    // for (var i=0; i<itemsTypes.length; i++){
+    //     var itemTypes = _.uniq(itemsTypes[i]);
+        
+    //     for (var j=0; j<itemTypes.length; j++){
+    //         var type = itemTypes[j];
+    //         if (itemCounts.hasOwnProperty(type))
+    //             itemCounts[type]++;
+    //         else
+    //             itemCounts[type] = 1;
+    //     }
+    // }
+
+    
+    var posTypes = _.uniq(_.union.apply([], _.map(POSITEMS, getTypes))); 
+    var posSupers = _.uniq(_.union.apply([], _.map(POSITEMS, getSupers))); 
+    var negTypes = _.uniq(_.union.apply([], _.map(NEGITEMS, getTypes))); 
+    var negSupers = _.uniq(_.union.apply([], _.map(NEGITEMS, getSupers))); 
+
+    // better algorithm:
+    // uniq on each element
+    // flatten them
+    // countBy type names
+
+    var itemCounts = _.countBy([].concat.apply([], _.map(_.map(POSITEMS, getTypes), _.uniq)));
+
+    var diffs = {
+        types : COMPARE(posTypes, negTypes),
+        supers : COMPARE(posSupers, negSupers)
+    };
+
+    //var kinds = organizeKinds(diffs, grammar); 
 
     var requests = [];
     var supers = false;
@@ -546,7 +604,8 @@ function doDiff() {
         data = {
             'query'        : 'find-supers',
             'grammar-name' : grammar,
-            'kinds'        : JSON.stringify(kinds)
+            'types'        : JSON.stringify(diffs.types),
+            'supers'        : JSON.stringify(diffs.types)
         };
         requests.push($.post(WEBTYPES_SCRIPT, data));
         supers = true;
@@ -578,7 +637,8 @@ function doDiff() {
             for (var i=0; i < arguments.length; i++)
                 things(arguments[i][0]);
         }
-        postDiff(diffs, kinds, grammar, supers, treebank);
+
+        postDiff(diffs, kinds, itemCounts, grammar, supers, treebank);
     });
 }
 

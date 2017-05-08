@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from subprocess import Popen, PIPE
 
@@ -6,7 +6,7 @@ import sys
 import os
 import stat
 import argparse
-import cPickle
+import pickle
 
 import delphin
 import config
@@ -54,39 +54,39 @@ def argparser():
 
 def pickle_typesfile(grammar):
     sys.setrecursionlimit(10000)
-    print "pickling {} hierarchy".format(grammar.alias)
+    print("pickling {} hierarchy".format(grammar.alias))
     hierarchy = delphin.TypeHierarchy(grammar.types_path)
-    cPickle.dump(hierarchy, open(grammar.pickle_path, 'wb'))
+    pickle.dump(hierarchy, open(grammar.pickle_path, 'wb'))
 
 
 def build_grammar_image(grammar):
     if config.ACESRC is not None:
         os.chdir(config.ACESRC)
-    print "compiling {}".format(grammar.alias)
+    print("compiling {}".format(grammar.alias))
     args = [config.ACEBIN, '-g', grammar.aceconfig, '-G', grammar.dat_path]
     process= Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = process.communicate()
-    
+
     if process.returncode != 0:
         msg = "Failed to build {}; ACE returned:\n{}"
-        raise UtilError(msg.format(grammar.alias, err)) 
+        raise UtilError(msg.format(grammar.alias, err.decode('utf8'))) 
     
     permissions = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH
     os.chmod(grammar.dat_path, permissions)
          
 
 def get_types_dump(grammar):
-    print "dumping {} hierarchy".format(grammar.alias)
+    print("dumping {} hierarchy".format(grammar.alias))
     args = [config.DUMPHIERARCHYBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = process.communicate()
     
-    if err != '':
+    if process.returncode != 0:
         msg = "Failed to dump {} hierarchy; dumphierarchy returned:\n{}"
-        raise UtilError(msg.format(grammar.alias, err)) 
-    
-    with open(grammar.types_path, 'w') as f:
-        f.write(out)
+        raise UtilError(msg.format(grammar.alias, err.decode('utf8')))
+
+    with open(grammar.types_path, 'w', encoding='utf8') as f:
+        f.write(out.decode('utf8'))
         
 
 def make_data(grammar):

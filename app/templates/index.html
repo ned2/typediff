@@ -1,60 +1,38 @@
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Typediff</title>
-  <link rel="stylesheet" type="text/css" media="screen" href="www/typediff.css"/>
-  <link href="https://cdn.datatables.net/v/dt/dt-1.10.12/fh-3.1.2/datatables.min.css" rel='stylesheet' type='text/css'>
-  <!-- Note that jQuery 3.0 will require updated version of jQuery UI:
-      https://github.com/jquery/jquery-ui/commit/b3a9b13a218cd90b7cf67be5d5f8ad6e76c557b0
-  <script type="text/javascript" src="www/jquery-3.0.0-alpha1.js"></script>
-  -->
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-  <script type="text/javascript">
-    if (typeof jQuery == 'undefined') {
-        document.write(unescape("%3Cscript src='www/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
-    }
-  </script>
-  <script src="https://cdn.datatables.net/v/dt/dt-1.10.12/fh-3.1.2/datatables.min.js"></script>
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
-  <script>
-    if (typeof jQuery.ui == 'undefined') {
-        document.write(unescape("%3Cscript src='www/jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
-    }
-  </script>
-  <script type="text/javascript" src="www/lodash.min.js"></script>
-  <script type="text/javascript" src="www/typediff.js"></script>
-  <script type="text/javascript" src="www/render.js"></script>
-  <script type="text/html" id="item-template">
+{% extends "base.html" %}
+
+{% block js_scripts_top %}
+<script type="text/html" id="item-template">
     <div class="item">
-      <div class="tree-box popup hidden">
-        <div class="tree-actions hidden">
-          <input class="activate-derivations" type="submit" value="Select All"/>
-          <input class="disable-derivations" type="submit" value="Unselect All"/>
-          <input class="copy-item" type="submit" value="Copy Item" title="Copy this item to the other set with the same active trees."/>
-          <input class="toggle-tree-box" type="submit" value="Maximise" title="Expand popup to fill window."/>
-          <div class="tree-count"></div>
+        <div class="tree-box popup hidden">
+            <div class="tree-actions hidden">
+                <input class="activate-derivations" type="submit" value="Select All"/>
+                <input class="disable-derivations" type="submit" value="Unselect All"/>
+                <input class="copy-item" type="submit" value="Copy Item" title="Copy this item to the other set with the same active trees."/>
+                <input class="toggle-tree-box" type="submit" value="Maximise" title="Expand popup to fill window."/>
+                <div class="tree-count"></div>
+            </div>
         </div>
-      </div>
-      <div class="mrs-box popup hidden">
-        <div class="mrs-label"></div>
-        <div class="mrs"></div>
-      </div>
-      <div class="actions">
-        <div class="number">1.</div>
-        <div class="del" title="remove item">✖</div>
-        <div class="disable">
-          <span class="icon" title="disable item">≢</span>
-          <span class="icon hidden" title="enable item">≡</span>
+        <div class="mrs-box popup hidden">
+            <div class="mrs-label"></div>
+            <div class="mrs"></div>
         </div>
-      </div>
-      <div class="clear"></div>
-      <div class="text"></div>
-      <div class="tree-count"></div>
-      <div class="clear"></div>
+        <div class="actions">
+            <div class="number">1.</div>
+            <div class="del" title="remove item">✖</div>
+            <div class="disable">
+                <span class="icon" title="disable item">≢</span>
+                <span class="icon hidden" title="enable item">≡</span>
+            </div>
+        </div>
+        <div class="clear"></div>
+        <div class="text"></div>
+        <div class="tree-count"></div>
+        <div class="clear"></div>
     </div>
-  </script>
-</head>
-<body>
+</script>
+{% endblock js_scripts_top %}
+
+{% block content %}
 <div id="help-box">
   <div id="help-content" class="hidden">
     <p>Typediff is a tool to allow you to quickly explore types
@@ -232,5 +210,4 @@
   </div>
   <div class="clear"></div>
 </div>
-</body>
-</html>
+{% endblock content %}

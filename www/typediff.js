@@ -336,7 +336,7 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
 
     var outputPane = $('#output-pane-contents').empty(); 
     var table = $('<table>').
-            attr({id:'#type-table'}).
+            attr({id:'type-table'}).
             html('<thead><tr><th>kind</th><th>Items</th><th>Treebank</th><th>Type</th></tr></thead>').
             appendTo(outputPane);
     var tbody = $('<tbody>').appendTo(table);

@@ -381,3 +381,7 @@ input[type=text], input[type=submit], select {
     text-align: right;
     padding-right: 1em;
 }
+
+#type-table_wrapper {
+    position: static;
+}

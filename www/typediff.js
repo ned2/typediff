@@ -16,8 +16,8 @@ var POSCOUNTER = 0;
 var NEGCOUNTER = 0;
 var DESCENDANTS = {};
 var FADELENGTH = 400;
-var WEBTYPES_SCRIPT = 'src/webtypes.cgi'; 
 var ACTIVE_TYPES = [];
+var API_URL = '/api/';
 
 // these should match the corresponding checkboxes in HTML
 var LONGLABELS = false;
@@ -230,7 +230,7 @@ function processItems(callback) {
         'fragments': $('input[name=fragments]').prop('checked')
     };
         
-    var posting = $.post(WEBTYPES_SCRIPT, data);
+    var posting = $.post(API_URL + 'parse-types', data);
     posting.done(function(data) {
         if (data.success) {
             if (data.descendants)
@@ -513,12 +513,11 @@ function doDiff() {
     if (SUPERS && supers.length != 0) {
         // We need to lookup which types the supers are supertypes of.
         data = {
-            'query'        : 'find-supers',
             'grammar-name' : grammar,
             'types'        : JSON.stringify(types),
-            'supers'        : JSON.stringify(supers)
+            'supers'       : JSON.stringify(supers)
         };
-        requests.push($.post(WEBTYPES_SCRIPT, data));
+        requests.push($.post(API_URL + 'find-supers', data));
     }
 
     var treebankAlias = $('select[name=treebank-name]').val();
@@ -1117,10 +1116,7 @@ function updateIds(removedElem) {
 
 
 function loadData(callback) {
-
-    var data = {'query' : 'load-data' }; 
-    var posting = $.post(WEBTYPES_SCRIPT, data);
-
+    var posting = $.post(API_URL + 'load-data');
     posting.done(function(data) {
         FANGORNPATH = data.fangornpath;
         JSONPATH = data.jsonpath;

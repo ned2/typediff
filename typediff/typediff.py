@@ -123,7 +123,7 @@ def pretty_print_types(types, hierarchy):
         else:
             return set(t.name for t in hierarchy[s].descendants())
 
-    kinds = [(descendants(t), tc) for t,tc in config.TYPES]
+    kinds = [(descendants(t), col) for t, _rgba, col in config.TYPES]
 
     def keyfunc(t):
         for i, x in enumerate(kinds): 
@@ -191,7 +191,7 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
 
     if load_desc:
         descendants = lambda x: set(t.name for t in hierarchy[x].descendants())
-        kinds = [name for name, col in config.TYPES if name != 'other']
+        kinds = [name for name, _rgba, _col in config.TYPES if name != 'other']
         data['descendants'] = {}
 
         for kind in kinds:
@@ -200,8 +200,8 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
     else:
         data['descendants'] = False
 
-    data['typeData'] = {t:{'rank':i+1, 'col':col}
-                        for i, (t, col) in enumerate(config.TYPES)} 
+    data['typeData'] = {t:{'rank':i+1, 'col':rgba}
+                        for i, (t, rgba, _col) in enumerate(config.TYPES)} 
     return json.dumps(data, cls=delphin.JSONEncoder)
 
 

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import cgitb
 cgitb.enable(logdir='/tmp')
 
@@ -85,7 +84,6 @@ def test(json_str):
 def main():
     form = cgi.FieldStorage()
     query = form.getvalue('query')
-
     print('Content-Type: application/json; charset=utf-8\n\n')
 
     if query == 'parse-types':  

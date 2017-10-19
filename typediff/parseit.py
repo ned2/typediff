@@ -1,19 +1,15 @@
-#!/usr/bin/env python3
-
 import sys
 import os
 import argparse
 from collections import Counter, defaultdict
 
-import delphin
-import config
-import gram
-import stats
+from .delphin import (get_profile_ids, load_hierarchy, TypeNotFoundError,
+                      get_profile_results)
+from .config import TYPIFIERBIN, ACEBIN
+from .gram import get_grammar
+from .stats import counts2dist, kl_divergence, js_divergence
 
-"""parseit.py
-Author: Ned Letcher
-https://github.com/ned2/grammalytics
-
+"""
 A flexible tool for converting and extracting information from
 DELPH-IN grammar derivations. Supports reading stored derivations from
 DELPH-IN profiles as well as on the fly parsing from text files and
@@ -234,7 +230,7 @@ def convert_trees(results_dict, feature, align, paths, failtok, best, backoff):
             backoffs = extract_backoff_items(backoff)
 
         lines = []
-        for iid in delphin.get_profile_ids(*paths):
+        for iid in get_profile_ids(*paths):
             try:
                 features = reading_features(results_dict[iid][0], feature)
                 lines.append(features)
@@ -261,10 +257,10 @@ def update_reading_counts(reading, feature, counts, ancestor):
         if ancestor is None:
             counts.update(reading.types)    
         else:
-            hierarchy = delphin.load_hierarchy(reading.grammar.types_path)
+            hierarchy = load_hierarchy(reading.grammar.types_path)
             try:
                 descendant_types = set(t.name for t in hierarchy[ancestor].descendants())
-            except delphin.TypeNotFoundError as e:
+            except TypeNotFoundError as e:
                 sys.stderr.write(str(e))
                 sys.exit()
             for t in reading.types:
@@ -295,9 +291,9 @@ def compare_trees(results_dictA, results_dictB, feature):
             for reading in item:
                 update_reading_counts(reading, feature, counts)
 
-    dist1, dist2 = stats.counts2dist(countsA, countsB)
-    kl = stats.kl_divergence(dist1, dist2)
-    js = stats.js_divergence(dist1, dist2)
+    dist1, dist2 = counts2dist(countsA, countsB)
+    kl = kl_divergence(dist1, dist2)
+    js = js_divergence(dist1, dist2)
     
     lines = [
         "KL divergence of {} = {}".format(feature, kl),
@@ -311,10 +307,10 @@ def compare(grammar, arg):
     split = arg.paths.index('@')
     pathsA = arg.paths[:split]
     pathsB = arg.paths[split+1:]
-    readingA = delphin.get_profile_results(pathsA, best=arg.best, gold=arg.gold, 
-                                            cutoff=arg.cutoff, grammar=grammar)
-    resultsB = delphin.get_profile_results(pathsB, best=arg.best, gold=arg.gold,
-                                             cutoff=arg.cutoff, grammar=grammar)
+    readingA = get_profile_results(pathsA, best=arg.best, gold=arg.gold, 
+                                   cutoff=arg.cutoff, grammar=grammar)
+    resultsB = get_profile_results(pathsB, best=arg.best, gold=arg.gold,
+                                   cutoff=arg.cutoff, grammar=grammar)
     return compare_trees(resultsA, resultsB, arg.feature)
 
 
@@ -333,7 +329,7 @@ def get_results(grammar, arg):
     cache = (arg.command == 'convert' and arg.feature == 'derivation')
 
     if arg.command == 'count' and arg.feature == 'types':
-        typifier = config.TYPIFIERBIN
+        typifier = TYPIFIERBIN
     else:
         typifier = None
 
@@ -353,10 +349,10 @@ def get_results(grammar, arg):
         if arg.feature == "short-derivation":
             results = delphin.get_short_label_results(
                 lines, grammar, best=arg.best, fragments=arg.fragments,
-                ace_path=config.ACEBIN)
+                ace_path=ACEBIN)
         else:
             results = delphin.get_text_results(
-                lines, grammar, best=arg.best, ace_path=config.ACEBIN,
+                lines, grammar, best=arg.best, ace_path=ACEBIN,
                 lextypes=lextypes, typifier=typifier, fragments=arg.fragments,
                 cache=cache)
     else:
@@ -378,7 +374,7 @@ def main():
     elif arg.command == 'draw':
         arg.feature = None # just hack this rather than working out when defined
 
-    grammar = gram.get_grammar(arg.grammar)
+    grammar = get_grammar(arg.grammar)
     #if arg.command == 'draw' or arg.feature not in NONTDL_FEATURES:
         #if os.path.basename(arg.paths[0]) in ('vm6', 'vm13', 'vm31', 'vm32'):
         #    # note that this program doesn't support mixing speech and non
@@ -408,7 +404,3 @@ def main():
         print(e)
 
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

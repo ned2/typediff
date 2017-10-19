@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 import os
 import argparse
@@ -275,7 +273,3 @@ def main():
     except(delphin.AceError) as err:
         sys.stderr.write(err.msg)
         return 2
-
-
-if __name__ == "__main__":
-    sys.exit(main())

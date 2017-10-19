@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import division 
-
 import sys
 import os
 import argparse
@@ -11,9 +9,11 @@ import json
 from subprocess import Popen, PIPE
 from collections import Counter, defaultdict
 
-import delphin
-import config
-import gram
+from .delphin import (TypeStats, tsdb_query, TsdbError, AceError, AceError,
+                      load_hierarchy, JSONEncoder)
+from .config import TYPIFIERBIN
+from .gram import get_grammar
+
 
 """This script is for working with type statistics from DELPH-IN
 treebanks. Funcitonality includes collecting treebank statisitcs,
@@ -56,7 +56,7 @@ def argparser():
 
 
 def index(profiles, treebank, in_grammar):
-    stats_dict = defaultdict(delphin.TypeStats)
+    stats_dict = defaultdict(TypeStats)
     trees = 0
     failures = []
 
@@ -68,14 +68,14 @@ def index(profiles, treebank, in_grammar):
 
         if profile in ERG_SPEECH_PROFILES:
             alias = grammar.alias+'-speech'
-            grammar = gram.get_grammar(alias)
+            grammar = get_grammar(alias)
 
         try:
             # for treebanked profiles:
-            out = delphin.tsdb_query('select i-id derivation where t-active > 0', path)
+            out = tsdb_query('select i-id derivation where t-active > 0', path)
             # for non-treebanked profiles
-            # out = delphin.tsdb_query('select i-id derivation where readings > 0', path)
-        except delphin.TsdbError as e:
+            # out = tsdb_query('select i-id derivation where readings > 0', path)
+        except TsdbError as e:
             sys.stderr.write(str(e)+'\n')
             continue
 
@@ -93,7 +93,7 @@ def index(profiles, treebank, in_grammar):
                 counts = get_types(derivation, grammar)
                 for name, count in counts.items():
                     stats_dict[name].update(count)
-            except delphin.AceError as e:
+            except AceError as e:
                 e.other_data.append(iid)
                 e.other_data.append(path)
                 failures.append(e)
@@ -124,12 +124,12 @@ def index(profiles, treebank, in_grammar):
 def get_types(derivation_string, grammar):
     env = dict(os.environ)
     env['LC_ALL'] = 'en_US.UTF-8'
-    args = [config.TYPIFIERBIN, grammar.dat_path]
+    args = [TYPIFIERBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env)
     out, err = process.communicate(input=derivation_string.encode('utf8'))
 
     if err != '':
-        raise delphin.AceError('typifier', err)
+        raise AceError('typifier', err)
     
     types, tree = out.split('\n\n')
     err = err
@@ -148,8 +148,8 @@ def output(pickle_path, output_type):
     trees = x[2]
     metadata = {'grammar' : grammar_name, 'treebank' : treebank, 'trees' : trees}
 
-    grammar = gram.get_grammar(grammar_name)
-    hierarchy = delphin.load_hierarchy(grammar.types_path)
+    grammar = get_grammar(grammar_name)
+    hierarchy = load_hierarchy(grammar.types_path)
     signs = [x.name for x in hierarchy['sign'].descendants() 
              if not x.name.startswith('glb')]
  
@@ -170,7 +170,7 @@ def json_output(type_stats, metadata):
     filename = "{grammar}--{treebank}--{trees}.json".format(**metadata)
 
     with open(filename, 'w') as f:
-        f.write(json.dumps(type_stats, cls=delphin.JSONEncoder))
+        f.write(json.dumps(type_stats, cls=JSONEncoder))
 
 
 def txt_output(types, type_stats, metadata, kind):
@@ -220,7 +220,7 @@ def main():
             else:
                 profiles.append(arg.profile)
 
-        grammar = gram.get_grammar(arg.grammar)
+        grammar = get_grammar(arg.grammar)
         index(profiles, arg.treebank, grammar)
 
     elif arg.command == 'output':

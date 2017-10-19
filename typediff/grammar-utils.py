@@ -1,21 +1,18 @@
-#!/usr/bin/env python3
-
-from subprocess import Popen, PIPE
-
 import sys
 import os
 import stat
 import argparse
 import pickle
+from subprocess import Popen, PIPE
 
-import delphin
-import config
-import gram
+from .delphin import TypeHierarchy
+from .config import ACESRC, ACEBIN, DUMPHIERARCHYBIN, DATAPATH
+from .gram import get_grammar, get_grammars
 
 
 """
-A convenience script for generating data needed by things in the
-grammalytics toolkit. Other functions may be added in the future.
+A convenience script for generating data needed Typediff. Other functions
+may be added in the future.
 
 Usage:
 
@@ -55,15 +52,15 @@ def argparser():
 def pickle_typesfile(grammar):
     sys.setrecursionlimit(10000)
     print("pickling {} hierarchy".format(grammar.alias))
-    hierarchy = delphin.TypeHierarchy(grammar.types_path)
+    hierarchy = TypeHierarchy(grammar.types_path)
     pickle.dump(hierarchy, open(grammar.pickle_path, 'wb'))
 
 
 def build_grammar_image(grammar):
-    if config.ACESRC is not None:
-        os.chdir(config.ACESRC)
+    if ACESRC is not None:
+        os.chdir(ACESRC)
     print("compiling {}".format(grammar.alias))
-    args = [config.ACEBIN, '-g', grammar.aceconfig, '-G', grammar.dat_path]
+    args = [ACEBIN, '-g', grammar.aceconfig, '-G', grammar.dat_path]
     process= Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = process.communicate()
 
@@ -77,7 +74,7 @@ def build_grammar_image(grammar):
 
 def get_types_dump(grammar):
     print("dumping {} hierarchy".format(grammar.alias))
-    args = [config.DUMPHIERARCHYBIN, grammar.dat_path]
+    args = [DUMPHIERARCHYBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stderr=PIPE)
     out, err = process.communicate()
     
@@ -99,20 +96,16 @@ def main():
     arg = argparser().parse_args()
     
     if arg.command == "make-data":
-        if not os.path.exists(config.DATAPATH):
-            os.makedirs(config.DATAPATH)
+        if not os.path.exists(DATAPATH):
+            os.makedirs(DATAPATH)
 
         if len(arg.grammars) == 0:
-            grammars = gram.get_grammars()
+            grammars = get_grammars()
         else:
-            grammars = [gram.get_grammar(alias) for alias in arg.grammars]
+            grammars = [get_grammar(alias) for alias in arg.grammars]
 
         for grammar in grammars:
             try:
                 make_data(grammar)
             except UtilError as e:
                 sys.stderr.write(e.msg+'\n')
-
-        
-if __name__ == "__main__":
-    sys.exit(main())

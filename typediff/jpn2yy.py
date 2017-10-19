@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -* coding:utf-8 -*-
 
 # Author: Francis Bond
@@ -40,6 +40,5 @@ def jp2yy(sent):
 
 
 if __name__ == "__main__":
-    import sys
     sent = sys.argv[1]
     print("".join(jp2yy(sent)))

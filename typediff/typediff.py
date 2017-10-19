@@ -7,9 +7,9 @@ import json
 import pickle
 from itertools import chain
 
-import delphin
-import config
-import gram
+from . import delphin
+from . import config
+from . import gram
 
 
 """typediff.py
@@ -156,7 +156,7 @@ def compare_types(pos_types, neg_types, arg):
     return types
 
 
-def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
+def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
                 tagger):
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
@@ -202,7 +202,7 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
 
     data['typeData'] = {t:{'rank':i+1, 'col':rgba}
                         for i, (t, rgba, _col) in enumerate(config.TYPES)} 
-    return json.dumps(data, cls=delphin.JSONEncoder)
+    return data
 
 
 def typediff(pos_input, neg_input, grammar, arg):

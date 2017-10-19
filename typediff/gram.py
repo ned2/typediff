@@ -1,7 +1,7 @@
 import os
 
-import config
-from delphin import Grammar
+from . import config
+from .delphin import Grammar
 
 
 class ConfigGrammar(Grammar):

@@ -2,28 +2,26 @@
 <head>
   <meta charset="utf-8" />
   <title>Typediff</title>
-  <link rel="stylesheet" type="text/css" media="screen" href="www/typediff.css"/>
+  <link rel="stylesheet" type="text/css" media="screen" href="static/typediff.css"/>
   <link href="https://cdn.datatables.net/v/dt/dt-1.10.12/fh-3.1.2/datatables.min.css" rel='stylesheet' type='text/css'>
-  <!-- Note that jQuery 3.0 will require updated version of jQuery UI:
-      https://github.com/jquery/jquery-ui/commit/b3a9b13a218cd90b7cf67be5d5f8ad6e76c557b0
-  <script type="text/javascript" src="www/jquery-3.0.0-alpha1.js"></script>
-  -->
+  <!-- TODO: add local version for offline  -->
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
   <script type="text/javascript">
     if (typeof jQuery == 'undefined') {
-        document.write(unescape("%3Cscript src='www/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
+        document.write(unescape("%3Cscript src='static/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
     }
   </script>
   <script src="https://cdn.datatables.net/v/dt/dt-1.10.12/fh-3.1.2/datatables.min.js"></script>
+  <!-- TODO: add local version for offline  -->
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
   <script>
     if (typeof jQuery.ui == 'undefined') {
-        document.write(unescape("%3Cscript src='www/jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
+        document.write(unescape("%3Cscript src='static/jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
     }
   </script>
-  <script type="text/javascript" src="www/lodash.min.js"></script>
-  <script type="text/javascript" src="www/typediff.js"></script>
-  <script type="text/javascript" src="www/render.js"></script>
+  <script type="text/javascript" src="static/lodash.min.js"></script>
+  <script type="text/javascript" src="static/typediff.js"></script>
+  <script type="text/javascript" src="static/render.js"></script>
   <script type="text/html" id="item-template">
     <div class="item">
       <div class="tree-box popup hidden">

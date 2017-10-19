@@ -17,7 +17,6 @@ var NEGCOUNTER = 0;
 var DESCENDANTS = {};
 var FADELENGTH = 400;
 var ACTIVE_TYPES = [];
-var API_URL = '/api/';
 
 // these should match the corresponding checkboxes in HTML
 var LONGLABELS = false;
@@ -230,7 +229,7 @@ function processItems(callback) {
         'fragments': $('input[name=fragments]').prop('checked')
     };
         
-    var posting = $.post(API_URL + 'parse-types', data);
+    var posting = $.post('/parse-types', data);
     posting.done(function(data) {
         if (data.success) {
             if (data.descendants)
@@ -517,7 +516,7 @@ function doDiff() {
             'types'        : JSON.stringify(types),
             'supers'       : JSON.stringify(supers)
         };
-        requests.push($.post(API_URL + 'find-supers', data));
+        requests.push($.post('/find-supers', data));
     }
 
     var treebankAlias = $('select[name=treebank-name]').val();
@@ -1116,7 +1115,7 @@ function updateIds(removedElem) {
 
 
 function loadData(callback) {
-    var posting = $.post(API_URL + 'load-data');
+    var posting = $.post('/load-data');
     posting.done(function(data) {
         FANGORNPATH = data.fangornpath;
         JSONPATH = data.jsonpath;

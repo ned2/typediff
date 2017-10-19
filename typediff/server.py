@@ -13,6 +13,10 @@ init_paths(logonroot=LOGONROOT)
 
 from .typediff import web_typediff
 
+# TODO:
+# create a setup.py file with executable entry points for the main functions of:
+# -- typediff.py, grammar-utils.py, type-stats.py, parseit.py, queryex.py, eval.py
+
 
 app = Flask(__name__)
 app.json_encoder = JSONEncoder

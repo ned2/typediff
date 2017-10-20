@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from flask import Flask, request, jsonify
 
-from .config import LOGONROOT, TREEBANKLIST, FANGORNPATH, JSONPATH
+from .config import LOGONROOT, TREEBANKLIST, FANGORNPATH
 from .gram import get_grammar, get_grammars
 from .delphin import init_paths, JSONEncoder, load_hierarchy, Treebank
 
@@ -74,5 +74,4 @@ def load_data():
         'grammars'    : get_grammars(), 
         'treebanks'   : [Treebank(t) for t in TREEBANKLIST] , 
         'fangornpath' : FANGORNPATH,
-        'jsonpath'    : JSONPATH,
     })

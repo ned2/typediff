@@ -7,7 +7,6 @@ export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}
 mod_wsgi-express start-server \
                  --debug-mode \
                  --reload-on-changes \
-                 --url-alias /static www/static \
                  --document-root www \
                  --directory-index index.html \
                  --entry-point wsgi.py

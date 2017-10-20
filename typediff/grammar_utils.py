@@ -5,9 +5,8 @@ import argparse
 import pickle
 from subprocess import Popen, PIPE
 
-from typediff import ACEBIN, DUMPHIERARCHYBIN
 from .delphin import TypeHierarchy
-from .config import ACESRC, DATAPATH
+from .config import ACESRC, DATAPATH, ACEBIN, DUMPHIERARCHYBIN
 from .gram import get_grammar, get_grammars
 
 

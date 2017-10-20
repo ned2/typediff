@@ -526,7 +526,7 @@ function doDiff() {
         // check to see if the treebank has already been loaded
         // before making a request to fetch it
         if (treebank.data == undefined)
-            requests.push($.getJSON(JSONPATH + '/' + treebank.json));
+            requests.push($.getJSON('/json/' + treebank.json));
     }
 
     // process the array of requests
@@ -1118,7 +1118,6 @@ function loadData(callback) {
     var posting = $.post('/load-data');
     posting.done(function(data) {
         FANGORNPATH = data.fangornpath;
-        JSONPATH = data.jsonpath;
         GRAMMARS = {};
         var $grammarInput = $('#grammar-input');
         var $treebankInput = $('#treebank-input');

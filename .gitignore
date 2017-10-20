@@ -1,5 +1,5 @@
 .python-version
-src/config.py
+typediff/config.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

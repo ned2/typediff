@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import sys
 import os
 import argparse
@@ -7,9 +5,9 @@ import json
 import pickle
 from itertools import chain
 
-import delphin
-import config
-import gram
+from . import delphin
+from . import config
+from . import gram
 
 
 """typediff.py
@@ -123,7 +121,7 @@ def pretty_print_types(types, hierarchy):
         else:
             return set(t.name for t in hierarchy[s].descendants())
 
-    kinds = [(descendants(t), tc) for t,tc,wc in config.TYPES]
+    kinds = [(descendants(t), col) for t, _rgba, col in config.TYPES]
 
     def keyfunc(t):
         for i, x in enumerate(kinds): 
@@ -156,7 +154,7 @@ def compare_types(pos_types, neg_types, arg):
     return types
 
 
-def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
+def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
                 tagger):
     hierarchy = delphin.load_hierarchy(grammar.types_path)
     parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
@@ -166,10 +164,9 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
                                        typifier=config.TYPIFIERBIN,
                                        fragments=frags, 
                                        logpath=config.LOGPATH)
-
     try:
-        pos  = [parse(x) for x in pos_input]
-        neg  = [parse(x) for x in neg_input]
+        pos = [parse(x) for x in pos_input]
+        neg = [parse(x) for x in neg_input]
     except(delphin.AceError) as err:
         data = {
             'succes' : False, 
@@ -179,8 +176,10 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
         return json.dumps(data)
 
     if supers:
-        for p in pos: p.load_supers(hierarchy)
-        for n in neg: n.load_supers(hierarchy)
+        for p in pos:
+            p.load_supers(hierarchy)
+        for n in neg:
+            n.load_supers(hierarchy)
 
     data = {
         'success': True,
@@ -190,16 +189,18 @@ def export_json(pos_input, neg_input, grammar, count, frags, supers, load_desc,
 
     if load_desc:
         descendants = lambda x: set(t.name for t in hierarchy[x].descendants())
-        kinds = [name for name, col in config.TYPES if name != 'other']
+        kinds = [name for name, _rgba, _col in config.TYPES if name != 'other']
         data['descendants'] = {}
+
         for kind in kinds:
             for t in descendants(kind):
                 data['descendants'][t] = kind
     else:
         data['descendants'] = False
 
-    data['typeData'] = {t:{'rank':i+1, 'col':col} for i, (t, col) in enumerate(config.TYPES)} 
-    return json.dumps(data, cls=delphin.JSONEncoder)
+    data['typeData'] = {t:{'rank':i+1, 'col':rgba}
+                        for i, (t, rgba, _col) in enumerate(config.TYPES)} 
+    return data
 
 
 def typediff(pos_input, neg_input, grammar, arg):
@@ -272,7 +273,3 @@ def main():
     except(delphin.AceError) as err:
         sys.stderr.write(err.msg)
         return 2
-
-
-if __name__ == "__main__":
-    sys.exit(main())

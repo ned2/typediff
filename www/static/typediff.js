@@ -16,7 +16,6 @@ var POSCOUNTER = 0;
 var NEGCOUNTER = 0;
 var DESCENDANTS = {};
 var FADELENGTH = 400;
-var WEBTYPES_SCRIPT = 'src/webtypes.cgi'; 
 var ACTIVE_TYPES = [];
 
 // these should match the corresponding checkboxes in HTML
@@ -230,7 +229,7 @@ function processItems(callback) {
         'fragments': $('input[name=fragments]').prop('checked')
     };
         
-    var posting = $.post(WEBTYPES_SCRIPT, data);
+    var posting = $.post('/parse-types', data);
     posting.done(function(data) {
         if (data.success) {
             if (data.descendants)
@@ -513,12 +512,11 @@ function doDiff() {
     if (SUPERS && supers.length != 0) {
         // We need to lookup which types the supers are supertypes of.
         data = {
-            'query'        : 'find-supers',
             'grammar-name' : grammar,
             'types'        : JSON.stringify(types),
-            'supers'        : JSON.stringify(supers)
+            'supers'       : JSON.stringify(supers)
         };
-        requests.push($.post(WEBTYPES_SCRIPT, data));
+        requests.push($.post('/find-supers', data));
     }
 
     var treebankAlias = $('select[name=treebank-name]').val();
@@ -528,7 +526,7 @@ function doDiff() {
         // check to see if the treebank has already been loaded
         // before making a request to fetch it
         if (treebank.data == undefined)
-            requests.push($.getJSON(JSONPATH + '/' + treebank.json));
+            requests.push($.getJSON('/json/' + treebank.json));
     }
 
     // process the array of requests
@@ -1117,13 +1115,9 @@ function updateIds(removedElem) {
 
 
 function loadData(callback) {
-
-    var data = {'query' : 'load-data' }; 
-    var posting = $.post(WEBTYPES_SCRIPT, data);
-
+    var posting = $.post('/load-data');
     posting.done(function(data) {
         FANGORNPATH = data.fangornpath;
-        JSONPATH = data.jsonpath;
         GRAMMARS = {};
         var $grammarInput = $('#grammar-input');
         var $treebankInput = $('#treebank-input');

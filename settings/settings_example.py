@@ -1,6 +1,3 @@
-import os
-
-
 """
 This file contains configuration information that typediff needs to
 run, as well as options which can be customized.
@@ -24,17 +21,6 @@ LTDBPATH = None
 # used to build the ERG image so that unknown word handling is
 # enabled.
 ACESRC = None
-
-
-# The path to the directory of the typediff program. Needed for other
-# defaults. You should not need to change this.
-TYPEDIFF_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
-
-
-# Path where ACE output will be logged to. This is useful to change if
-# your web server does not have write access to the typediff
-# directory. 
-LOGPATH = os.path.join(TYPEDIFF_PATH, 'ace.log')
 
 
 # Grammars configured for use with typediff. The string '${LOGONROOT}'
@@ -124,32 +110,3 @@ TREEBANKLIST = (
         'json'     : 'tanaka.json',
     }
 )
-
-
-# The order types are to be displayed in the output list and their
-# color value for terminal output and web interface output
-# repectively.  
-# 
-# format = (super_type_name, terminal_color, web_color)
-# 
-# terminal_color must be one of {white, cyan, purple, blue,
-# yellow, green, red}
-# 
-# web_color can be any valid CSS color string
-TYPES = (
-    ('sign',     'red',     'rgba(255, 0,   0,   0.65)'),
-    ('head',     'purple',  'rgba(128, 0,   128, 0.65)'),
-    ('synsem',   'green',   'rgba(0,   128, 0,   0.65)'),
-    ('cat',      'blue',    'rgba(0,   0,   255, 0.65)'),
-    ('relation', 'cyan',    'rgba(0,   255, 255, 0.65)'),
-    ('predsort', 'yellow',  'rgba(255, 255, 0,   0.65)'),
-    ('other',    'white',   'rgba(255, 255, 255, 1.00)'),
-)
-
-
-# These should only need to be changed if you needed to compile
-# thebinaries for your own environment. 
-TYPIFIERBIN = os.path.join(TYPEDIFF_PATH, 'bin', 'typifier')
-DUMPHIERARCHYBIN = os.path.join(TYPEDIFF_PATH, 'bin', 'dumphierarchy')
-ACEBIN = os.path.join(TYPEDIFF_PATH, 'bin', 'ace')
-JSONPATH = 'www/json'

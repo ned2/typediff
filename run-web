@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+
+SCRIPTPATH=$(cd $(dirname $0); pwd -P)
+export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}
+
+mod_wsgi-express start-server \
+                 --debug-mode \
+                 --reload-on-changes \
+                 --document-root www \
+                 --directory-index index.html \
+                 --entry-point wsgi.py

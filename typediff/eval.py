@@ -1,16 +1,9 @@
-#!/usr/bin/env python2
-
-from __future__ import division
-
-
 import sys
 import os
 import argparse
 from collections import Counter, defaultdict
 
-import delphin
-import config
-import stats
+from .delphin import tsdb_query, get_profile_ids
 
 
 def argparser():
@@ -43,13 +36,12 @@ def evaluate(predicted_iids, gold_iids, tot):
 def main():
     arg = argparser().parse_args()
     query = "select i-id where p-id = {}".format(arg.pid)
-    tsdb_results = delphin.tsdb_query(query, arg.profile)
+    tsdb_results = tsdb_query(query, arg.profile)
     gold_iids = set(int(x) for x in tsdb_results.split())
-    all_iids = delphin.get_profile_ids(arg.profile)
+    all_iids = get_profile_ids(arg.profile)
     predicted_iids = get_predicted_iids(arg)
-    print evaluate(predicted_iids, gold_iids, len(all_iids)) 
+    print(evaluate(predicted_iids, gold_iids, len(all_iids)))
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

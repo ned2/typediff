@@ -1,16 +1,13 @@
-#!/usr/bin/env python2
-
-from __future__ import division
-
 import sys
 import os
 import argparse
+import pickle
 from collections import Counter, defaultdict
 
-import delphin
-import config
-import stats
-import cPickle
+from .delphin import (load_hierarchy, TypeNotFoundError, Fragment, AceError,
+                      get_profile_results)
+from .config import load_grammar, TYPIFIERBIN
+
 
 
 def argparser():
@@ -45,10 +42,10 @@ def get_type_sig(fragment, grammar, type_stats, num_trees, cutoff, supertype=Non
     signature = {}
 
     if supertype is not None:
-        hierarchy = delphin.load_hierarchy(grammar.types_path)
+        hierarchy = load_hierarchy(grammar.types_path)
         try:
             descendant_types = set(t.name for t in hierarchy[ancestor].descendants())
-        except delphin.TypeNotFoundError as e:
+        except TypeNotFoundError as e:
             sys.stderr.write(str(e))
             sys.exit()
     
@@ -86,26 +83,22 @@ def main():
     num_trees = int(os.path.splitext(os.path.basename(arg.tbstats))[0].split('--')[-1])
 
     with open(arg.tbstats, 'rb') as f:
-        type_stats = cPickle.load(f)
+        type_stats = pickle.load(f)
 
-    grammar = config.load_grammar(arg.grammar)
+    grammar = load_grammar(arg.grammar)
 
     try:
-        fragment = delphin.Fragment(example, grammar, count=1, typifier=config.TYPIFIERBIN)
-    except delphin.AceError as e:
-        print e
+        fragment = Fragment(example, grammar, count=1, typifier=TYPIFIERBIN)
+    except AceError as e:
+        print(e)
         return 
 
     signature = get_type_sig(fragment, grammar, type_stats, num_trees, arg.cutoff, arg.descendants)
-    results = delphin.get_profile_results([arg.profile], 
-                                          best=arg.best, 
-                                          gold=arg.gold, 
-                                          grammar=grammar,
-                                          lextypes=False,
-                                          typifier=config.TYPIFIERBIN)
+    results = get_profile_results([arg.profile], 
+                                  best=arg.best, 
+                                  gold=arg.gold, 
+                                  grammar=grammar,
+                                  lextypes=False,
+                                  typifier=TYPIFIERBIN)
     items = do_query(results, grammar, signature)
-    print output(signature, items)
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+    print(output(signature, items))

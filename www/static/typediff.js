@@ -1159,7 +1159,7 @@ function clearState(callback) {
             $('.item').remove();
         });
 
-        $('#output-box').fadeOut(FADELENGTH, function() { 
+        $('#output-pane-contents').fadeOut(FADELENGTH, function() { 
             $(this).empty().show();
         } );
     } else {
@@ -1169,7 +1169,7 @@ function clearState(callback) {
         // cludge it and remove the fading.
         $(things).hide();
         $('.item').remove();
-        $('#output-box').empty();
+        $('#output-pane-contents').empty();
         callback();
     }
     setOperator();

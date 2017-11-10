@@ -109,3 +109,7 @@ def main():
                 make_data(grammar)
             except UtilError as e:
                 sys.stderr.write(e.msg+'\n')
+
+
+if __name__ == "__main__":
+    main()

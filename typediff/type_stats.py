@@ -29,6 +29,7 @@ BLACKLIST = set()
 ERG_SPEECH_PROFILES = set(['vm6', 'vm13', 'vm13', 'vm31', 'vm32', 'ecpa',
                            'ecoc', 'ecos', 'ecpr'])
 
+
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
@@ -58,6 +59,7 @@ def index(profiles, treebank, in_grammar):
     trees = 0
     failures = []
 
+
     for path in profiles:
         grammar = in_grammar
         items_seen = set()
@@ -65,6 +67,8 @@ def index(profiles, treebank, in_grammar):
         profile = os.path.basename(path) 
 
         if profile in ERG_SPEECH_PROFILES:
+            # let's just  ignore them for now
+            continue
             alias = grammar.alias+'-speech'
             grammar = get_grammar(alias)
 
@@ -74,6 +78,9 @@ def index(profiles, treebank, in_grammar):
             # for non-treebanked profiles
             # out = tsdb_query('select i-id derivation where readings > 0', path)
         except TsdbError as e:
+            with open('tsdb_errors.txt', 'a', encoding='utf8') as f:
+                f.write(str(e) + '\n')
+
             sys.stderr.write(str(e)+'\n')
             continue
 
@@ -88,6 +95,7 @@ def index(profiles, treebank, in_grammar):
                 continue
                 
             try:
+                assert grammar is not None
                 counts = get_types(derivation, grammar)
                 for name, count in counts.items():
                     stats_dict[name].update(count)
@@ -95,6 +103,8 @@ def index(profiles, treebank, in_grammar):
                 e.other_data.append(iid)
                 e.other_data.append(path)
                 failures.append(e)
+                with open('ace_errors.txt', 'a', encoding='utf8') as f:
+                    f.write(str(e) + '\n')
                 sys.stderr.write(str(e) + '\n')
             else:
                 items_seen.add(iid)
@@ -103,20 +113,20 @@ def index(profiles, treebank, in_grammar):
 
     print("Processed {} trees".format(trees))
 
-    num_failures = len(failures)
-    if num_failures > 0: 
-        print("Failed to reconstruct {} trees".format(num_failures))
-        print("See type-stats-errors.txt for details.")
-
-        with open('type-stats-errors.txt', 'w') as f:
-            errors_str = '\n'.join(str(e) for e in failures)
-            f.write(errors_str.encode('utf8')+'\n\n')
-
     treebank_str = treebank.replace(' ', '_')
     filename = '{}--{}--{}.pickle'.format(grammar.alias, treebank_str, trees)
 
     with open(filename, 'wb') as f:
         pickle.dump(stats_dict, f)
+
+    num_failures = len(failures)
+    if num_failures > 0: 
+        print("Failed to reconstruct {} trees".format(num_failures))
+        print("See type-stats-errors.txt for details.")
+
+        with open('type-stats-errors.txt', 'w', encoding='utf8') as f:
+            errors_str = '\n'.join(str(e) for e in failures) + '\n\n'
+            f.write(errors_str)
 
 
 def get_types(derivation_string, grammar):
@@ -125,6 +135,8 @@ def get_types(derivation_string, grammar):
     args = [TYPIFIERBIN, grammar.dat_path]
     process= Popen(args, stdout=PIPE, stdin=PIPE, stderr=PIPE, env=env)
     out, err = process.communicate(input=derivation_string.encode('utf8'))
+    out = out.decode('utf8')
+    err = err.decode('utf8')
 
     if err != '':
         raise AceError('typifier', err)
@@ -224,3 +236,6 @@ def main():
     elif arg.command == 'output':
         output(arg.path, arg.type)
         
+
+if __name__ == "__main__":
+    main()

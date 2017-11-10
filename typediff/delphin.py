@@ -1203,11 +1203,13 @@ def tsdb_query(query, profile):
     args = ['tsdb', '-home', profile, '-query', query]
     process= Popen(args, stdout=PIPE, stderr=PIPE, env=env, close_fds=True)
     out, err = process.communicate()
+    out = out.decode('utf8')
+    err = err.decode('utf8')
 
     if process.returncode != 0:
         raise TsdbError(err)
     
-    return out.decode('utf8')
+    return out
     
 
 def get_profile_ids(*paths):

@@ -156,7 +156,6 @@ def compare_types(pos_types, neg_types, arg):
 
 def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
                 tagger):
-    hierarchy = delphin.load_hierarchy(grammar.types_path)
     parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
                                        dat_path=grammar.dat_path,
                                        count=count,
@@ -172,35 +171,35 @@ def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc,
             'succes' : False, 
             'error'  : err.msg,
         }
-
         return json.dumps(data)
-
-    if supers:
-        for p in pos:
-            p.load_supers(hierarchy)
-        for n in neg:
-            n.load_supers(hierarchy)
 
     data = {
         'success': True,
         'pos-items' : pos,
         'neg-items' : neg,
+        'descendants' : False,
     }
+
+    if supers or load_desc:
+        hierarchy = delphin.load_hierarchy(grammar.types_path)
+
+    if supers:
+        for group in (pos, neg):
+            for item in group:
+                item.load_supers(hierarchy)
 
     if load_desc:
         descendants = lambda x: set(t.name for t in hierarchy[x].descendants())
         kinds = [name for name, _rgba, _col in config.TYPES if name != 'other']
         data['descendants'] = {}
-
         for kind in kinds:
             for t in descendants(kind):
                 data['descendants'][t] = kind
-    else:
-        data['descendants'] = False
 
     data['typeData'] = {t:{'rank':i+1, 'col':rgba}
                         for i, (t, rgba, _col) in enumerate(config.TYPES)} 
     return data
+
 
 
 def typediff(pos_input, neg_input, grammar, arg):
@@ -210,18 +209,14 @@ def typediff(pos_input, neg_input, grammar, arg):
                                        typifier=config.TYPIFIERBIN,
                                        fragments=arg.frags, 
                                        logpath=config.LOGPATH)
+    try:
+        pos  = [parse(x) for x in pos_input]
+        neg  = [parse(x) for x in neg_input]
+    except(delphin.AceError) as err:
+        print(err)
+        return
 
-    pos  = [parse(x) for x in pos_input]
-    neg  = [parse(x) for x in neg_input]
-    hierarchy = None
-
-    if arg.all:
-        tfunc = lambda x:x.types.keys()
-        sfunc = lambda x:x.supers
-    else:
-        tfunc = lambda x:x.best.types.keys()
-        sfunc = lambda x:x.best.supers
-
+    tfunc = lambda x:x.types.keys() if arg.all else lambda x:x.best.supers
     pos_types = set(chain.from_iterable(tfunc(x) for x in pos))
     neg_types = set(chain.from_iterable(tfunc(x) for x in neg))
 
@@ -229,23 +224,40 @@ def typediff(pos_input, neg_input, grammar, arg):
         typelist = list(compare_types(pos_types, neg_types, arg))
     else:
         typelist = list(max(pos_types, neg_types))
+        
+    if arg.raw:
+        return '\n'.join(typelist)
 
+    hierarchy = delphin.load_hierarchy(grammar.types_path)    
+        
     if arg.supers:
-        hierarchy = delphin.load_hierarchy(grammar.types_path)
-        for p in pos: p.load_supers(hierarchy)
-        for n in neg: n.load_supers(hierarchy)
+        for group in (pos, neg):
+            for item in group:
+                item.load_supers(hierarchy)     
+    
+        sfunc = lambda x:x.supers
         pos_supers = set(chain.from_iterable(sfunc(x) for x in pos))
         neg_supers = set(chain.from_iterable(sfunc(x) for x in neg))
         supers = compare_types(pos_supers, neg_supers, arg)
         typelist.extend('^'+t for t in supers)
 
-    if arg.raw:
-        return '\n'.join(typelist)
-    else:
-        if hierarchy is None:
-            hierarchy = delphin.load_hierarchy(grammar.types_path)
-        return pretty_print_types(typelist, hierarchy)
+    return pretty_print_types(typelist, hierarchy)
 
+
+def process_profile(path, constraint=''):
+    # assume profiles are gold profiles for now
+    return delphin.get_profile_results([path], gold=True, constraint=constraint,
+                                       typifier=config.TYPIFIERBIN)
+
+def profile_typediff(pos, neg):
+
+    pos_results = []
+    neg_results = []
+    for group in (pos, neg):
+        path, constraint = group.split(':')
+        results = process_profile(path, constraint=constraint)
+        
+    
 
 def main():
     arg = argparser().parse_args()
@@ -257,7 +269,6 @@ def main():
     pos = []
     neg = []
     stype = pos
-
     for s in arg.sentences:
         if s =='@':
             stype = neg
@@ -265,7 +276,12 @@ def main():
             stype.append(s)
                 
     try:
-        if arg.json:
+        if arg.profile:
+            # assume a 'sentence' is actually:
+            # PROFILE_PATH:opt_tsql_query
+            print(profile_typediff(pos, neg, arg))
+            
+        elif arg.json:
             print(export_json(pos, neg, grammar, arg.n, arg.frags, arg.supers, 
                               arg.descendants, arg.tagger))
         else:

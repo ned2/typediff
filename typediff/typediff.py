@@ -12,31 +12,18 @@ from . import gram
 
 """typediff.py
 Author: Ned Letcher
-https://github.com/ned2/grammalytics
+https://github.com/ned2/typediff
 
 Typediff is a tool to allow you to quickly explore the types used in
 the processing of input by DELPH-IN grammars.
 
-For usage, run parseit.py --help
 """
 
 
 HELP = """Usage:
-$ typediff.py [options] GRAMMAR_NAME pos_sent1 pos_sent2 ... @ neg_sent1 neg_sent2 ...
+$ typediff [options] GRAMMAR_NAME pos_sent1 pos_sent2 ... @ neg_sent1 neg_sent2 ...
 
 Options:
-
---json
- Tells typediff to return json data used for the web interface. In this mode
- the comparison of the types is not done by typediff as this is performed within 
- the browser.
-
---descendants
- In json mode, this instructs typediff to return a list of descentants for various
- high level supertypes used to sort and style the output list of types in the 
- inteface. This is optional as doing the hierarchy loopkup incurs a performace
- hit, and the results can be cached.
-
 
 The remainder of the options are only relevant to the command line mode:
 
@@ -51,6 +38,8 @@ The remainder of the options are only relevant to the command line mode:
  
 -n count
   The number of trees ACE is limited to returning.
+
+--profiles
 
 --frags
   Include fragment readings (only supported by ERG currently).
@@ -80,8 +69,7 @@ def argparser():
     argparser.add_argument("--tagger")
     argparser.add_argument("--frags", action='store_true')
     argparser.add_argument("--supers", action='store_true')
-    argparser.add_argument("--json", action='store_true')
-    argparser.add_argument("--descendants", action='store_true')
+    argparser.add_argument("--profiles", action='store_true')
     argparser.add_argument("--raw", action='store_true')
     group = argparser.add_mutually_exclusive_group(required=False)
     group.add_argument("-i", action='store_true')
@@ -201,26 +189,19 @@ def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc,
     return data
 
 
+def typediff(pos_items, neg_items, arg):
+    """pos_items and neg_items are lists of either Fragment or Reading objects"""
+    # currently assuming that the Reading objects are only coming from gold
+    # profiles, therefore only one per item. otherwise we'd need to be using s
+    # list of Reading objects or probably could be defining an ProfileItem
+    # class that emulates the relevant interface to Fragment
+    tfunc = lambda x:(x.best.types.keys()
+                      if (isinstance(x, delphin.Fragment) and not arg.all)
+                      else x.types.keys())
+    pos_types = set(chain.from_iterable(tfunc(x) for x in pos_items))
+    neg_types = set(chain.from_iterable(tfunc(x) for x in neg_items))
 
-def typediff(pos_input, neg_input, grammar, arg):
-    parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
-                                       dat_path=grammar.dat_path,  
-                                       count=arg.n,
-                                       typifier=config.TYPIFIERBIN,
-                                       fragments=arg.frags, 
-                                       logpath=config.LOGPATH)
-    try:
-        pos  = [parse(x) for x in pos_input]
-        neg  = [parse(x) for x in neg_input]
-    except(delphin.AceError) as err:
-        print(err)
-        return
-
-    tfunc = lambda x:x.types.keys() if arg.all else lambda x:x.best.supers
-    pos_types = set(chain.from_iterable(tfunc(x) for x in pos))
-    neg_types = set(chain.from_iterable(tfunc(x) for x in neg))
-
-    if len(pos) + len(neg) > 1:
+    if len(pos_types) + len(neg_types) > 1:
         typelist = list(compare_types(pos_types, neg_types, arg))
     else:
         typelist = list(max(pos_types, neg_types))
@@ -228,7 +209,7 @@ def typediff(pos_input, neg_input, grammar, arg):
     if arg.raw:
         return '\n'.join(typelist)
 
-    hierarchy = delphin.load_hierarchy(grammar.types_path)    
+    hierarchy = delphin.load_hierarchy(arg.grammar.types_path)    
         
     if arg.supers:
         for group in (pos, neg):
@@ -244,48 +225,78 @@ def typediff(pos_input, neg_input, grammar, arg):
     return pretty_print_types(typelist, hierarchy)
 
 
-def process_profile(path, constraint=''):
-    # assume profiles are gold profiles for now
-    return delphin.get_profile_results([path], gold=True, constraint=constraint,
-                                       typifier=config.TYPIFIERBIN)
+def process_sentences(pos_items, neg_items, arg):
+    process = lambda sentence: delphin.Fragment(
+        sentence,
+        arg.grammar,
+        ace_path=config.ACEBIN,
+        dat_path=arg.grammar.dat_path,  
+        count=arg.n,
+        typifier=config.TYPIFIERBIN,
+        fragments=arg.frags, 
+        logpath=config.LOGPATH
+    )
 
-def profile_typediff(pos, neg):
+    pos_fragments  = [process(i) for i in pos_items]
+    neg_fragments  = [process(i) for i in neg_items]
+    return pos_fragments, neg_fragments    
 
-    pos_results = []
-    neg_results = []
-    for group in (pos, neg):
-        path, constraint = group.split(':')
-        results = process_profile(path, constraint=constraint)
-        
+
+def process_profiles(pos_items, neg_items, arg):
+    # assume pos_input and neg_input are strings of the form:
+    # PROFILE_PATH:opt_tsql_query
+    sep = ':'
+    pos_readings, neg_readings = [], []
+    for items, readings in ((pos_items, pos_readings),
+                            (neg_items, neg_readings)):
+        for item in items:
+            if item.find(sep) >= 0:
+                path, condition = item.split(':')
+            else:
+                path = item
+                condition = None
+            new_readings = process_gold_profile(
+                path,
+                condition=condition,
+                grammar=arg.grammar,
+            )
+            # because gold profiles, will only be one reading per item
+            readings.extend(chain.from_iterable(new_readings))
+    return pos_readings, neg_readings
     
+
+def process_gold_profile(path, condition=None, grammar=None):
+    return delphin.get_profile_results(
+        [path],
+        gold=True,
+        grammar=grammar,
+        condition=condition,
+        typifier=config.TYPIFIERBIN
+    ).values()
+
 
 def main():
     arg = argparser().parse_args()
-    grammar = gram.get_grammar(arg.grammar)
+    arg.grammar = gram.get_grammar(arg.grammar)
 
     if '@' in arg.sentences and not (arg.u or arg.i or arg.d):
         arg.d = True
 
-    pos = []
-    neg = []
+    pos, neg = [], []
+
+    # assign the inputs into pos and neg lists accordingly 
     stype = pos
     for s in arg.sentences:
         if s =='@':
             stype = neg
         else:
             stype.append(s)
-                
-    try:
-        if arg.profile:
-            # assume a 'sentence' is actually:
-            # PROFILE_PATH:opt_tsql_query
-            print(profile_typediff(pos, neg, arg))
-            
-        elif arg.json:
-            print(export_json(pos, neg, grammar, arg.n, arg.frags, arg.supers, 
-                              arg.descendants, arg.tagger))
-        else:
-            print(typediff(pos, neg, grammar, arg))
-    except(delphin.AceError) as err:
-        sys.stderr.write(err.msg)
-        return 2
+
+    process_func = process_profiles if arg.profiles else process_sentences
+    pos_items, neg_items = process_func(pos, neg, arg)
+    result = typediff(pos_items, neg_items, arg)
+    print(result)
+
+
+if __name__ == "__main__":
+    main()

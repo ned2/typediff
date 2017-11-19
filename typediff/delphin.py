@@ -216,7 +216,7 @@ class JSONEncoder(json.JSONEncoder):
 class Fragment(object):
     def __init__(self, text, grammar, ace_path=None, dat_path=None, count=None, 
                  tnt=False, typifier=None, fragments=False, logpath=None, 
-                 cache=False, lextypes=True):
+                 cache=False):
         self.input = text
         self.logpath = logpath
         self.log_lines = [time.strftime("%Y-%m-%d %H:%M:%S")]
@@ -235,15 +235,12 @@ class Fragment(object):
         if ace_path is None:
             ace_path = ACEBIN
 
-        if self.grammar.lex_entries is None:
-            lextypes = False
-
         self.preprocess()
         self.parse(ace_path, self.grammar.dat_path, count, fragments, tnt,
-                   typifier, cache, lextypes)
+                   typifier, cache)
         self.write_log()
 
-    def parse(self, ace_path, dat_path, count, fragments, tnt, typifier, cache, lextypes):
+    def parse(self, ace_path, dat_path, count, fragments, tnt, typifier, cache):
         try:
             if self.yy_input:
                 input_str = self.yy_input
@@ -265,12 +262,16 @@ class Fragment(object):
         readings = lines[1:]
 
         self.readings = []
-        for i,reading in enumerate(readings):
+        for i, reading in enumerate(readings):
             mrs, derivation = reading.split(';', 1)
-            r = Reading(derivation.strip(), resultid=i, grammar=self.grammar, 
-                        mrs=mrs.strip(), lextypes=lextypes, typifier=typifier, 
-                        cache=cache)
-
+            r = Reading(
+                derivation.strip(),
+                resultid=i,
+                grammar=self.grammar, 
+                mrs=mrs.strip(),
+                typifier=typifier, 
+                cache=cache
+            )
             self.readings.append(r)
 
     def preprocess(self):
@@ -312,7 +313,7 @@ class Fragment(object):
 
 class Reading(object):
     def __init__(self, derivation, iid=None, resultid=None, grammar=None, 
-                 mrs=None, ptokens=None, lextypes=True, dat_path=None, 
+                 mrs=None, ptokens=None, dat_path=None, 
                  typifier=None, cache=False, pspans=[]):
         self.iid = iid
         self.resultid = resultid
@@ -326,6 +327,8 @@ class Reading(object):
             # supplied grammar was just an alias
             self.grammar = LogonGrammar(grammar)
 
+        lextypes = self.grammar.lex_entries is not None
+            
         if dat_path is not None:
             self.grammar.dat_path = dat_path
 
@@ -336,7 +339,7 @@ class Reading(object):
             cache_derivations = True
         else:
             cache_derivations = False
-
+            
         self.tree = parse_derivation(derivation, cache=cache_derivations)
 
         self.lex_entries = Counter()
@@ -379,7 +382,7 @@ class Reading(object):
             # tree.
             self.root_condition = self.tree.label
             self.tree = self.tree.children[0]
-
+        
         lex_lookup = self.grammar.lex_lookup if lextypes else None
         self.tokens, subtrees = self.tree.process(lex_lookup=lex_lookup)
 
@@ -1225,8 +1228,8 @@ def get_profile_ids(*paths):
 
 
 def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None, 
-                        lextypes=True, typifier=None, condition=None, pspans=None,
-                        cache=False):
+                        lextypes=False, typifier=None, condition=None,
+                        pspans=None, cache=False):
     """Return Readings from across a series of profiles. This assumes
     unique i-ids across all profiles. Returns a dictionary which maps
     i-ids onto lists of Reading sorted by result-id (ie decreasing
@@ -1277,12 +1280,21 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
             mrs = bits[2].strip()
             ptokens = bits[3].strip()
             derivation = bits[4].strip()
-            reading = Reading(derivation, iid=iid, resultid=resultid, mrs=mrs,
-                              grammar=grammar, ptokens=ptokens, lextypes=lextypes, 
-                              typifier=typifier, pspans=annotations[iid], 
-                              cache=cache)
-
-            results_dict[iid].append(reading)
+            try:
+                reading = Reading(
+                    derivation,
+                    iid=iid,
+                    resultid=resultid,
+                    mrs=mrs,
+                    grammar=grammar,
+                    ptokens=ptokens, 
+                    typifier=typifier,
+                    pspans=annotations[iid], 
+                    cache=cache
+                )
+                results_dict[iid].append(reading)
+            except AceError as e:
+                sys.stderr.write(e.msg)
 
             if cutoff is not None and len(results) >= cutoff:
                 return results_dict

@@ -1,11 +1,34 @@
 #!/usr/bin/env bash
 
 PORT=5000
+DEBUG=''
 
+args=$(getopt -l "searchpath:" -o "s:h" -- "$@")
+eval set -- "$args"
 
-if [ ! -z "$1" ]; then
-    PORT=$1
-fi
+# process command line arguments
+while [ $# -ge 1 ]; do
+    case "$1" in
+        --)
+            # No more options left.
+            shift
+            break
+            ;;
+        -p|--port)
+            PORT="$2"
+            shift
+            ;;
+        -d|--debug)
+            DEBUG="--debug-mode"
+            ;;
+        -h|--help)
+            echo "run-web --port PORT --debug"
+            exit 0
+            ;;
+    esac
+
+    shift
+done
 
 
 SCRIPTPATH=$(cd $(dirname $0); pwd -P)
@@ -13,7 +36,7 @@ export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}
 
 mod_wsgi-express start-server \
                  --port ${PORT} \
-                 --debug-mode \
+                 ${DEBUG} \
                  --reload-on-changes \
                  --document-root www \
                  --directory-index index.html \

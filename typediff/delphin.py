@@ -29,6 +29,13 @@ ACEBIN = None
 LOGONREGPATH = None
 
 
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def init_paths(logonroot=None):
     """
     Set various paths. If logonroot argument omitted, uses LOGONROOT
@@ -167,7 +174,7 @@ class AceError(Exception):
         return self.msg + '\n'.join(self.other_data)
 
 
-class TypeStats(object):
+class TypeStats:
     
     def __init__(self):
         self.counts = 0
@@ -178,7 +185,7 @@ class TypeStats(object):
         self.counts += counts
 
 
-class Treebank(object):
+class Treebank:
     def __init__(self, params):
         for param, val in params.items():
             setattr(self, param, val)       
@@ -212,22 +219,63 @@ class JSONEncoder(json.JSONEncoder):
             return obj.json()
         return json.JSONEncoder.default(self, obj)
 
+    
+class Item:
+    def __init__(self):
+        self.log_path = None
+        self.log_lines = [time.strftime("%Y-%m-%d %H:%M:%S")]
+                
+    def post_init(self):
+        if not hasattr(self.grammar, 'alias'):
+            # supplied grammar was just an alias
+            self.grammar = LogonGrammar(self.grammar)
+        self.write_log()
+        
+    def load_supers(self, hierarchy):
+        for reading in self.readings:
+            reading.supers = get_supers(reading.types, hierarchy)
 
-class Fragment(object):
+    def write_log(self):
+        if self.logpath is None:
+            return
+        try:
+            with open(self.logpath, mode='a+', encoding='utf-8') as f:
+                f.write('\n'.join(self.log_lines))
+        except IOError:
+            # In case apache does not have write permissions
+            sys.stderr.write("Cannot write to {}.\n".format(self.logpath))
+            pass
+        
+    @property
+    def best(self):
+        return self.readings[0]
+    
+    @property
+    def types(self):
+        return set(chain.from_iterable(x.types for x in self.readings))
+
+
+class ProfileItem(Item):
+    """Class that models an item from a profile. Needs
+    to provide same interface as Fragment
+    """
+    def __init__(self, text, grammar, readings, logpath=None):
+        super().__init__()
+        self.input = text
+        self.grammar = grammar
+        self.readings = readings
+        self.logpath = logpath
+        self.post_init()
+
+        
+class Fragment(Item):
     def __init__(self, text, grammar, ace_path=None, dat_path=None, count=None, 
                  tnt=False, typifier=None, fragments=False, logpath=None, 
                  cache=False):
+        super().__init__()
         self.input = text
+        self.grammar = grammar
         self.logpath = logpath
-        self.log_lines = [time.strftime("%Y-%m-%d %H:%M:%S")]
-
-        try:
-            # supplied grammar is a Grammar object
-            alias = grammar.alias
-            self.grammar = grammar
-        except AttributeError:
-            # supplied grammar was just an alias
-            self.grammar = LogonGrammar(grammar)
 
         if dat_path is not None:
             self.grammar.dat_path = dat_path
@@ -235,19 +283,19 @@ class Fragment(object):
         if ace_path is None:
             ace_path = ACEBIN
 
+        self.post_init()
         self.preprocess()
         self.parse(ace_path, self.grammar.dat_path, count, fragments, tnt,
                    typifier, cache)
-        self.write_log()
 
     def parse(self, ace_path, dat_path, count, fragments, tnt, typifier, cache):
+        if self.yy_input:
+            input_str = self.yy_input
+            yy_input = True
+        else:
+            input_str = self.input
+            yy_input = False
         try:
-            if self.yy_input:
-                input_str = self.yy_input
-                yy_input = True
-            else:
-                input_str = self.input
-                yy_input = False
             out, err = ace_parse(input_str, ace_path, self.grammar, count,
                                  yy_input=yy_input, fragments=fragments, tnt=tnt)
         except AceError as error:
@@ -286,32 +334,9 @@ class Fragment(object):
                 msg = string.format(str(e))
                 sys.stderr.write(msg+'\n')
                 self.log_lines.append(msg)
-        
-    def load_supers(self, hierarchy):
-        for reading in self.readings:
-            reading.supers = get_supers(reading.types, hierarchy)
-
-    @property
-    def types(self):
-        return set(chain.from_iterable(x.types for x in self.readings))
-
-    @property
-    def best(self):
-        return self.readings[0]
-
-    def write_log(self):
-        if self.logpath is None:
-            return
-        try:
-            with open(self.logpath, mode='a+', encoding='utf-8') as f:
-                f.write('\n'.join(self.log_lines))
-        except IOError:
-            # In case apache does not have write permissions
-            sys.stderr.write("Cannot write to {}.\n".format(self.logpath))
-            pass
 
 
-class Reading(object):
+class Reading:
     def __init__(self, derivation, iid=None, resultid=None, grammar=None, 
                  mrs=None, ptokens=None, dat_path=None, 
                  typifier=None, cache=False, pspans=[]):
@@ -555,7 +580,7 @@ class Reading(object):
         return sum(self.rules.values()) + sum(self.lex_entries.values())
 
 
-class Grammar(object):
+class Grammar:
     """Models a DELPH-IN grammar."""
 
     lex_entries = None
@@ -697,7 +722,7 @@ class LogonGrammar(Grammar):
         return attrs
 
 
-class Type(object):
+class Type:
     """Class used to model a DELPH-IN grammar type."""
     def __init__(self, name, hierarchy, parent_names, child_names):
         self.name = name
@@ -737,7 +762,7 @@ class Type(object):
         return self.name
 
 
-class TypeHierarchy(object):
+class TypeHierarchy:
     """
     A class to model a DELPH-IN grammar's type hierarchy. Uses the
     XML representation that is yielded from this lkb function:
@@ -826,7 +851,7 @@ class TypeHierarchy(object):
         return t
 
 
-class Token(object):
+class Token:
     def __init__(self, string, lex_entry, start, end, from_char, to_char, span=None):
         self.string = string
         self.lex_entry = lex_entry
@@ -837,7 +862,7 @@ class Token(object):
         self.span = span
 
 
-class Tree(object):
+class Tree:
     def __init__(self, label, start, end, span=None):
         self.label = label
         self.start = start
@@ -1227,9 +1252,9 @@ def get_profile_ids(*paths):
     return ids
 
 
-def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None, 
+def get_profile_results(paths, best=1, gold=False, grammar=None, 
                         lextypes=False, typifier=None, condition=None,
-                        pspans=None, cache=False):
+                        pspans=None, cache=False, logpath=None):
     """Return Readings from across a series of profiles. This assumes
     unique i-ids across all profiles. Returns a dictionary which maps
     i-ids onto lists of Reading sorted by result-id (ie decreasing
@@ -1243,14 +1268,14 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
         # multiple readings in a gold profile. eg when t-active > 1.
         # This query will return all however, so if just the first is
         # wanted, the rest need to be excluded downstream.
-        query = 'select i-id result-id mrs p-tokens derivation from result where readings > 0'
+        query = 'select i-id result-id mrs p-tokens derivation i-input from result where readings > 0'
     else:
         # This query is not appropriate for gold/thinned profiles as
         # the readings will have relatively arbitrary result-ids. We
         # must also restrict queries to within relevant result-ids
         # otherwise query times/memory usage explodes for large parse
         # forests.
-        query = 'select i-id result-id mrs p-tokens derivation where result-id <= {}'.format(best - 1)
+        query = 'select i-id result-id mrs p-tokens derivation i-input where result-id <= {}'.format(best - 1)
         
     if condition is not None:
         # NOTE: just adding 't-active > 0' won't give you gold trees,
@@ -1273,13 +1298,15 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
 
     for path in paths:
         results = tsdb_query(query, path)
+        readings = []
         for result in results.splitlines():
-            bits = result.split(' | ', 4)
+            bits = result.split(' | ', 5)
             iid = int(bits[0].strip())
             resultid = int(bits[1].strip())
             mrs = bits[2].strip()
             ptokens = bits[3].strip()
             derivation = bits[4].strip()
+            iinput = bits[5].strip()
             try:
                 reading = Reading(
                     derivation,
@@ -1287,19 +1314,21 @@ def get_profile_results(paths, best=1, gold=False, cutoff=None, grammar=None,
                     resultid=resultid,
                     mrs=mrs,
                     grammar=grammar,
-                    ptokens=ptokens, 
+                    ptokens=ptokens,
                     typifier=typifier,
                     pspans=annotations[iid], 
                     cache=cache
                 )
-                results_dict[iid].append(reading)
+                results_dict[(iid, iinput)].append(reading)
             except AceError as e:
                 sys.stderr.write(e.msg)
 
-            if cutoff is not None and len(results) >= cutoff:
-                return results_dict
+    profile_items = []
+    for (iid, iinput), readings in results_dict.items():
+        item = ProfileItem(iinput, grammar, readings, logpath=logpath)
+        profile_items.append(item)
 
-    return results_dict
+    return profile_items
 
 
 def get_text_results(lines, grammar, best=1, ace_path=None, lextypes=True,

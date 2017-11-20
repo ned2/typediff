@@ -6,12 +6,12 @@ from flask import Flask, request, jsonify
 
 from .config import LOGONROOT, TREEBANKLIST, FANGORNPATH
 from .gram import get_grammar, get_grammars
-from .delphin import init_paths, JSONEncoder, load_hierarchy, Treebank
+from .delphin import init_paths, JSONEncoder, load_hierarchy, Treebank, dotdict
 
 # set LOGONROOT environment variable in case it's not set
 init_paths(logonroot=LOGONROOT)
 
-from .typediff import web_typediff
+from .typediff import typediff_web, process_sentences, process_profiles
 
 # TODO:
 # create a setup.py file with executable entry points for the main functions of:
@@ -24,23 +24,24 @@ app.json_encoder = JSONEncoder
 
 @app.route('/parse-types', methods=['POST'])
 def parse_types():
-    pinput = request.form.get('pos-items')
-    ninput = request.form.get('neg-items')
-    alias = request.form.get('grammar-name')
-    count = request.form.get('count')
-    supers = request.form.get('supers')
-    desc = request.form.get('load-descendants') 
-    fragments = request.form.get('fragments') 
-    tagger = request.form.get('tagger')
-  
-    pos = pinput.strip().splitlines() if pinput is not None else []
-    neg = ninput.strip().splitlines() if ninput is not None else []
-    desc_flag = (desc == 'true')
-    frags_flag = (fragments == 'true')
-    supers_flag = (supers == 'true')
-    grammar = get_grammar(alias)
-    return jsonify(web_typediff(pos, neg, grammar, count, frags_flag,
-                                supers_flag, desc_flag, tagger))
+    opts = dotdict({
+        'count': int(request.form.get('count')),
+        'tnt': request.form.get('tagger') == 'tnt2D',
+        'grammar': get_grammar(request.form.get('grammar-name')),
+        'desc': request.form.get('load-descendants') == 'true',
+        'fragments': request.form.get('fragments') == 'true',
+        'supers': request.form.get('supers')
+    })
+
+    pos_inputs = request.form.get('pos-items', '').strip().splitlines()
+    neg_inputs = request.form.get('neg-items', '').strip().splitlines()
+    pos_items, neg_items = process_sentences(pos_inputs, neg_inputs, opts)
+    return jsonify(typediff_web(pos_items, neg_items, opts))
+
+
+@app.route('/process-profiles', methods=['POST'])
+def process_profiles():
+    pass
 
 
 @app.route('/find-supers', methods=['POST'])

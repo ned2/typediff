@@ -311,6 +311,9 @@ def compare(grammar, arg):
                                    cutoff=arg.cutoff, grammar=grammar)
     resultsB = get_profile_results(pathsB, best=arg.best, gold=arg.gold,
                                    cutoff=arg.cutoff, grammar=grammar)
+
+    # TODO: need to turn readingsA and readingsB into dictionaries
+    # of {iid:results}. have changed the return value of get_profile_results
     return compare_trees(resultsA, resultsB, arg.feature)
 
 

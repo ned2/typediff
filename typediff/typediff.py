@@ -3,6 +3,7 @@ import os
 import argparse
 import json
 import pickle
+import functools
 from itertools import chain
 
 from . import delphin
@@ -64,10 +65,10 @@ The remainder of the options are only relevant to the command line mode:
 def argparser():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("grammar", metavar="GRAMMAR NAME")
-    argparser.add_argument("-n", default=10)
+    argparser.add_argument("--count", default=10)
     argparser.add_argument("--all", action='store_true')
     argparser.add_argument("--tagger")
-    argparser.add_argument("--frags", action='store_true')
+    argparser.add_argument("--fragments", action='store_true')
     argparser.add_argument("--supers", action='store_true')
     argparser.add_argument("--profiles", action='store_true')
     argparser.add_argument("--raw", action='store_true')
@@ -142,15 +143,58 @@ def compare_types(pos_types, neg_types, arg):
     return types
 
 
+@functools.lru_cache(maxsize=32)
+def get_hierarchy(grammar):
+    return delphin.load_hierarchy(grammar.types_path)
+
+
+@functools.lru_cache(maxsize=32)
+def load_descendants(grammar):
+    hierarchy = get_hierarchy(grammar)
+    desc_func = lambda x: set(t.name for t in hierarchy[x].descendants())
+    kinds = [name for name, _rgba, _col in config.TYPES if name != 'other']
+    descendants = {}
+    for kind in kinds:
+        for t in desc_func(kind):
+            descendants[t] = kind
+    return descendants
+
+
+def type_data():
+    return {t:{'rank':i+1, 'col':rgba}
+            for i, (t, rgba, _col) in enumerate(config.TYPES)}
+
+
+def typediff_web(pos_items, neg_items, opts):
+    data = {
+        'success': True,
+        'pos-items' : pos_items,
+        'neg-items' : neg_items,
+        'descendants' : load_descendants(opts.grammar) if opts.desc else False,
+        'typeData': type_data()
+    }
+
+    if opts.supers:
+        hierarchy = get_hierarchy(opts.grammar)
+        for item in chain(pos_items, neg_items):
+            item.load_supers(hierarchy)
+                
+    return data
+
+
 def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
                 tagger):
-    parse = lambda x: delphin.Fragment(x, grammar, ace_path=config.ACEBIN,
-                                       dat_path=grammar.dat_path,
-                                       count=count,
-                                       tnt=(tagger=='tnt'),
-                                       typifier=config.TYPIFIERBIN,
-                                       fragments=frags, 
-                                       logpath=config.LOGPATH)
+    parse = lambda x: delphin.Fragment(
+        sentence,
+        grammar,
+        ace_path=config.ACEBIN,
+        dat_path=grammar.dat_path,
+        count=count,
+        tnt=(tagger=='tnt'),
+        typifier=config.TYPIFIERBIN,
+        fragments=frags, 
+        logpath=config.LOGPATH
+    )
     try:
         pos = [parse(x) for x in pos_input]
         neg = [parse(x) for x in neg_input]
@@ -189,29 +233,27 @@ def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc,
     return data
 
 
-def typediff(pos_items, neg_items, arg):
+def typediff(pos_items, neg_items, opts):
     """pos_items and neg_items are lists of either Fragment or Reading objects"""
     # currently assuming that the Reading objects are only coming from gold
     # profiles, therefore only one per item. otherwise we'd need to be using s
     # list of Reading objects or probably could be defining an ProfileItem
     # class that emulates the relevant interface to Fragment
-    tfunc = lambda x:(x.best.types.keys()
-                      if (isinstance(x, delphin.Fragment) and not arg.all)
-                      else x.types.keys())
+    tfunc = lambda x:x.types.keys() if opts.all else x.best.types.keys()
     pos_types = set(chain.from_iterable(tfunc(x) for x in pos_items))
     neg_types = set(chain.from_iterable(tfunc(x) for x in neg_items))
 
     if len(pos_types) + len(neg_types) > 1:
-        typelist = list(compare_types(pos_types, neg_types, arg))
+        typelist = list(compare_types(pos_types, neg_types, opts))
     else:
         typelist = list(max(pos_types, neg_types))
         
-    if arg.raw:
+    if opts.raw:
         return '\n'.join(typelist)
 
-    hierarchy = delphin.load_hierarchy(arg.grammar.types_path)    
+    hierarchy = delphin.load_hierarchy(opts.grammar.types_path)    
         
-    if arg.supers:
+    if opts.supers:
         for group in (pos, neg):
             for item in group:
                 item.load_supers(hierarchy)     
@@ -219,50 +261,49 @@ def typediff(pos_items, neg_items, arg):
         sfunc = lambda x:x.supers
         pos_supers = set(chain.from_iterable(sfunc(x) for x in pos))
         neg_supers = set(chain.from_iterable(sfunc(x) for x in neg))
-        supers = compare_types(pos_supers, neg_supers, arg)
+        supers = compare_types(pos_supers, neg_supers, opts)
         typelist.extend('^'+t for t in supers)
 
     return pretty_print_types(typelist, hierarchy)
 
 
-def process_sentences(pos_items, neg_items, arg):
+def process_sentences(pos_inputs, neg_inputs, opts):
     process = lambda sentence: delphin.Fragment(
         sentence,
-        arg.grammar,
+        opts.grammar,
+        fragments=opts.fragments, 
+        count=opts.count,
+        tnt=opts.get('tnt', False), 
+        dat_path=opts.grammar.dat_path,  
         ace_path=config.ACEBIN,
-        dat_path=arg.grammar.dat_path,  
-        count=arg.n,
         typifier=config.TYPIFIERBIN,
-        fragments=arg.frags, 
         logpath=config.LOGPATH
     )
 
-    pos_fragments  = [process(i) for i in pos_items]
-    neg_fragments  = [process(i) for i in neg_items]
+    pos_fragments  = [process(i) for i in pos_inputs]
+    neg_fragments  = [process(i) for i in neg_inputs]
     return pos_fragments, neg_fragments    
 
 
-def process_profiles(pos_items, neg_items, arg):
+def process_profiles(pos_queries, neg_queries, opts):
     # assume pos_input and neg_input are strings of the form:
     # PROFILE_PATH:opt_tsql_query
     sep = ':'
-    pos_readings, neg_readings = [], []
-    for items, readings in ((pos_items, pos_readings),
-                            (neg_items, neg_readings)):
-        for item in items:
-            if item.find(sep) >= 0:
+    pos_items, neg_items = [], []
+    for queries, items in ((pos_queries, pos_items),
+                           (neg_queries, neg_items)):
+        for query in queries:
+            if query.find(sep) >= 0:
                 path, condition = item.split(':')
             else:
-                path = item
+                path = query
                 condition = None
-            new_readings = process_gold_profile(
+            items.extend(process_gold_profile(
                 path,
                 condition=condition,
-                grammar=arg.grammar,
-            )
-            # because gold profiles, will only be one reading per item
-            readings.extend(chain.from_iterable(new_readings))
-    return pos_readings, neg_readings
+                grammar=opts.grammar,
+            ))
+    return pos_items, neg_items
     
 
 def process_gold_profile(path, condition=None, grammar=None):
@@ -272,7 +313,7 @@ def process_gold_profile(path, condition=None, grammar=None):
         grammar=grammar,
         condition=condition,
         typifier=config.TYPIFIERBIN
-    ).values()
+    )
 
 
 def main():

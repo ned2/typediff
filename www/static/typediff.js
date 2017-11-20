@@ -211,6 +211,8 @@ function loadUrlParams() {
     }
 }
 
+// function processProfileItems(callback) {
+// }
 
 function processItems(callback) {
     showStatusBox('#waiting-box');
@@ -218,7 +220,6 @@ function processItems(callback) {
     var loadDescendants = !Boolean(DESCENDANTS[grammar]);
 
     var data = {
-        'query' : 'parse-types', 
         'pos-items' : $('#pos-input').val(), 
         'neg-items' : $('#neg-input').val(),
         'grammar-name' : grammar,

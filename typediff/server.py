@@ -4,9 +4,10 @@ from collections import defaultdict
 
 from flask import Flask, request, jsonify
 
-from .config import LOGONROOT, TREEBANKLIST, FANGORNPATH
+from .config import LOGONROOT, TREEBANKLIST, FANGORNPATH, PROFILELIST
 from .gram import get_grammar, get_grammars
-from .delphin import init_paths, JSONEncoder, load_hierarchy, Treebank, dotdict
+from .delphin import (init_paths, JSONEncoder, load_hierarchy, Treebank,
+                      dotdict, Profile)
 
 # set LOGONROOT environment variable in case it's not set
 init_paths(logonroot=LOGONROOT)
@@ -21,6 +22,7 @@ from .typediff import typediff_web, process_sentences, process_profiles
 app = Flask(__name__)
 app.json_encoder = JSONEncoder
 
+PROFILES = {p['alias']: Profile(p) for p in PROFILELIST}
 
 @app.route('/parse-types', methods=['POST'])
 def parse_types():
@@ -35,13 +37,35 @@ def parse_types():
 
     pos_inputs = request.form.get('pos-items', '').strip().splitlines()
     neg_inputs = request.form.get('neg-items', '').strip().splitlines()
-    pos_items, neg_items = process_sentences(pos_inputs, neg_inputs, opts)
+    pos_items = process_sentences(pos_inputs, opts)
+    neg_items = process_sentences(neg_inputs, opts)
     return jsonify(typediff_web(pos_items, neg_items, opts))
 
 
 @app.route('/process-profiles', methods=['POST'])
 def process_profiles():
-    pass
+    opts = dotdict({
+        'grammar': get_grammar(request.form.get('grammar-name')),
+    })
+
+    pos_prof_name = request.form.get('pos-profile', '')
+    neg_prof_name = request.form.get('neg-profile', '')
+    pos_prof_filter = request.form.get('pos-profile-filter', '')
+    neg_prof_filter = request.form.get('neg-profile-filter', '')
+
+    pos_items, neg_items = [], []
+
+    if pos_prof_name != '':
+        prof = PROFILES[pos_prof_name]
+        query = f'{prof.home}:{pos_prof_filter}'
+        pos_items = process_profiles(query, opts)
+
+    if neg_prof_name != '':
+        prof = PROFILES[neg_prof_name]
+        query = f'{prof.home}:{pos_prof_filter}'
+        neg_items = process_profiles(query, opts)
+
+    return jsonify(typediff_web(pos_items, neg_items, opts))
 
 
 @app.route('/find-supers', methods=['POST'])
@@ -75,4 +99,5 @@ def load_data():
         'grammars'    : get_grammars(), 
         'treebanks'   : [Treebank(t) for t in TREEBANKLIST] , 
         'fangornpath' : FANGORNPATH,
+        'profiles' : [Profile(p) for p in PROFILELIST] 
     })

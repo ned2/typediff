@@ -34,12 +34,10 @@ def load_grammar(gparams):
     return ConfigGrammar(gparams, config.DATAPATH)    
 
 
-def get_grammar(alias):
-    for gparams in config.GRAMMARLIST:
-        if gparams['alias'] == alias:
-            return load_grammar(gparams)
-    return None
+GRAMMARS = {g['alias']:g for g in config.GRAMMARLIST}
 
+def get_grammar(alias):
+    return load_grammar(GRAMMARS[alias])
 
 def get_grammars():
     return [load_grammar(gparams) for gparams in config.GRAMMARLIST]

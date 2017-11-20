@@ -190,12 +190,17 @@ class Treebank:
         for param, val in params.items():
             setattr(self, param, val)       
 
+class Profile:
+    def __init__(self, params):
+        for param, val in params.items():
+            setattr(self, param, val)       
+
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, set):
             return list(obj)
-        if isinstance(obj, Treebank):
+        if isinstance(obj, (Treebank, Token, Profile, TypeStats)):
             return obj.__dict__
         if isinstance(obj, Reading):
             data = obj.__dict__
@@ -205,16 +210,12 @@ class JSONEncoder(json.JSONEncoder):
             return data
         if isinstance(obj, Tree):
             return obj.ptb()
-        if isinstance(obj, Token):
-            return obj.__dict__
-        if isinstance(obj, Fragment):
+        if isinstance(obj, (Fragment, ProfileItem)):
             data = obj.__dict__
             data['grammar'] = data['grammar'].alias
             del data['log_lines']
             del data['logpath']
             return data
-        if isinstance(obj, TypeStats):
-            return obj.__dict__
         if hasattr(obj, 'json'):
             return obj.json()
         return json.JSONEncoder.default(self, obj)

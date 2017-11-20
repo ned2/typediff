@@ -267,43 +267,39 @@ def typediff(pos_items, neg_items, opts):
     return pretty_print_types(typelist, hierarchy)
 
 
-def process_sentences(pos_inputs, neg_inputs, opts):
-    process = lambda sentence: delphin.Fragment(
-        sentence,
-        opts.grammar,
-        fragments=opts.fragments, 
-        count=opts.count,
-        tnt=opts.get('tnt', False), 
-        dat_path=opts.grammar.dat_path,  
-        ace_path=config.ACEBIN,
-        typifier=config.TYPIFIERBIN,
-        logpath=config.LOGPATH
-    )
+def process_sentences(inputs, opts):
+    def process(sentence):
+        return delphin.Fragment(
+            sentence,
+            opts.grammar,
+            fragments=opts.fragments, 
+            count=opts.count,
+            tnt=opts.get('tnt', False), 
+            dat_path=opts.grammar.dat_path,  
+            ace_path=config.ACEBIN,
+            typifier=config.TYPIFIERBIN,
+            logpath=config.LOGPATH
+        )
 
-    pos_fragments  = [process(i) for i in pos_inputs]
-    neg_fragments  = [process(i) for i in neg_inputs]
-    return pos_fragments, neg_fragments    
+    return [process(i) for i in inputs]
 
 
-def process_profiles(pos_queries, neg_queries, opts):
-    # assume pos_input and neg_input are strings of the form:
-    # PROFILE_PATH:opt_tsql_query
+def process_profiles(queries, opts):
+    # assume queries is a string of the form: PROFILE_PATH:opt_tsql_query
     sep = ':'
-    pos_items, neg_items = [], []
-    for queries, items in ((pos_queries, pos_items),
-                           (neg_queries, neg_items)):
-        for query in queries:
-            if query.find(sep) >= 0:
-                path, condition = item.split(':')
-            else:
-                path = query
-                condition = None
-            items.extend(process_gold_profile(
-                path,
-                condition=condition,
-                grammar=opts.grammar,
-            ))
-    return pos_items, neg_items
+    items = []
+    for query in queries:
+        if query.find(sep) >= 0:
+            path, condition = item.split(':')
+        else:
+            path = query
+            condition = None
+        items.extend(process_gold_profile(
+            path,
+            condition=condition,
+            grammar=opts.grammar,
+        ))
+    return items
     
 
 def process_gold_profile(path, condition=None, grammar=None):
@@ -334,7 +330,8 @@ def main():
             stype.append(s)
 
     process_func = process_profiles if arg.profiles else process_sentences
-    pos_items, neg_items = process_func(pos, neg, arg)
+    pos_items = process_func(pos, arg)
+    neg_items = process_func(neg, arg)
     result = typediff(pos_items, neg_items, arg)
     print(result)
 

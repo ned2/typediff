@@ -42,6 +42,7 @@ PARAMS = [
     'ACESRC',
     'GRAMMARLIST',
     'TREEBANKLIST',
+    'PROFILELIST',
     'ACEBIN',
     'JSONPATH',
     'LOGPATH',

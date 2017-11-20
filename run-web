@@ -3,33 +3,29 @@
 PORT=5000
 DEBUG=''
 
-args=$(getopt -l "searchpath:" -o "s:h" -- "$@")
-eval set -- "$args"
+set -e
+set -o pipefail
 
 # process command line arguments
-while [ $# -ge 1 ]; do
-    case "$1" in
-        --)
-            # No more options left.
-            shift
-            break
+while getopts ':p:dh' OPTION; do
+    case "$OPTION" in
+        p)
+            PORT=${OPTARG}
             ;;
-        -p|--port)
-            PORT="$2"
-            shift
-            ;;
-        -d|--debug)
+        d)
             DEBUG="--debug-mode"
             ;;
-        -h|--help)
-            echo "run-web --port PORT --debug"
+        h)
+            echo "run-web -p PORT -d"
+            exit 0
+            ;;
+        ?)
+            echo "run-web -p PORT -d"
             exit 0
             ;;
     esac
-
-    shift
 done
-
+shift "$(($OPTIND -1))"
 
 SCRIPTPATH=$(cd $(dirname $0); pwd -P)
 export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}

@@ -266,6 +266,7 @@ class ProfileItem(Item):
         self.grammar = grammar
         self.readings = readings
         self.logpath = logpath
+        self.type = "profile" 
         self.post_init()
 
         
@@ -277,7 +278,8 @@ class Fragment(Item):
         self.input = text
         self.grammar = grammar
         self.logpath = logpath
-
+        self.type = "fragment"
+        
         if dat_path is not None:
             self.grammar.dat_path = dat_path
 

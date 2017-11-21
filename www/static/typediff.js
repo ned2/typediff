@@ -15,8 +15,9 @@ var ALLITEMS = [POSITEMS, NEGITEMS];
 var POSCOUNTER = 0;
 var NEGCOUNTER = 0;
 var DESCENDANTS = {};
+var POSPROFILES = Array();
+var NEGPROFILES = Array();
 var FADELENGTH = 400;
-var ACTIVE_TYPES = [];
 
 // these should match the corresponding checkboxes in HTML
 var LONGLABELS = false;
@@ -96,8 +97,10 @@ function updateUrl() {
     params.push(makeParam('supers', $("input[name=supers]").prop('checked')));
     params.push(makeParam('fragments', $("input[name=fragments]").prop('checked')));
 
-    var $posItems = $('#pos-items .item .text'); 
-    var $negItems = $('#neg-items .item .text'); 
+    // extract the text of all POS and PEG items but exclude those that came
+    // from a profile result as they must be restored separately
+    var $posItems = $('#pos-items .item').not('.profile').find('.text'); 
+    var $negItems = $('#neg-items .item').not('.profile').find('.text'); 
 
     if ($posItems.length > 0) {
         var Aitems = _.map($posItems, function (x) { return x.title; });
@@ -111,6 +114,14 @@ function updateUrl() {
         params.push(makeParam('B', Bitems.join('|||')));
     }
 
+
+    if (POSPROFILES.length > 0) {
+        params.push(makeParam('Aprofiles', POSPROFILES.join('|||')));
+    }
+    if (NEGPROFILES.length > 0) {
+        params.push(makeParam('Bprofiles', NEGPROFILES.join('|||')));
+    }
+    
     window.location.hash = encodeURI(params.join('&'));
 }
 
@@ -173,12 +184,45 @@ function loadUrlParams() {
             var Ainput = value.split('|||');
         } else if (param == 'B') {
             var Binput = value.split('|||');
+        } else if (param == 'Aprofiles'){
+            var posProfiles = value.split('|||');
+        } else if (param == 'Bprofiles'){
+            var negProfiles = value.split('|||');
         }
     }
 
-    if (!(Agrammar || Bgrammar))
+    if (posProfiles != null ) {
+        for (var i=0; i < posProfiles.length; i++) { 
+            var values = posProfiles[i].split(':');
+            var prof = values[0];
+            var filter = values[1];
+            processProfiles({
+                posProfile: prof,
+                posFilter: filter,
+                negProfile: null,
+                negFilter: ''
+            });
+        }
+    }
+        
+    if (negProfiles != null ) {
+        for (var i=0; i < negProfiles.length; i++) { 
+            var values = negProfiles[i].split(':');
+            var prof = values[0];
+            var filter = values[1];
+            processProfiles({
+                posProfile: null,
+                posFilter: '',
+                negProfile: prof,
+                negFilter: filter
+            });
+        }
+    }
+
+    if (!(Agrammar || Bgrammar)) {
         return;
-    
+    }
+
     // the typediff queries only work for one grammar at a time, so if
     // the A grammar and B grammar are different, we need to do first
     // one then the other.
@@ -233,21 +277,39 @@ function processItems(callback) {
 }
 
 
-function processProfiles(callback) {
+function processProfiles(savedProfiles) {
     showStatusBox('#waiting-box');
-    var grammar =  $('#grammar-input').val();
+    if (savedProfiles != null){
+        var posProfile = savedProfiles.posProfile;
+        var negProfile = savedProfiles.negProfile;
+        var posFilter = savedProfiles.negFilter;
+        var negFilter = savedProfiles.negFilter;
+    } else {
+        var posProfile = $('#pos-profile-input').val();
+        var negProfile = $('#neg-profile-input').val();
+        var posFilter = $('#pos-profile-filter').val();
+        var negFilter = $('#neg-profile-filter').val();
+    }
+
+    // we're assuming that POS and NEG profiles used the same grammar
+    var grammar =  PROFILES[(posProfile||negProfile)].grammar;
+
     var data = {
-        'pos-profile': $('#pos-profile-input').val(), 
-        'neg-profile': $('#neg-profile-input').val(), 
-        'pos-profile-filter': $('#pos-profile-filter').val(),
-        'neg-profile-filter': $('#neg-profile-filter').val(),
+        'pos-profile': posProfile,
+        'neg-profile': negProfile,
+        'pos-profile-filter': posFilter, 
+        'neg-profile-filter': negFilter,
         'load-descendants': !Boolean(DESCENDANTS[grammar]) 
     };
 
     var posting = $.post('/process-profiles', data);
     posting.done(processPostData, function(data){
-        if (data.success && callback)
-            callback();
+        if (posProfile != null) {
+            POSPROFILES.push(`${posProfile}:${posFilter}`);
+        }
+        if (negProfile != null) {
+            NEGPROFILES.push(`${negProfile}:${negFilter}`);
+        }
     });
 }
 
@@ -262,6 +324,8 @@ function processPostData(data) {
         processItemResults(data['pos-items'], 'pos');
         processItemResults(data['neg-items'], 'neg');
         $('#pos-input, #neg-input').val('');
+        $('#pos-profile-input, #neg-profile-input').val(null);
+        $('#pos-profile-filter, #neg-profile-filter').val('');
         setOperator();
         doDiff();
     } else {
@@ -291,6 +355,8 @@ function processItemResults(newItems, type) {
     for (var i = 0; i < newItems.length; i++) {
         var item = newItems[i];
         var $item = $(template).attr('grammar', item.grammar);
+        if (item.type == "profile")
+            $item.addClass('profile');
         var readings = item.readings.length;
         var counter = incrCounter(type);
         var id = type+'-item-'+counter;
@@ -1181,6 +1247,8 @@ function loadData(callback) {
 function clearState(callback) {
     POSITEMS = Array();
     NEGITEMS = Array();
+    POSPROFILES = Array();
+    NEGPROFILES = Array();
     POSCOUNTER = 0;
     NEGCOUNTER = 0;
     updateButtons();

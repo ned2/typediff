@@ -3,8 +3,6 @@
 PORT=5000
 DEBUG=''
 
-set -e
-set -o pipefail
 
 # process command line arguments
 while getopts ':p:dh' OPTION; do
@@ -29,6 +27,7 @@ shift "$(($OPTIND -1))"
 
 SCRIPTPATH=$(cd $(dirname $0); pwd -P)
 export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}
+. ${LOGONROOT}/dot.bashrc 
 
 mod_wsgi-express start-server \
                  --port ${PORT} \

@@ -171,7 +171,8 @@ def typediff_web(pos_items, neg_items, opts):
         'pos-items' : pos_items,
         'neg-items' : neg_items,
         'descendants' : load_descendants(opts.grammar) if opts.desc else False,
-        'typeData': type_data()
+        'typeData': type_data(),
+        'grammar': opts.grammar.alias,
     }
 
     if opts.supers:
@@ -179,57 +180,6 @@ def typediff_web(pos_items, neg_items, opts):
         for item in chain(pos_items, neg_items):
             item.load_supers(hierarchy)
                 
-    return data
-
-
-def web_typediff(pos_input, neg_input, grammar, count, frags, supers, load_desc, 
-                tagger):
-    parse = lambda x: delphin.Fragment(
-        sentence,
-        grammar,
-        ace_path=config.ACEBIN,
-        dat_path=grammar.dat_path,
-        count=count,
-        tnt=(tagger=='tnt'),
-        typifier=config.TYPIFIERBIN,
-        fragments=frags, 
-        logpath=config.LOGPATH
-    )
-    try:
-        pos = [parse(x) for x in pos_input]
-        neg = [parse(x) for x in neg_input]
-    except(delphin.AceError) as err:
-        data = {
-            'succes' : False, 
-            'error'  : err.msg,
-        }
-        return json.dumps(data)
-
-    data = {
-        'success': True,
-        'pos-items' : pos,
-        'neg-items' : neg,
-        'descendants' : False,
-    }
-
-    if supers or load_desc:
-        hierarchy = delphin.load_hierarchy(grammar.types_path)
-
-    if supers:
-        for group in (pos, neg):
-            for item in group:
-                item.load_supers(hierarchy)
-
-    if load_desc:
-        descendants = lambda x: set(t.name for t in hierarchy[x].descendants())
-        kinds = [name for name, _rgba, _col in config.TYPES if name != 'other']
-        data['descendants'] = {}
-        for kind in kinds:
-            for t in descendants(kind):
-                data['descendants'][t] = kind
-
-    data['typeData'] = {t:{'rank':i+1, 'col':rgba}
-                        for i, (t, rgba, _col) in enumerate(config.TYPES)} 
     return data
 
 
@@ -288,9 +238,15 @@ def process_profiles(queries, opts):
     # assume queries is a string of the form: PROFILE_PATH:opt_tsql_query
     sep = ':'
     items = []
+
+    # support both list of queries and single query
+    if isinstance(queries, str):
+        queries = [queries]
+        
     for query in queries:
         if query.find(sep) >= 0:
-            path, condition = item.split(':')
+            path, condition = query.split(':')
+            condition = None if condition == '' else condition
         else:
             path = query
             condition = None

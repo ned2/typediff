@@ -111,24 +111,28 @@
   </div>
 </div>
 
-  <div id="add-items-box" class="popup hidden">
+<div id="add-items-box" class="popup hidden">
     <form action="#" method="post" onsubmit="return false;">
-      <div class="input-box"><div class="header">A Items</div><textarea id="pos-input" name="pos-items"></textarea></div>
-      <div class="spacer"></div>
-      <div class="input-box"><div class="header">B Items</div><textarea id="neg-input" name="neg-items"></textarea></div>
-
-      <div class="input-box">
-          <select id="pos-profile-input">
-          </select>
-      </div>
-      <div class="spacer"></div>
-      <div class="input-box">
-          <select id="pos-profile-input">
-          </select>
-      </div>
-      <input id="submit-items-button" type="submit" value="Add Items"/>
+        <div class="input-box" style="width:45%">
+            <div class="header">A Items</div>
+            <textarea id="pos-input" name="pos-items"></textarea>
+            <select id="pos-profile-input" class="profile-input">
+                <option value="" disabled selected>Add profile items...</option>
+            </select>
+            <input id="pos-profile-filter" type="text" placeholder="TSQL Constraint">
+        </div>
+        <div class="spacer"></div>
+        <div class="input-box" style="width:45%">
+            <div class="header">B Items</div>
+            <textarea id="neg-input" name="neg-items"></textarea>
+            <select id="neg-profile-input" class="profile-input">
+                <option value="" disabled selected>Add profile items...</option>
+            </select>
+            <input id="neg-profile-filter" type="text" placeholder="TSQL Constraint">
+        </div>
+        <input id="submit-items-button" type="submit" value="Add Items"/>
     </form>
-  </div>
+</div>
 
 <div id="container">
   <div id="console-pane" class="pane left-pane">

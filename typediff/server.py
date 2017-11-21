@@ -43,28 +43,32 @@ def parse_types():
 
 
 @app.route('/process-profiles', methods=['POST'])
-def process_profiles():
-    opts = dotdict({
-        'grammar': get_grammar(request.form.get('grammar-name')),
-    })
-
+def process_the_profiles():
     pos_prof_name = request.form.get('pos-profile', '')
     neg_prof_name = request.form.get('neg-profile', '')
     pos_prof_filter = request.form.get('pos-profile-filter', '')
     neg_prof_filter = request.form.get('neg-profile-filter', '')
 
     pos_items, neg_items = [], []
-
+    
+    opts = dotdict({
+        'desc': request.form.get('load-descendants') == 'true',
+    })
+    
     if pos_prof_name != '':
         prof = PROFILES[pos_prof_name]
         query = f'{prof.home}:{pos_prof_filter}'
+        opts.grammar = get_grammar(prof.grammar)
         pos_items = process_profiles(query, opts)
 
     if neg_prof_name != '':
         prof = PROFILES[neg_prof_name]
         query = f'{prof.home}:{pos_prof_filter}'
+        opts.grammar = get_grammar(prof.grammar)
         neg_items = process_profiles(query, opts)
 
+    # for now assume that both profiles will be parsed using the
+    # same grammar version, so use whichever grammar was assigned
     return jsonify(typediff_web(pos_items, neg_items, opts))
 
 

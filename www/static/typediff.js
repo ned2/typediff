@@ -211,44 +211,63 @@ function loadUrlParams() {
     }
 }
 
-// function processProfileItems(callback) {
-// }
 
 function processItems(callback) {
     showStatusBox('#waiting-box');
     var grammar =  $('#grammar-input').val();
-    var loadDescendants = !Boolean(DESCENDANTS[grammar]);
-
     var data = {
         'pos-items' : $('#pos-input').val(), 
         'neg-items' : $('#neg-input').val(),
         'grammar-name' : grammar,
         'count' : $('#count-input').val(),
-        'load-descendants': loadDescendants,
+        'load-descendants': !Boolean(DESCENDANTS[grammar]),
         'supers': $('input[name=supers]').prop('checked'),
         'tagger': $("input[name=tagger]:checked").val(),
         'fragments': $('input[name=fragments]').prop('checked')
-    };
-        
+    };  
     var posting = $.post('/parse-types', data);
-    posting.done(function(data) {
-        if (data.success) {
-            if (data.descendants)
-                DESCENDANTS[grammar] = data.descendants;
-
-            TYPEDATA = data.typeData;
-            processItemResults(data['pos-items'], 'pos');
-            processItemResults(data['neg-items'], 'neg');
-            $('#pos-input, #neg-input').val('');
-            setOperator();
-            doDiff();
-            if (callback)
-                callback();
-        } else {
-            showStatusBox('#fail-box').html(data.error.replace(/\n/g, '<br/>'));
-            updateButtons();
-        }
+    posting.done(processPostData, function(data){
+        if (data.success && callback)
+            callback();
     });
+}
+
+
+function processProfiles(callback) {
+    showStatusBox('#waiting-box');
+    var grammar =  $('#grammar-input').val();
+    var data = {
+        'pos-profile': $('#pos-profile-input').val(), 
+        'neg-profile': $('#neg-profile-input').val(), 
+        'pos-profile-filter': $('#pos-profile-filter').val(),
+        'neg-profile-filter': $('#neg-profile-filter').val(),
+        'load-descendants': !Boolean(DESCENDANTS[grammar]) 
+    };
+
+    var posting = $.post('/process-profiles', data);
+    posting.done(processPostData, function(data){
+        if (data.success && callback)
+            callback();
+    });
+}
+
+
+function processPostData(data) {
+    // handles results of both /parse-types and /process-profiles
+
+    if (data.success) {
+        if (data.descendants) DESCENDANTS[data.grammar] = data.descendants;
+        
+        TYPEDATA = data.typeData;
+        processItemResults(data['pos-items'], 'pos');
+        processItemResults(data['neg-items'], 'neg');
+        $('#pos-input, #neg-input').val('');
+        setOperator();
+        doDiff();
+    } else {
+        showStatusBox('#fail-box').html(data.error.replace(/\n/g, '<br/>'));
+        updateButtons();
+    }
 }
 
 
@@ -1122,25 +1141,38 @@ function loadData(callback) {
         GRAMMARS = {};
         var $grammarInput = $('#grammar-input');
         var $treebankInput = $('#treebank-input');
-
+        var $profileInput = $('.profile-input');
+        
         for (var i=0; i < data.grammars.length; i++) {
             var grammar = data.grammars[i]; 
             GRAMMARS[grammar.alias] = grammar;
-            $grammarInput.append($('<option>', { 'value' : grammar.alias,
-                                                 'html'  : grammar.shortname
-                                               }));
+            $grammarInput.append($('<option>', {
+                'value' : grammar.alias,
+                'html'  : grammar.shortname
+            }));
         }
 
         TREEBANKS = {};
         for (var i=0; i < data.treebanks.length; i++) {
             var treebank = data.treebanks[i]; 
             TREEBANKS[treebank.alias] = treebank;
-            $treebankInput.append($('<option>', { 'value' : treebank.alias,
-                                                  'html'  : treebank.name
-                                               }));
+            $treebankInput.append($('<option>', {
+                'value' : treebank.alias,
+                'html'  : treebank.name
+            }));
+        }
+        $treebankInput.append($('<option>', {'value':'none', 'html':'None'}));
+
+        PROFILES = {};
+        for (var i=0; i < data.profiles.length; i++) {
+            var profile = data.profiles[i]; 
+            PROFILES[profile.alias] = profile;
+            $profileInput.append($('<option>', {
+                'value' : profile.alias,
+                'html'  : profile.name
+            }));
         }
 
-        $treebankInput.append($('<option>', {'value':'none', 'html':'None'}));
         callback();
     });
 }
@@ -1285,8 +1317,17 @@ function setHandlers() {
     });
 
     $('#submit-items-button').click(function(event) {
-        $('#add-items-box').hide();
-        processItems();
+        if ($('#pos-input').val() != '' ||
+            $('#neg-input').val() != '') {
+            $('#add-items-box').hide();
+            processItems();
+        }
+
+        if ($("#pos-profile-input").val() != null ||
+            $("#pos-profile-input").val() != null) {
+            $('#add-items-box').hide();
+            processProfiles();            
+        }
     });
 
     $("#pos-input, #neg-input").keydown(function(event){

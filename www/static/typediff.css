@@ -313,6 +313,14 @@ input[type=text], input[type=submit], select {
     margin-left: -425px;
 }
 
+#add-items-box textarea {
+    margin-bottom: 1em;
+}
+
+#add-items-box select {
+    margin-right: 1em;
+}
+
 #treebanks-box {
     text-align: center;
     top: 9%;

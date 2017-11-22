@@ -114,12 +114,13 @@ function updateUrl() {
         params.push(makeParam('B', Bitems.join('|||')));
     }
 
-
     if (POSPROFILES.length > 0) {
-        params.push(makeParam('Aprofiles', POSPROFILES.join('|||')));
+        var value = POSPROFILES.join('|||').replace(/=/g, '+');
+        params.push(makeParam('Aprofiles', value));
     }
     if (NEGPROFILES.length > 0) {
-        params.push(makeParam('Bprofiles', NEGPROFILES.join('|||')));
+        var value = NEGPROFILES.join('|||').replace(/=/g, '+');
+        params.push(makeParam('Bprofiles', value));
     }
     
     window.location.hash = encodeURI(params.join('&'));
@@ -193,7 +194,7 @@ function loadUrlParams() {
 
     if (posProfiles != null ) {
         for (var i=0; i < posProfiles.length; i++) { 
-            var values = posProfiles[i].split(':');
+            var values = posProfiles[i].replace(/\+/g, '=').split(':');
             var prof = values[0];
             var filter = values[1];
             processProfiles({

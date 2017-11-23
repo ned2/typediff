@@ -437,7 +437,7 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     var outputPane = $('#output-pane-contents').empty(); 
     var table = $('<table>').
             attr({id:'type-table'}).
-            html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value=".*">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>').
+            html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>').
             appendTo(outputPane);
     var tbody = $('<tbody>').appendTo(table);
     
@@ -524,10 +524,17 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
 
     var dt = table.DataTable({
         paging: false,
-        
-        order: [[0,'asc'], [1, 'desc']],
+        dom: 'fit',
+        order: [[1, 'desc']],
         fixedHeader: true,
         //columnDefs: [{ "visible": false, "targets": 0 }]
+        aoSearchCols: [
+            {
+                sSearch: "(sign|synsem|head|cat|relation|predsort)",
+                "bRegex": true
+            },
+            null, null, null, null
+        ],
         initComplete: function () {
             // generate select options from unique values from columns
             // with select filters
@@ -547,8 +554,9 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
                         return 1;
                     };
                     column.data().unique().sort(order).each(function (d, j) {
-                        select.append( '<option value="'+d+'">'+d+'</option>' );
+                        select.append('<option value="'+d+'">'+d+'</option>');
                     });
+                    select.append('<option value=".*">All + other</option>');
                 }
             });
         }

@@ -304,14 +304,14 @@ function processProfiles(savedProfiles) {
     };
 
     var posting = $.post('/process-profiles', data);
-    posting.done(processPostData, function(data){
+    posting.done(function(data){
         if (posProfile != null) {
             POSPROFILES.push(`${posProfile}:${posFilter}`);
         }
         if (negProfile != null) {
             NEGPROFILES.push(`${negProfile}:${negFilter}`);
         }
-    });
+    }, processPostData);
 }
 
 
@@ -416,6 +416,20 @@ function updateButtons() {
     }
 }
 
+function convertToPercentage(number, denominator, percent) {
+    var float = number*100/denominator;
+    var string = float.toFixed(2).toString();
+
+    // make sure zero padded if need be
+    if (string.length == 4)
+        string = '0' + string;
+
+    if (percent)
+        string = string + "%";
+    
+    return string;
+}
+
 
 function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     /* create a new table with output types */
@@ -423,52 +437,72 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     var outputPane = $('#output-pane-contents').empty(); 
     var table = $('<table>').
             attr({id:'type-table'}).
-            html('<thead><tr><th>kind</th><th>Items</th><th>Treebank</th><th>Type</th></tr></thead>').
+            html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value=".*">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>').
             appendTo(outputPane);
     var tbody = $('<tbody>').appendTo(table);
     
     function makeNode(type, kind, superOf) {
-        var typeLine = $('<tr>', {'class' : 'type-line'});
-
-        var typeName = $('<td>', {'text'  : type,
-                                  'class' : kind + ' type',
-                                  'title' : kind + ' type',
-                                  'style' : 'background: ' + TYPEDATA[kind].col
-                               });
+        var treebankPercentage = '';
+        var tfIdfVal = '';
         
-        var stringNum = '';
         if (treebank.data && !superOf) {
             var typeStats = treebank.data[type];
-            var items = typeStats == undefined ? 0 : typeStats.items*100/treebank.trees;    
-            stringNum = items.toFixed(2)+'%';
-            if (stringNum.length == 5) stringNum = '0' + stringNum;
+            var trees = (typeStats != undefined) ? typeStats.items : 0;
+            //if (trees > treebank.trees) debugger;
+            treebankPercentage = convertToPercentage(trees, treebank.trees); 
+            tfIdfVal = (itemCounts[type]/(1+Math.log(trees))).toFixed(2);
         }
             
-        var treebankCount = $('<td>', {
-            class : 'items-stat', 
-            text : stringNum,
-            title : 'percent of trees in treebank this type is found in'});
+        // Make all the cells of the line 
+        var typeKind = $('<td>', {
+            text : kind,
+            "data-order" : TYPEDATA[kind].rank
+        });
 
         var itemCount = $('<td>', {
             class : 'items-stat', 
-            text : itemCounts[type],
-            title : 'number of positive items found in'});
+            text : convertToPercentage(itemCounts[type], POSITEMS.length),
+            title : 'percentage of A items found in'
+        });
 
-        var typeKind = $('<td>', {
-            text : kind,
-            "data-order" : TYPEDATA[kind].rank});
+        var treebankCount = $('<td>', {
+            class : 'items-stat', 
+            text : treebankPercentage,
+            title : 'percent of trees in treebank this type is found in'
+        });
+
+        var tfIdf = $('<td>', {
+            class : 'items-stat', 
+            text : tfIdfVal,
+            title : 'TF-IDF'
+        });
+
+        var typeName = $('<td>', {
+            'text'  : type,
+            'class' : kind + ' type',
+            'title' : kind + ' type',
+            'style' : 'background: ' + TYPEDATA[kind].col
+        });
+
+        var typeLine = $('<tr>', {'class' : 'type-line'});
 
         if (superOf) {
             typeLine.addClass('super');
             typeName.addClass('super');
             typeName.attr('title', 'supertype of ' + superOf);
             itemCount.html('');
+            treebankCount.html('');
+            tfIdf.html('');
         }
-        
-        typeLine.append(typeKind);
-        typeLine.append(itemCount);
-        typeLine.append(treebankCount);
-        typeLine.append(typeName);
+
+        typeLine.append([
+            typeKind,
+            tfIdf,
+            itemCount,
+            treebankCount,
+            typeName,
+        ]);
+
         return typeLine;
     };
 
@@ -488,13 +522,48 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
         }
     }
 
-    table.DataTable({
+    var dt = table.DataTable({
         paging: false,
-        orderFixed: [0,'asc'],
+        
+        order: [[0,'asc'], [1, 'desc']],
         fixedHeader: true,
-        columnDefs: [{ "visible": false, "targets": 0 }]
+        //columnDefs: [{ "visible": false, "targets": 0 }]
+        initComplete: function () {
+            // generate select options from unique values from columns
+            // with select filters
+            this.api().columns().every( function () {
+                var column = this;
+                var select = $('select.filter', column.footer());
+                if (select.length != 0){
+                    var order = function (x,y){
+                        order = [
+                            'sign', 'synsem', 'head', 'cat', 'relation',
+                            'predsort','other'
+                        ];
+                        if (x == y)
+                            return 0;
+                        if (order.indexOf(x) < order.indexOf(y))
+                            return -1;
+                        return 1;
+                    };
+                    column.data().unique().sort(order).each(function (d, j) {
+                        select.append( '<option value="'+d+'">'+d+'</option>' );
+                    });
+                }
+            });
+        }
     });
 
+    dt.columns().every(function(){
+        var column = this;
+        $('select.filter', this.footer()).on('change', function () {
+            var val = this.value;
+            var searchString = '^'+val+'$';
+            var regex = true;
+            column.search(searchString, regex, !regex, true).draw();
+        });
+    });
+    
     // Do various status things...
     
     var addGrammarStatus = function(grammars, $status) {
@@ -514,6 +583,9 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
         }
     };
 
+    $('#num-pos-items').text(POSITEMS.length);
+    $('#num-neg-items').text(NEGITEMS.length);
+    
     var posGrammars = _.map($('#pos-items .item'), function(x) { 
         return $(x).attr('grammar'); });
     var negGrammars = _.map($('#neg-items .item'), function(x) { 

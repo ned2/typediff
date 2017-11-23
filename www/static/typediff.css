@@ -393,3 +393,7 @@ input[type=text], input[type=submit], select {
 #type-table_wrapper {
     position: static;
 }
+
+#type-table tfoot {
+    display: table-header-group;
+}

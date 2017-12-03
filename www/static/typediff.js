@@ -56,11 +56,11 @@ function getItemObject($item){
 }
 
 function numActivePosItems(){
-    return _.sumBy(POSITEMS, function(value){return Boolean(!value.disabled);});
+    return _.sumBy(POSITEMS, function(value){return !value.disabled | 0;});
 }
 
 function numActiveNegItems(){
-    return _.sumBy(NEGITEMS, function(value){return Boolean(!value.disabled);});
+    return _.sumBy(NEGITEMS, function(value){return !value.disabled | 0;});
 }
 
 function getDerivation($deriv) { 
@@ -445,15 +445,12 @@ function convertToPercentage(number, denominator, percent) {
 }
 
 
-function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
+function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     /* create a new table with output types */
-
-    var outputPane = $('#output-pane-contents').empty(); 
-    var table = $('<table>').
+    var $table = $('<table>').
             attr({id:'type-table'}).
-            html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>').
-            appendTo(outputPane);
-    var tbody = $('<tbody>').appendTo(table);
+            html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>');
+    var tbody = $('<tbody>').appendTo($table);
     
     function makeNode(type, kind, superOf) {
         var treebankPercentage = '';
@@ -462,7 +459,6 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
         if (treebank.data && !superOf) {
             var typeStats = treebank.data[type];
             var trees = (typeStats != undefined) ? typeStats.items : 0;
-            //if (trees > treebank.trees) debugger;
             treebankPercentage = convertToPercentage(trees, treebank.trees); 
             tfIdfVal = (itemCounts[type]/(1+Math.log(trees))).toFixed(2);
         }
@@ -539,7 +535,7 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
         }
     }
 
-    var dt = table.DataTable({
+    var dt = $table.DataTable({
         paging: false,
         dom: 'fit',
         order: [[1, 'desc']],
@@ -588,7 +584,48 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
             column.search(searchString, regex, !regex, true).draw();
         });
     });
+    return $table;
+}
+
+
+function makeFilterLists(grammar) {
+    var makeFilterList = function (filters, text) {
+        var typeFilters = Array();
+        for (var i=0; i < filters.length; i++) {
+            var typeName = filters[i];
+            var kind = DESCENDANTS[grammar][type] || "other";
+            var filter = $('<div>', {
+                'html'  : typeName,
+                'class' : kind + ' type',
+                'title' : `${type} (${kind} type)`,
+                'style' : 'background: ' + TYPEDATA[kind].col
+            });
+            filter.append('<i class="fa fa-times"></i>');
+            typeFilters.push(filter);
+        }
+
+        var header = $('<div>', {text: text});
+        return $('div', {class: 'filter-list'})
+            .append(header)
+            .append(typeFilters);
+    };
     
+    return $('div').append([
+        makeFilterList('pos'),
+        makeFilterList('neg'),
+        // TODO: clear button that's centered
+    ]);
+}
+
+
+function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
+    var outputPane = $('#output-pane-contents').empty(); 
+
+    //var $filterList = makeFilterLists(grammar);
+    //$filterList.appendTo(outputPane);
+    var $table = makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank);
+    $table.appendTo(outputPane);
+
     // Do various status things...
     
     var addGrammarStatus = function(grammars, $status) {
@@ -615,8 +652,10 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
         return $(x).attr('grammar'); });
     var negGrammars = _.map($('#neg-items .item'), function(x) { 
         return $(x).attr('grammar'); });
+
     addGrammarStatus(posGrammars, $('#pos-grammar'));
     addGrammarStatus(negGrammars, $('#neg-grammar'));
+
     $('#numtypes').text(types.length);
 
     if (SUPERS)
@@ -636,9 +675,19 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
 }
 
 
-function doDiff() {
-    if (!haveItems()) return;
+function updateActiveItems() {
+    var numPos = numActivePosItems();
+    var numNeg = numActiveNegItems();
+    $('#pos-active-count').html(`<span>${numPos} ${pluralize('item', numPos)}</span>`);
+    $('#neg-active-count').html(`<span>${numNeg} ${pluralize('item', numNeg)}</span>`);
+}
 
+
+function doDiff() {
+    updateActiveItems();
+
+    if (!haveItems()) return;
+   
     $('.locked').each(function(index, elem) {
         elem.classList.remove('locked');
     });
@@ -1064,24 +1113,17 @@ function setTypeHandlers() {
 
 
 function applyFilters() {
-    // blacklisted types
-    var blacklistFunc = function($item){
+    var disableFunc = function($item){
         var item = getItemObject($item);
         item.disabled = true;
         $item.hide();
     };
 
-    var whitelistFunc = function($item){
-        var item = getItemObject($item);
-        item.disabled = true;
-        $item.hide();
-    };
-    
     for (var i=0; i < BLACKLISTTYPES.length; i++)
-        applyToMatchingItems(BLACKLISTTYPES[i], blacklistFunc);
+        applyToMatchingItems(BLACKLISTTYPES[i], disableFunc);
 
     for (var j=0; j < WHITELISTTYPES.length; j++)
-        applyToNonMatchingItems(WHITELISTTYPES[j], whitelistFunc);
+        applyToNonMatchingItems(WHITELISTTYPES[j], disableFunc);
 
     doDiff();
 }

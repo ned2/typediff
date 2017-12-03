@@ -7,6 +7,7 @@ body {
     width: 39%;
     top: 0;
     right: 1em;
+    z-index: 1000;
 }
 
 #help-content {
@@ -419,3 +420,16 @@ input[type=text], input[type=submit], select {
 #type-table tfoot {
     display: table-header-group;
 }
+
+.item-group-info {
+    padding: 0 0.5em;
+}
+
+.item-type-header{
+    display: inline-block;
+}
+
+.item-count-header{
+    float: right;
+}
+

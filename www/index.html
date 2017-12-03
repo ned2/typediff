@@ -2,7 +2,8 @@
 <head>
   <meta charset="utf-8" />
   <title>Typediff</title>
-  <link rel="stylesheet" type="text/css" media="screen" href="static/typediff.css"/>
+  <link rel="stylesheet" type="text/css" href="static/typediff.css"/>
+  <link rel="stylesheet" type="text/css" href="static/font-awesome/css/font-awesome.min.css"/>
   <link href="https://cdn.datatables.net/v/dt/dt-1.10.12/fh-3.1.2/datatables.min.css" rel='stylesheet' type='text/css'>
   <!-- TODO: add local version for offline  -->
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
@@ -25,7 +26,7 @@
   <script type="text/html" id="item-template">
     <div class="item">
       <div class="tree-box popup hidden">
-        <div class="tree-actions hidden">
+        <div class="tree-actions">
           <input class="activate-derivations" type="submit" value="Select All"/>
           <input class="disable-derivations" type="submit" value="Unselect All"/>
           <input class="copy-item" type="submit" value="Copy Item" title="Copy this item to the other set with the same active trees."/>
@@ -39,12 +40,13 @@
       </div>
       <div class="actions">
         <div class="number">1.</div>
-        <div class="del" title="remove item">✖</div>
-        <div class="disable">
-          <span class="icon" title="disable item">≢</span>
-          <span class="icon hidden" title="enable item">≡</span>
+        <div class="del" title="remove item">
+            <i class="fa fa-times"></i>
         </div>
-      </div>
+        <div class="disable">
+            <i class="fa fa-toggle-on" title="toggle item"></i>
+        </div>
+        </div>
       <div class="clear"></div>
       <div class="text"></div>
       <div class="tree-count"></div>
@@ -200,7 +202,7 @@
   <div id="status-pane" class="pane right-pane">
     <div class="pane-header">STATUS</div>
     <div class="pane-content">
-      <div id="waiting-box" class="hidden">Working...</div>
+      <div id="waiting-box" class="hidden"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i></div>
       <div id="success-box" class="hidden">
         <div class="status-label">A items:</div>
         <div id="num-pos-items" class="status-value"></div>

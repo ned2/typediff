@@ -19,6 +19,9 @@ var POSPROFILES = Array();
 var NEGPROFILES = Array();
 var FADELENGTH = 400;
 
+var BLACKLISTTYPES = Array();
+var WHITELISTTYPES = Array();
+
 // these should match the corresponding checkboxes in HTML
 var LONGLABELS = false;
 var SUPERS = false;
@@ -39,12 +42,26 @@ function makeFangornQueryUrl(treebank, query) {
 function isERG(grammar) { return grammar.match('t?erg') !== null;}
 function getItemId($item) { return parseInt($item.attr('id').split('-')[2]); }
 function getItemType($item) { return $item.attr('id').split('-')[0]; }
-function getItems(type) { return (type == 'pos') ? POSITEMS : NEGITEMS; }
+function getItems(polarity) { return (polarity == 'pos') ? POSITEMS : NEGITEMS; }
 function getItem($item) { return getItems(getItemType($item))[getItemId($item)]; }
 function getDerivationId($deriv) { return parseInt($deriv.attr('id').split('-')[1]); }
 function haveItems() { return POSITEMS.length > 0 || NEGITEMS.length > 0; }
 function havePosItems() { return POSITEMS.length > 0; }
 function haveNegItems() { return NEGITEMS.length > 0; }
+function getItemObject($item){
+    var id = getItemId($item);
+    var polarity = getItemType($item);
+    var items = getItems(polarity);
+    return items[id];
+}
+
+function numActivePosItems(){
+    return _.sumBy(POSITEMS, function(value){return Boolean(!value.disabled);});
+}
+
+function numActiveNegItems(){
+    return _.sumBy(NEGITEMS, function(value){return Boolean(!value.disabled);});
+}
 
 function getDerivation($deriv) { 
     item = getItem($deriv.closest('.item'));
@@ -205,7 +222,7 @@ function loadUrlParams() {
             });
         }
     }
-        
+
     if (negProfiles != null ) {
         for (var i=0; i < negProfiles.length; i++) { 
             var values = negProfiles[i].split(':');
@@ -283,7 +300,7 @@ function processProfiles(savedProfiles) {
     if (savedProfiles != null){
         var posProfile = savedProfiles.posProfile;
         var negProfile = savedProfiles.negProfile;
-        var posFilter = savedProfiles.negFilter;
+        var posFilter = savedProfiles.posFilter;
         var negFilter = savedProfiles.negFilter;
     } else {
         var posProfile = $('#pos-profile-input').val();
@@ -304,6 +321,7 @@ function processProfiles(savedProfiles) {
     };
 
     var posting = $.post('/process-profiles', data);
+
     posting.done(function(data){
         if (posProfile != null) {
             POSPROFILES.push(`${posProfile}:${posFilter}`);
@@ -373,10 +391,6 @@ function processItemResults(newItems, type) {
         $itemSection.find('.item-list').append($item);
 
         var $treeBox = $item.find('.tree-box');
-
-        if (readings > 1) { 
-            $treeBox.find('.tree-actions').show();
-        }
 
         for (var j=0; j < readings; j++) {
             var derivation = item.readings[j];
@@ -461,8 +475,8 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
 
         var itemCount = $('<td>', {
             class : 'items-stat', 
-            text : convertToPercentage(itemCounts[type], POSITEMS.length),
-            title : 'percentage of A items found in'
+            text : convertToPercentage(itemCounts[type], numActivePosItems()),
+            title : 'percentage of active A items found in'
         });
 
         var treebankCount = $('<td>', {
@@ -478,11 +492,14 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
         });
 
         var typeName = $('<td>', {
-            'text'  : type,
+            'html'  : `<div class="type-name">${type}</div>`,
             'class' : kind + ' type',
-            'title' : kind + ' type',
+            'title' : `${type} (${kind} type)`,
             'style' : 'background: ' + TYPEDATA[kind].col
         });
+
+        typeName.append('<div class="filter-type-in"><i class="fa fa-filter" title="limit items to those having this type" style="color:#d6caca"></i></div>');
+        typeName.append('<div class="filter-type-out"><i class="fa fa-filter" title="remove items that have this type"></i></div>');
 
         var typeLine = $('<tr>', {'class' : 'type-line'});
 
@@ -859,7 +876,11 @@ function updateTreeCounts($item, count) {
 
 
 function toggleTrees() {
-    var types = _.map($('.type.active'), function (x) {return x.innerHTML});
+    var types = _.map($('.type.active'), function (x) {
+        // this assumes that there is no other inner text within the
+        // typename <td> other than the text of the type-name.
+        return x.innerText;
+    });
     $('.derivation').each(function(index, elem) {
         var $derivation = $(elem);
         var derivation = getDerivation($derivation);
@@ -948,48 +969,73 @@ function updateSignNodes() {
 }
 
 
+function applyToMatchingItems(typeName, func, filterOut){
+    // for each item, if any of its active derivations has 'typeName' in
+    // derivation.types, func is evaluated with the jQuery element of the
+    // matching item as the sole argument.
+    $('.item').each(function(index, element) {
+        var $item = $(element);
+        $item.find('.derivation.active').each(function(index, element) {
+            var derivation = getDerivation($(element));
+            var hasType = _.has(derivation.types, typeName); 
+            if ((hasType && !filterOut) || (!hasType && filterOut)){
+                func($item);
+                return false;
+            }
+            return true;
+        });
+    });
+}
+
+
+function applyToNonMatchingItems(typeName, func){
+    // call applyToMatchingItems in filterOut mode
+    applyToMatchingItems(typeName, func, true);
+}
+
+
+function activateType(typeName, isSignType){
+    // highlight items with this type:
+    var func = function ($item){$item.css({'background-color': '#A6C1FF'});}; 
+    applyToMatchingItems(typeName, func);
+
+    if (isSignType) {
+        // this is a sign type so highlight all corresponding
+        // subtrees then highlight corresponding span in
+        // surface string
+        setNodes(typeName, 'highlighted');            
+        highlightSpans(typeName);
+    }
+}
+
+
+function deactivateType(typeName, isSignType){
+    // restore background
+    $('.item').css({'background-color': 'white'});
+
+    // restore tree subtrees to original colour and remove
+    // surface string highlighting
+    if (isSignType) {
+        $('.highlighted').each(function(index, elem) {
+            elem.classList.remove('highlighted');
+        });
+        resetSpans();
+    }
+}
+
+
 function setTypeHandlers() {
 
     $('.type').hover(
         function(event) {
-            var $this = $(this);
-            var type = $this.html();
-            // highlight items with this type:
-            $('.item').each(function(index, element) {
-                // for each item, if any of its active derivations has
-                // 'type' in derivation.types, update its background
-
-                var $item = $(element);
-                $item.find('.derivation.active').each(function(index, element) {                    
-                    var derivation = getDerivation($(element));
-                    if (_.has(derivation.types, type)) {
-                        $item.css({'background-color': '#A6C1FF'});
-                        return false;
-                    }
-                    return true;
-                });
-            });
-
-            if ($this.hasClass('sign')) {
-                // this is a sign type so highlight all corresponding
-                // subtrees then highlight corresponding span in
-                // surface string
-                setNodes(type, 'highlighted');            
-                highlightSpans(type);
-            }
+            var typeName = $(this).find('.type-name').html();
+            var isSignType = $(this).hasClass('sign');
+            activateType(typeName, isSignType);
         }, 
         function(event) {
-            // restore background
-            $('.item').css({'background-color': 'white'});
-
-            // restore tree subtrees to original colour and remove
-            // surface string highlighting
-            if ($(this).hasClass('sign')) {
-                $('.highlighted').each(function(index, elem) {
-                    elem.classList.remove('highlighted');
-                });
-                resetSpans();
-            }
+            var typeName = $(this).find('.type-name').html();
+            var isSignType = $(this).hasClass('sign');
+            deactivateType(typeName, isSignType);
         }
     );
         
@@ -999,6 +1045,45 @@ function setTypeHandlers() {
             updateSignNodes();
         toggleTrees();
     });
+
+    $('.type .filter-type-out').click(function(event) {
+        // add the type name to the blacklist and apply the filter
+        event.stopPropagation();
+        BLACKLISTTYPES.push($(this).parent().find('.type-name').text());
+        applyFilters();
+    });
+
+    $('.type .filter-type-in').click(function(event) {
+        // add the type name to the whitelist and apply the filter
+        event.stopPropagation();
+        WHITELISTTYPES.push($(this).parent().find('.type-name').text());
+        applyFilters();
+    });
+
+}
+
+
+function applyFilters() {
+    // blacklisted types
+    var blacklistFunc = function($item){
+        var item = getItemObject($item);
+        item.disabled = true;
+        $item.hide();
+    };
+
+    var whitelistFunc = function($item){
+        var item = getItemObject($item);
+        item.disabled = true;
+        $item.hide();
+    };
+    
+    for (var i=0; i < BLACKLISTTYPES.length; i++)
+        applyToMatchingItems(BLACKLISTTYPES[i], blacklistFunc);
+
+    for (var j=0; j < WHITELISTTYPES.length; j++)
+        applyToNonMatchingItems(WHITELISTTYPES[j], whitelistFunc);
+
+    doDiff();
 }
 
 
@@ -1211,13 +1296,9 @@ function setItemHandlers($item) {
 
     $item.find('.disable').click(function(event) {
         event.stopPropagation();
-        var id = getItemId($item);
-        var type = getItemType($item);
-        var items = getItems(type);
-        var item = items[id];
+        var item = getItemObject($item);
         item.disabled = !item.disabled;
-        $item.toggleClass('disabled');
-        $(this).find('.icon').toggle();
+        $(this).children().toggleClass('fa-toggle-on fa-toggle-off');
         doDiff();
     });
 

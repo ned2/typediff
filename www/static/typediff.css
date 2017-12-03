@@ -45,11 +45,11 @@ body {
 }
 
 .left-pane {
-    width: 61%;
+    width: 55%;
 }
 
 .right-pane {
-    width: 38%;
+    width: 44%;
 }
 
 .pane {
@@ -101,6 +101,11 @@ body {
 .status-value { display: inline-block }
 
 #fail-box { font-size: 85% }
+
+#waiting-box {
+    text-align: center;
+    margin-top: 2em;
+}
 
 .error { color: red }
 
@@ -231,6 +236,7 @@ input[type=text], input[type=submit], select {
     left: 0.5%;
     right: 1%;
     top: 9%;
+    z-index: 1000;
 }
 
 .tree-box.max {
@@ -240,7 +246,7 @@ input[type=text], input[type=submit], select {
 .mrs-box {
     max-width: 36%; 
     max-height: 85%;
-    left: 61%;
+    left: 55%;
     top: 9%;
 }
 
@@ -305,12 +311,12 @@ input[type=text], input[type=submit], select {
 
 #add-items-box, #treebanks-box {
     text-align: center;
-    top: 50%;
-    left: 50%;
-    width: 850px;
-    height: 220px;
+    top: 40%;
+    left: 47%;
+    width: 900px;
     margin-top: -110px;
     margin-left: -425px;
+    z-index: 1000;
 }
 
 #add-items-box textarea {
@@ -355,8 +361,10 @@ input[type=text], input[type=submit], select {
 }
 
 #output-pane-contents {
-    height: 70vh;
+    height: 76vh;
     overflow-y: auto;
+    padding-right: .5em;
+    position: fixed;
 }
 
 
@@ -367,6 +375,7 @@ input[type=text], input[type=submit], select {
     border: 2px solid black;
     width: 100%;
     padding: 0.15em .5em;
+    max-width: 0em;
 }
 
 .type.active { font-weight: 700 }
@@ -389,6 +398,19 @@ input[type=text], input[type=submit], select {
     text-align: right;
     padding-right: 1em;
 }
+
+.type-name {display: inline-block;}
+
+.filter-type-in,  .filter-type-out {
+    display: none;
+    float: right;
+    margin-left: 0.5em;
+}
+
+.type:hover .filter-type-in, .type:hover .filter-type-out {
+    display: inline-block;
+}
+
 
 #type-table_wrapper {
     position: static;

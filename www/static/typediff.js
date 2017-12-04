@@ -593,26 +593,29 @@ function makeFilterLists(grammar) {
         var typeFilters = Array();
         for (var i=0; i < filters.length; i++) {
             var typeName = filters[i];
-            var kind = DESCENDANTS[grammar][type] || "other";
-            var filter = $('<div>', {
+            var kind = DESCENDANTS[grammar][typeName] || "other";
+            var $filter = $('<div>', {
                 'html'  : typeName,
                 'class' : kind + ' type',
-                'title' : `${type} (${kind} type)`,
+                'title' : `${typeName} (${kind} type)`,
                 'style' : 'background: ' + TYPEDATA[kind].col
             });
-            filter.append('<i class="fa fa-times"></i>');
-            typeFilters.push(filter);
+            $filter.append('<i title="remove this filter" class="del fa fa-times"></i>');
+            typeFilters.push($('<div class="type-wrapper">').append($filter));
         }
 
-        var header = $('<div>', {text: text});
-        return $('div', {class: 'filter-list'})
+        var header = $('<div>', {
+            text: text,
+            class: 'filter-header'
+        });
+        return $('<div>', {class: 'filter-list'})
             .append(header)
             .append(typeFilters);
     };
     
-    return $('div').append([
-        makeFilterList('pos'),
-        makeFilterList('neg'),
+    return $('<div>', {class:'filter-list-container'}).append([
+        makeFilterList(BLACKLISTTYPES, 'Excluded Types'),
+        makeFilterList(WHITELISTTYPES, 'Included Types'),
         // TODO: clear button that's centered
     ]);
 }
@@ -621,9 +624,13 @@ function makeFilterLists(grammar) {
 function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     var outputPane = $('#output-pane-contents').empty(); 
 
-    //var $filterList = makeFilterLists(grammar);
-    //$filterList.appendTo(outputPane);
-    var $table = makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank);
+    if (BLACKLISTTYPES.length > 0 || WHITELISTTYPES.length > 0){
+        var $filterList = makeFilterLists(grammar);
+        $filterList.appendTo(outputPane);
+    }
+
+    var $table = makeTable(types, supers, itemCounts, grammar, typesToSupers,
+                           treebank);
     $table.appendTo(outputPane);
 
     // Do various status things...
@@ -1075,7 +1082,7 @@ function deactivateType(typeName, isSignType){
 
 function setTypeHandlers() {
 
-    $('.type').hover(
+    $('#type-table .type').hover(
         function(event) {
             var typeName = $(this).find('.type-name').html();
             var isSignType = $(this).hasClass('sign');

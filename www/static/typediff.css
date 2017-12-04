@@ -433,3 +433,37 @@ input[type=text], input[type=submit], select {
     float: right;
 }
 
+.filter-list-container {
+    display: flex;
+    justify-content: center;
+}
+
+.filter-header {
+    text-align: center;
+    font-weight: 600;
+}
+
+.filter-list {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.filter-list .type-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.filter-list .type {
+    max-width: 90%;
+}
+
+.filter-list .type .del {
+    float: right;
+    display: none;
+}
+
+.filter-list .type:hover .del {
+    display: inline-block;
+}

@@ -589,13 +589,13 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
 
 
 function makeFilterLists(grammar) {
-    var makeFilterList = function (filters, text) {
+    var makeFilterList = function (filters, id, text) {
         var typeFilters = Array();
         for (var i=0; i < filters.length; i++) {
             var typeName = filters[i];
             var kind = DESCENDANTS[grammar][typeName] || "other";
             var $filter = $('<div>', {
-                'html'  : typeName,
+                'html' : typeName,
                 'class' : kind + ' type',
                 'title' : `${typeName} (${kind} type)`,
                 'style' : 'background: ' + TYPEDATA[kind].col
@@ -608,14 +608,14 @@ function makeFilterLists(grammar) {
             text: text,
             class: 'filter-header'
         });
-        return $('<div>', {class: 'filter-list'})
+        return $('<div>', {id: id, class: 'filter-list'})
             .append(header)
             .append(typeFilters);
     };
     
     return $('<div>', {class:'filter-list-container'}).append([
-        makeFilterList(BLACKLISTTYPES, 'Excluded Types'),
-        makeFilterList(WHITELISTTYPES, 'Included Types'),
+        makeFilterList(BLACKLISTTYPES, 'black-filter-list', 'Excluded Types'),
+        makeFilterList(WHITELISTTYPES, 'white-filter-list', 'Included Types'),
         // TODO: clear button that's centered
     ]);
 }
@@ -1095,7 +1095,7 @@ function setTypeHandlers() {
         }
     );
         
-    $('.type:not(.super)').click(function(event) {
+    $('#type-table .type:not(.super)').click(function(event) {
         event.stopPropagation();
         if ($(this).toggleClass('active').hasClass('sign'))
             updateSignNodes();
@@ -1116,6 +1116,31 @@ function setTypeHandlers() {
         applyFilters();
     });
 
+    $('#black-filter-list .type .del').click(function(event) {
+        event.stopPropagation();
+        var $elem = $(this).parent().remove();
+        var typeName = $elem.text(); 
+        BLACKLISTTYPES.splice(BLACKLISTTYPES.indexOf(typeName, 1));
+        applyToMatchingItems(typeName, function($item){
+            var item = getItemObject($item);
+            item.disabled = false;
+            $item.show();
+        });
+        applyFilters();
+    });
+
+    $('#white-filter-list .type .del').click(function(event) {
+        event.stopPropagation();
+        var $elem = $(this).parent().remove();
+        var typeName = $elem.text(); 
+        WHITELISTTYPES.splice(WHITELISTTYPES.indexOf(typeName, 1));
+        applyToNonMatchingItems(typeName, function($item){
+            var item = getItemObject($item);
+            item.disabled = false;
+            $item.show();
+        });
+        applyFilters();
+    });
 }
 
 
@@ -1131,7 +1156,7 @@ function applyFilters() {
 
     for (var j=0; j < WHITELISTTYPES.length; j++)
         applyToNonMatchingItems(WHITELISTTYPES[j], disableFunc);
-
+        
     doDiff();
 }
 

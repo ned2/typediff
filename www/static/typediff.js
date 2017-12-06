@@ -535,9 +535,9 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
         }
     }
 
-    var dt = $table.DataTable({
+    dt = $table.DataTable({
+//        dom: 'fit',
         paging: false,
-        dom: 'fit',
         order: [[1, 'desc']],
         fixedHeader: true,
         //columnDefs: [{ "visible": false, "targets": 0 }]
@@ -613,10 +613,11 @@ function makeFilterLists(grammar) {
             .append(typeFilters);
     };
     
-    return $('<div>', {class:'filter-list-container'}).append([
+    return $('<div>', {
+        class: 'filter-list-container'
+    }).append([
         makeFilterList(BLACKLISTTYPES, 'black-filter-list', 'Excluded Types'),
         makeFilterList(WHITELISTTYPES, 'white-filter-list', 'Included Types'),
-        // TODO: clear button that's centered
     ]);
 }
 
@@ -624,11 +625,18 @@ function makeFilterLists(grammar) {
 function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     var outputPane = $('#output-pane-contents').empty(); 
 
-    if (BLACKLISTTYPES.length > 0 || WHITELISTTYPES.length > 0){
+    if (BLACKLISTTYPES.length > 0 || WHITELISTTYPES.length > 0) {
         var $filterList = makeFilterLists(grammar);
-        $filterList.appendTo(outputPane);
+        var clearFilters = $('<div>', {class: "center"})
+                .append($('<input>', {
+                    id: "clear-filters",
+                    type: "submit",
+                    value: "Clear All",
+                    title: "Clear all active filters"
+                }));
+        outputPane.append([$filterList, clearFilters]);
     }
-
+    
     var $table = makeTable(types, supers, itemCounts, grammar, typesToSupers,
                            treebank);
     $table.appendTo(outputPane);
@@ -1116,16 +1124,18 @@ function setTypeHandlers() {
         applyFilters();
     });
 
+    var enableFunc = function($item){
+        var item = getItemObject($item);
+        item.disabled = false;
+        $item.show();
+    };
+
     $('#black-filter-list .type .del').click(function(event) {
         event.stopPropagation();
         var $elem = $(this).parent().remove();
         var typeName = $elem.text(); 
         BLACKLISTTYPES.splice(BLACKLISTTYPES.indexOf(typeName, 1));
-        applyToMatchingItems(typeName, function($item){
-            var item = getItemObject($item);
-            item.disabled = false;
-            $item.show();
-        });
+        applyToMatchingItems(typeName, enableFunc);
         applyFilters();
     });
 
@@ -1134,12 +1144,14 @@ function setTypeHandlers() {
         var $elem = $(this).parent().remove();
         var typeName = $elem.text(); 
         WHITELISTTYPES.splice(WHITELISTTYPES.indexOf(typeName, 1));
-        applyToNonMatchingItems(typeName, function($item){
-            var item = getItemObject($item);
-            item.disabled = false;
-            $item.show();
-        });
+        applyToNonMatchingItems(typeName, enableFunc);
         applyFilters();
+    });
+
+    $('#clear-filters').click(function(event) {
+        event.stopPropagation();
+        WHITELISTTYPES = Array();
+        BLACKLISTTYPES = Array();
     });
 }
 

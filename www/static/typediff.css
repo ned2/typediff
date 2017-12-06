@@ -45,6 +45,11 @@ body {
     vertical-align: top;
 }
 
+.center {
+    display: flex;
+    justify-content: center;
+}
+
 .left-pane {
     width: 55%;
 }
@@ -436,11 +441,13 @@ input[type=text], input[type=submit], select {
 .filter-list-container {
     display: flex;
     justify-content: center;
+    margin-bottom: 0.5em;
 }
 
 .filter-header {
     text-align: center;
     font-weight: 600;
+    margin-bottom: 0.5em;
 }
 
 .filter-list {
@@ -466,3 +473,4 @@ input[type=text], input[type=submit], select {
 .filter-list .type:hover .del {
     display: inline-block;
 }
+

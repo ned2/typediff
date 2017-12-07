@@ -1041,7 +1041,7 @@ function setNodes(type, status) {
     
     // escape '*' found in type names
     type = type.replace( /(\*)/g, '\\$1' );
-    $('.derivation:visible').find('[rule='+type+']').each(function(index, elem) {
+    $('.derivation').find('[rule='+type+']').each(function(index, elem) {
         if (status == 'highlighted' && !isElementInViewport(elem))
             return;
             
@@ -1049,17 +1049,6 @@ function setNodes(type, status) {
         $elem.find('.svg-node-text').each(func);
         $elem.find('.svg-line').each(func);
         $elem.find('text').first().each(func);
-    });
-}
-
-
-function updateSignNodes() {
-    $('.locked').each(function(index, elem) {
-        elem.classList.remove('locked');
-    });
-        
-    $('.sign.type.active').each(function(index, elem) {
-        setNodes($(elem).find('.type-name').html(), 'locked');
     });
 }
 
@@ -1086,12 +1075,11 @@ function applyToNonMatchingItems(typeName, func){
 }
 
 
-// TODO: I'm using this to restore both highlighted nodes
-// on over and after unclicking. this obviously doesn't work.
-function activateType($type){
+function activateType($type, status){
+    status = status || 'highlighted';
     var typeName = $type.find('.type-name').html();
     var isSignType = $type.hasClass('sign');
-
+    
     // highlight items with this type:
     var func = function ($item){
         $item.css({'background-color': '#A6C1FF'});
@@ -1103,7 +1091,7 @@ function activateType($type){
         // this is a sign type so highlight all corresponding
         // subtrees then highlight corresponding span in
         // surface string
-        setNodes(typeName, 'highlighted');            
+        setNodes(typeName, status);            
         highlightSpans(typeName);
     }
 }
@@ -1113,21 +1101,28 @@ function deactivateType(){
     // restore background
     $('.item').css({'background-color': 'white'});
 
-    // restore tree subtrees to original colour and remove
-    // surface string highlighting --only relevant for sign types
+    // restore tree subtrees to original colour...
+
     $('.highlighted').each(function(index, elem) {
         elem.classList.remove('highlighted');
     });
+
+    $('.locked').each(function(index, elem) {
+        elem.classList.remove('locked');
+    });
+
     resetSpans();
 }
 
 
-function applyActiveHighlights() {
+function applyActiveHighlights(status) {
+    status = status || 'highlighted';
+
     //deactivate all highlights
     deactivateType();
     // now reactivate any other active types
     $('.type.active').each(function(index, element) {
-        activateType($(element));                
+        activateType($(element), status);                
     });
 }
 
@@ -1140,7 +1135,7 @@ function setTypeHandlers() {
                 activateType($(this));
         }, 
         function(event) {
-            applyActiveHighlights();
+            applyActiveHighlights('locked');
         }
     );
         
@@ -1148,11 +1143,8 @@ function setTypeHandlers() {
         event.stopPropagation();
         var $this = $(this);
         
-        if ($this.hasClass('sign'))
-            updateSignNodes();
-
         $this.toggleClass('active');
-        applyActiveHighlights();
+        applyActiveHighlights('locked');
         toggleTrees();
     });
 
@@ -1465,7 +1457,7 @@ function setItemHandlers($item) {
         setTreeHandlers($item);
 
         // in case some of the types are already active
-        updateSignNodes();
+        applyActiveHighlights('locked');
     });
 
 

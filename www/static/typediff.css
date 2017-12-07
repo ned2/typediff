@@ -98,6 +98,8 @@ body {
 
 #count-input { width: 2em }
 
+.phenomenon-input {visibility:hidden}
+
 .status-label {
     display: inline-block;
     vertical-align: top;
@@ -332,22 +334,38 @@ input[type=text], input[type=submit], select {
     z-index: 1000;
 }
 
+#input-boxes-container {
+    display: flex;
+    justify-content: center;
+}
+
 #add-items-box textarea {
     margin-bottom: 1em;
 }
 
-#add-items-box select {
-    margin-right: 1em;
+#pos-profile-input, #neg-profile-input {
+    margin-right: auto;
+}
+
+#pos-profile-filter, #neg-profile-filter {
+    margin-left: auto;
+}
+
+#add-items-box .flex-row {
+    margin-top: 1em;
+}
+
+.flex-row {display: flex}
+
+#submit-items-button {
+    font-size: 1.25em;
+    padding: 0.25em;
 }
 
 #treebanks-box {
     text-align: center;
     top: 9%;
     left: 18%;
-}
-
-.input-box {
-    display: inline-block;
 }
 
 #add-items-box textarea {

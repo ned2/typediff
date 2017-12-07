@@ -116,22 +116,38 @@
 
 <div id="add-items-box" class="popup hidden">
     <form action="#" method="post" onsubmit="return false;">
-        <div class="input-box" style="width:45%">
-            <div class="header">A Items</div>
-            <textarea id="pos-input" name="pos-items"></textarea>
-            <select id="pos-profile-input" class="profile-input">
-                <option value="" disabled selected>Add profile items...</option>
-            </select>
-            <input id="pos-profile-filter" type="text" placeholder="TSQL Constraint">
-        </div>
-        <div class="spacer"></div>
-        <div class="input-box" style="width:45%">
-            <div class="header">B Items</div>
-            <textarea id="neg-input" name="neg-items"></textarea>
-            <select id="neg-profile-input" class="profile-input">
-                <option value="" disabled selected>Add profile items...</option>
-            </select>
-            <input id="neg-profile-filter" type="text" placeholder="TSQL Constraint">
+        <div id="input-boxes-container">
+            <div class="input-box" style="width:45%">
+                <div class="header"><h2>A Items</h2></div>
+                <textarea id="pos-input" name="pos-items"></textarea>
+                <div class="flex-row">
+                    <select id="pos-profile-input" class="profile-input">
+                        <option value="" disabled selected>Add profile items...</option>
+                    </select>
+                    <input id="pos-profile-filter" type="text" placeholder="TSQL Constraint">
+                </div>
+                <div class="flex-row">
+                    <select id="pos-profile-phenomenon" class="phenomenon-input">
+                        <option selected disabled>Select phenomenon</option>
+                    </select>
+                </div>
+            </div>
+            <div class="spacer"></div>
+            <div class="input-box" style="width:45%">
+                <div class="header"><h2>B Items</h2></div>
+                <textarea id="neg-input" name="neg-items"></textarea>
+                <div class="flex-row">
+                    <select id="neg-profile-input" class="profile-input">
+                        <option value="" disabled selected>Add profile items...</option>
+                    </select>
+                    <input id="neg-profile-filter" type="text" placeholder="TSQL Constraint">
+                </div>
+                <div class="flex-row">
+                    <select id="neg-profile-phenomenon" class="phenomenon-input">
+                        <option selected disabled>Select phenomenon</option>
+                    </select>
+                    </div>
+                </div>
         </div>
         <input id="submit-items-button" type="submit" value="Add Items"/>
     </form>

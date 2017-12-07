@@ -1709,11 +1709,47 @@ function setHandlers() {
         }
     });
 
+    function addPhenomenonOptions(options, $target){
+        $target.find('option.phenomenon').remove();
+        for (var i=0; i < options.length; i++) {
+            var option = options[i];
+            $target.append($(`<option class="phenomenon">${option}</option>`));
+        }
+        $target.css('visibility', 'visible');
+    }
+    
+    $("#pos-profile-input").change(function (event){
+        var phenomenona = PROFILES[$(this).val()].phenomena;
+        if (phenomenona && phenomenona.length > 0) {
+            var $target = $("#pos-profile-phenomenon");
+            addPhenomenonOptions(phenomenona, $target);
+        }
+    });
+
+    $("#neg-profile-input").change(function (event){
+        var phenomenona = PROFILES[$(this).val()].phenomena;
+        if (phenomenona && phenomenona.length > 0) {
+            var $target = $("#neg-profile-phenomenon");
+            addPhenomenonOptions(phenomenona, $target);
+        }
+    });
+
+    $("#pos-profile-phenomenon").change(function(event){
+        var phenomenon = $(this).val();
+        var constraint = `p-name="${phenomenon}"`;
+        $('#pos-profile-filter').val(constraint); 
+    });
+
+    $("#neg-profile-phenomenon").change(function(event){
+        var phenomenon = $(this).val();
+        var constraint = `p-name="${phenomenon}"`;
+        $('#neg-profile-filter').val(constraint); 
+    });
+    
     $("body").click(function(event){
         $(".popup").hide();
         $('#help-content').slideUp();
     });
-
 
     $(".popup").click(function(event){
         event.stopPropagation();

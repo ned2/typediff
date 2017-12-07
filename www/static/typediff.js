@@ -6,6 +6,12 @@
  * Author: Ned Letcher
  * http://github.com/ned2/typediff
  *
+ * This file represents my first attempt at a non-trivial web application. It is
+ * an exemplar of what is often referred to as 'jQuery spaghetti' -- a complex
+ * and highly coupled pile of event listeners and callbacks with state being
+ * stored in the DOM. One day I'd like to re-implement it using
+ * best-practices. For now, to anyone trying to make sense of any of this: 
+ * I'm so sorry.
  */
 
 
@@ -64,6 +70,8 @@ function numActiveNegItems(){
 }
 
 function getDerivation($deriv) { 
+    // given a derivation jQuery element, returns the corresponding derivation
+    // data model object
     item = getItem($deriv.closest('.item'));
     return item.readings[getDerivationId($deriv)];
 }
@@ -139,7 +147,17 @@ function updateUrl() {
         var value = NEGPROFILES.join('|||').replace(/=/g, '+');
         params.push(makeParam('Bprofiles', value));
     }
-    
+
+    if (BLACKLISTTYPES.length > 0) {
+        var value = BLACKLISTTYPES.join(',');
+        params.push(makeParam('excludeTypes', value));
+    }
+
+    if (WHITELISTTYPES.length > 0) {
+        var value = WHITELISTTYPES.join(',');
+        params.push(makeParam('includeTypes', value));
+    }
+
     window.location.hash = encodeURI(params.join('&'));
 }
 
@@ -206,6 +224,10 @@ function loadUrlParams() {
             var posProfiles = value.split('|||');
         } else if (param == 'Bprofiles'){
             var negProfiles = value.split('|||');
+        } else if (param == 'excludeTypes') {
+            BLACKLISTTYPES = value.split(',');
+        } else if (param == 'includeTypes') {
+            WHITELISTTYPES = value.split(',');
         }
     }
 
@@ -346,7 +368,8 @@ function processPostData(data) {
         $('#pos-profile-input, #neg-profile-input').val(null);
         $('#pos-profile-filter, #neg-profile-filter').val('');
         setOperator();
-        doDiff();
+        // applyFilters calls doDiff even when there are no filters();
+        applyFilters();
     } else {
         showStatusBox('#fail-box').html(data.error.replace(/\n/g, '<br/>'));
         updateButtons();
@@ -419,9 +442,11 @@ function showStatusBox(id) {
  
 
 function updateButtons() {
+    if (window.location.hash == '')
+        $('#clear-button').addClass('disabled');
+
     if (!haveItems()) {
         $('#swap-items-button').addClass('disabled');
-        $('#clear-button').addClass('disabled');
     } else if (!(havePosItems() && haveNegItems())) {
         $('#swap-items-button').addClass('disabled');
         $('#clear-button').removeClass('disabled');
@@ -447,9 +472,10 @@ function convertToPercentage(number, denominator, percent) {
 
 function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     /* create a new table with output types */
-    var $table = $('<table>').
-            attr({id:'type-table'}).
-            html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>');
+    var $table = $('<table>', {
+        id: 'type-table',
+        style: 'clear:none'
+    }).html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>');
     var tbody = $('<tbody>').appendTo($table);
     
     function makeNode(type, kind, superOf) {
@@ -1040,21 +1066,18 @@ function updateSignNodes() {
 function applyToMatchingItems(typeName, func, filterOut){
     // for each item, if any of its active derivations has 'typeName' in
     // derivation.types, func is evaluated with the jQuery element of the
-    // matching item as the sole argument.
+    // matching item as the sole argument. items with multiple active matching
+    // derivations will then have func applied to them multiple times.
     $('.item').each(function(index, element) {
         var $item = $(element);
         $item.find('.derivation.active').each(function(index, element) {
             var derivation = getDerivation($(element));
             var hasType = _.has(derivation.types, typeName); 
-            if ((hasType && !filterOut) || (!hasType && filterOut)){
+            if ((hasType && !filterOut) || (!hasType && filterOut))
                 func($item);
-                return false;
-            }
-            return true;
         });
     });
 }
-
 
 function applyToNonMatchingItems(typeName, func){
     // call applyToMatchingItems in filterOut mode
@@ -1141,6 +1164,7 @@ function setTypeHandlers() {
         BLACKLISTTYPES.splice(BLACKLISTTYPES.indexOf(typeName, 1));
         applyToMatchingItems(typeName, enableFunc);
         applyFilters();
+        updateUrl();
     });
 
     $('#white-filter-list .type .del').click(function(event) {
@@ -1150,17 +1174,26 @@ function setTypeHandlers() {
         WHITELISTTYPES.splice(WHITELISTTYPES.indexOf(typeName, 1));
         applyToNonMatchingItems(typeName, enableFunc);
         applyFilters();
+        updateUrl();
     });
 
     $('#clear-filters').click(function(event) {
         event.stopPropagation();
         WHITELISTTYPES = Array();
         BLACKLISTTYPES = Array();
+
+        // enable all items not manually disabled
+        $('.item').has('.fa-toggle-on').each(function(index, element) {
+            enableFunc($(element));
+        });
+        doDiff();
+        updateUrl();
     });
 }
 
 
 function applyFilters() {
+    // note that  if there are no filters, this function will just do a doDiff()
     var disableFunc = function($item){
         var item = getItemObject($item);
         item.disabled = true;
@@ -1389,6 +1422,7 @@ function setItemHandlers($item) {
         var item = getItemObject($item);
         item.disabled = !item.disabled;
         $(this).children().toggleClass('fa-toggle-on fa-toggle-off');
+        $item.toggleClass('disabled');
         doDiff();
     });
 
@@ -1501,6 +1535,8 @@ function clearState(callback) {
     NEGITEMS = Array();
     POSPROFILES = Array();
     NEGPROFILES = Array();
+    WHITELISTTYPES = Array();
+    BLACKLISTTYPES = Array();
     POSCOUNTER = 0;
     NEGCOUNTER = 0;
     updateButtons();
@@ -1583,7 +1619,6 @@ function setHandlers() {
     $('#clear-button').click(function(event) {
         if ($(this).hasClass('disabled')) 
             return;
-
         clearState();
         window.location.hash = '';
     });
@@ -1613,6 +1648,8 @@ function setHandlers() {
         SUPERS = $(this).prop('checked');
         updateUrl();
 
+        // TODO: I think any active filters will be lost on supers being
+        // toggled.
         if (SUPERS && haveItems()) { 
             if ($('.type-line.super').length > 0)
                 $('.type-line.super').show();                

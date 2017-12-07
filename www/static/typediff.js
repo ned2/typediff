@@ -535,8 +535,8 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
         }
     }
 
-    dt = $table.DataTable({
-//        dom: 'fit',
+    var dt = $table.DataTable({
+        dom: 'fit',
         paging: false,
         order: [[1, 'desc']],
         fixedHeader: true,
@@ -584,7 +584,11 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
             column.search(searchString, regex, !regex, true).draw();
         });
     });
-    return $table;
+
+    //return $table;
+    // weird hack because datatables is not creating the container
+    return $(dt.table().container()).append($table);
+
 }
 
 
@@ -639,8 +643,8 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     
     var $table = makeTable(types, supers, itemCounts, grammar, typesToSupers,
                            treebank);
-    $table.appendTo(outputPane);
-
+    outputPane.append($table);
+   
     // Do various status things...
     
     var addGrammarStatus = function(grammars, $status) {

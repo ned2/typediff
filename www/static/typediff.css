@@ -154,6 +154,8 @@ body {
 
 .text .active { color: red; }
 
+.item.disabled {opacity: 0.7}
+
 .locked.svg-node-text {
     fill : blue;
 }
@@ -225,10 +227,15 @@ input[type=text], input[type=submit], select {
 
 .actions .number { font-weight: 700 }
 
-.del,.disable {
+.item .del,.item .disable {
+    visibility: hidden;
     float: right;
     margin-left: 0.6em;
     font-size: 110%;
+}
+
+.item:hover .del, .item:hover .disable {
+    visibility: visible;
 }
 
 .tree-box.popup, .mrs-box.popup { 

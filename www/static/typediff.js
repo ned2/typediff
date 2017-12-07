@@ -1035,11 +1035,12 @@ function setNodes(type, status) {
     // support modifying properties of SVG elements
     // (actually jquery 2.2.0 now supports it)
     
-    var func = function(index, elem) {elem.classList.add(status);};
+    var func = function(index, elem) {
+        elem.classList.add(status);
+    };
     
     // escape '*' found in type names
     type = type.replace( /(\*)/g, '\\$1' );
-
     $('.derivation:visible').find('[rule='+type+']').each(function(index, elem) {
         if (status == 'highlighted' && !isElementInViewport(elem))
             return;
@@ -1058,7 +1059,7 @@ function updateSignNodes() {
     });
         
     $('.sign.type.active').each(function(index, elem) {
-        setNodes($(elem).html(), 'locked');
+        setNodes($(elem).find('.type-name').html(), 'locked');
     });
 }
 
@@ -1085,9 +1086,17 @@ function applyToNonMatchingItems(typeName, func){
 }
 
 
-function activateType(typeName, isSignType){
+// TODO: I'm using this to restore both highlighted nodes
+// on over and after unclicking. this obviously doesn't work.
+function activateType($type){
+    var typeName = $type.find('.type-name').html();
+    var isSignType = $type.hasClass('sign');
+
     // highlight items with this type:
-    var func = function ($item){$item.css({'background-color': '#A6C1FF'});}; 
+    var func = function ($item){
+        $item.css({'background-color': '#A6C1FF'});
+    }; 
+
     applyToMatchingItems(typeName, func);
 
     if (isSignType) {
@@ -1100,18 +1109,26 @@ function activateType(typeName, isSignType){
 }
 
 
-function deactivateType(typeName, isSignType){
+function deactivateType(){
     // restore background
     $('.item').css({'background-color': 'white'});
 
     // restore tree subtrees to original colour and remove
-    // surface string highlighting
-    if (isSignType) {
-        $('.highlighted').each(function(index, elem) {
-            elem.classList.remove('highlighted');
-        });
-        resetSpans();
-    }
+    // surface string highlighting --only relevant for sign types
+    $('.highlighted').each(function(index, elem) {
+        elem.classList.remove('highlighted');
+    });
+    resetSpans();
+}
+
+
+function applyActiveHighlights() {
+    //deactivate all highlights
+    deactivateType();
+    // now reactivate any other active types
+    $('.type.active').each(function(index, element) {
+        activateType($(element));                
+    });
 }
 
 
@@ -1119,21 +1136,23 @@ function setTypeHandlers() {
 
     $('#type-table .type').hover(
         function(event) {
-            var typeName = $(this).find('.type-name').html();
-            var isSignType = $(this).hasClass('sign');
-            activateType(typeName, isSignType);
+            if (!$(this).hasClass('active'))
+                activateType($(this));
         }, 
         function(event) {
-            var typeName = $(this).find('.type-name').html();
-            var isSignType = $(this).hasClass('sign');
-            deactivateType(typeName, isSignType);
+            applyActiveHighlights();
         }
     );
         
     $('#type-table .type:not(.super)').click(function(event) {
         event.stopPropagation();
-        if ($(this).toggleClass('active').hasClass('sign'))
+        var $this = $(this);
+        
+        if ($this.hasClass('sign'))
             updateSignNodes();
+
+        $this.toggleClass('active');
+        applyActiveHighlights();
         toggleTrees();
     });
 

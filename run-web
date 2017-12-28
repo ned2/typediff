@@ -1,38 +1,65 @@
 #!/usr/bin/env bash
 
+
+function usage (){
+    cat << EOF
+This script runs the typediff webapp. Options are:
+
+  --port PORT        Runs the app on port PORT.
+                     
+  --debug            Runs mod_wsgi-express with --debug-mode and --enable-debugger
+                     flags enabled.   
+
+  --echo             Don't run the app, just echo the underlying mod_wsgi-express 
+                     command that would have been run with the configuration 
+                     specified
+
+  --help             Show this message.
+EOF
+}
+
 PORT=5000
-DEBUG=''
 
 
-# process command line arguments
-while getopts ':p:dh' OPTION; do
-    case "$OPTION" in
-        p)
-            PORT=${OPTARG}
+# loop over all flags starting with '--' and processing them along with any
+# arguments if they have them
+while [[ ${1} == --* ]]; do
+    case ${1} in
+        --port)
+            PORT=${2}
+            shift 2
             ;;
-        d)
-            DEBUG="--debug-mode"
+        --debug)
+            DEBUGFLAGS="--debug-mode --enable-debugger"
+            shift 1
             ;;
-        h)
-            echo "run-web -p PORT -d"
-            exit 0
+        --echo)
+            ECHO=echo
+            shift 1
             ;;
-        ?)
-            echo "run-web -p PORT -d"
-            exit 0
+        --help)
+            usage
+            exit
+            ;;
+        --*)
+            echo "Do not know option ${1}. Use --help for usage."
+            exit
             ;;
     esac
 done
-shift "$(($OPTIND -1))"
+
 
 SCRIPTPATH=$(cd $(dirname $0); pwd -P)
 export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}
 . ${LOGONROOT}/dot.bashrc 
 
-mod_wsgi-express start-server \
+
+${ECHO} mod_wsgi-express start-server \
                  --port ${PORT} \
-                 ${DEBUG} \
+                 ${DEBUGFLAGS} \
+                 --compress-responses \
                  --reload-on-changes \
                  --document-root www \
                  --directory-index index.html \
+                 --include-file httpd.conf \
                  --entry-point wsgi.py

@@ -62,55 +62,130 @@
 </head>
 <body>
 <div id="help-box">
-  <div id="help-content" class="hidden">
-    <p>Typediff is a tool to allow you to quickly explore types
-       used in the processing of utterances by DELPH-IN
-       grammars. Typediff uses ACE for parsing.</p>
+  <div id="help-content">
+      <h2>Overview</h2>
+      
+      <p>Typediff allows you to quickly explore types used in the
+        parsing of text by DELPH-IN grammars. It works by taking one or more
+        texts as input and then extracting all types found in the full AVM of
+        the selected parse derivation. The resulting bag of types are aggregated
+        and sorted by customizable groupings and weightings.</p>
 
-    <p>To get started, select <span class="highlight">Add Items</span>
-       and enter as many items as you want into the A Items and B
-       Items, separated by new lines.</p>
+    <p>By manipulating the groupings of input texts, selecting preferred
+        readings, and manipulating the output types through operations such as
+        sorting and filtering, users can identify the grammar types involved in
+        the processing of target phenomena.</p>
 
+    <p>Input texts can be assigned to the two different groups of 
+        <span class="highlight">A Items</span> and <span class="highlight">B Items</span>.
+        When only A items are used as input, the union of all types found across
+        all items are shown in the Output area. When B items are added, Typediff
+        will use set difference to subtract the B types from A types. The user
+        can modify this default behaviour to use intersection or union.</p>
+
+
+    <h2>Adding Items</h2>
+
+    <p>After opening the <span class="highlight">Add Items</span> box,
+        there are two ways you can add initial and additional items:
+
+        <ol>
+            <li>
+                <p class="highlight">Adding items to be parsed on the fly</p>
+                <p>Enter as many items as you want into either the A or B Items
+                    text boxes, separated by new lines. These will be parsed by
+                    ACE, with the best reading initally selected.  Alternate
+                    readings can be selected by clicking on an item, which
+                    presents the list of readings to select from.  Multiple
+                    readings can be selected with the Control key, resulting in
+                    the union of types from across selected readings being
+                    extracted.
+            </li>
+            <li>
+                <p class="highlight">Bulk add parsed items from a profile</p>
+                <p>Select a profile from the dropdown option for either A or B
+                    items. These contain contain treebanked and thinned profiles
+                    that also have phenomenon annotations.  You can load the
+                    entire profile, or filter down to a subset by selecting one
+                    of the phenomena the profile is annotated with, or by
+                    providing your own TSQL 'where' clause constraint. </p>
+            </li>
+        </ol>
+        
+
+    <h2>Removing Items</h2>
+        
+    <p>You can temporarily disable items by toggling the slider in their upper
+    right corner, or permanently remove items with the cross button.</p>
+
+    
+    <h2>Working with Output Types</h2>
+
+    <p>The types in the output type table are coloured according to whether they
+        are subtypes of high-level HPSG theoretic types (<i>sign</i>, <i>synsem</i>, <i>head</i>,
+        <i>cat</i>, <i>relation</i>, <i>predsort</i>) in addition to everything else (<i>other</i>).
+        Hovering over a type will indicate which kind it it is.</p>
+
+    <p>Hovering over the output types will also cause the corresponding items
+        that contain these types to be highlighted. Hovering over sign (red)
+        types also causes the corresponding surface span and subtrees in the
+        derivation to be highlighted. Clickin on a type fixes the highlighting
+        on/off.</p>
+
+    <p>The types can be sorted by a range of different variables. These
+    variables can be stacked by Control clicking on the sort directions. The
+    column variables that can be sorted are:</p>
+
+    <ol>
+        <li>The high level type category</li>
+        <li>The TF-IDF of the type, where TF is the number of A items containing
+        the type, which is offset by DF, the number of trees in the active
+        treebank that contain the type. </li>
+        <li>The proportion of A items containing the type.</li>
+        <li>The proportion of trees from the active treebank containing the type.</li>
+        <li>The name of the type.</li>
+    </ol>
+
+    <p>The types can also be filtered by:</p>
+        <ul>
+            <li>Types with a name that matches a text search. Performed with the 'Search' input.</li>
+            <li>Only subtypes of a particular high-level category. Performed with the dropdown underneath the 'Kind' column.</li>
+            <li>Those originating from items that *do* include a specific type. Performed by clicking on the grey filter icon on the desired type.</li>
+            <li>Those originating from items that *do not* include a specific type. Performed by clicking on the black filter icon on the desired type.</li>
+        </ul>
+
+    <h2>Minimal Pairs</h2>
+
+    <p>The motivating use case for being able to perform a diff between A and B
+        items is to compare two sentences which form a minimal pair for a
+        phenomenon, where the A sentence contains a positive instance of a
+        target phenomenon, and the B sentence is as close to the A sentence as
+        possible but without the occurance of the phenomenon. By subtracting the
+        types of the phenomenon-negative sentence from the phenomenon-positive
+        sentence, the hope is that the resultant output types are more likely to
+        be associated with the target phenomenon.
+
+        To see an example of this, open the Add Items box, place the cursor in
+        the A Items text box, and press Alt-Enter on the keyboard. This will
+        load a minimal pair corresponding to the right node-raising phenomenon.</p>
+    
     <p>In the <span class="highlight">difference mode</span>, this
        displays all types used to process A items that were not used
        in the processing of B items. This allows you (for instance) to
        contrast similar sentences, such as passive and active
        variants, thereby shedding light on which types are involved in
-       constraining a phenomenon. If the phenomenon you wish to
-       investigate does not lend itself to having such "minimal
-       pairs", you can try adding additional sentences to the B items
-       to filter out noisy types from the A items.</p>
+       constraining a phenomenon. </p>
 
-    <p>The type list is pseudo-sorted by more interesting types
-       (hovering types indicates their kind), and enabling
-       the <span class="highlight">super types</span> option will
-       include super types the types inherit from.  This is only
-       sensible in difference mode, otherwise you will see all types
-       up the hierarchy to *top*.</p>
+    
+    <h2>Sharing Typediff Results</h2>
 
-    <p><span class="highlight">Clicking on an item</span> will display
-       all derivations for that item and allow you to select which
-       reading(s) to be used in the comparison. Trees with a gray
-       background are active.</p>
+    <p>Most of the current state of the Typediff interface is represented in the
+        URL and synchronised as you perform actions. This means that you can
+        grab the URL and use it as a means of saving and sharing a particular
+        set of inputs and configuration.</p>
 
-    <p><span class="highlight">Hovering over the red sign types</span>
-       will highlight the corresponding span in all input strings
-       based on the first active derivation for each item. This will
-       also highlight the corresponding subtrees within the derivation
-       trees.</p>
-
-    <p>Within the parse selection popup,
-      the <span class="highlight">Copy Item</span> button in the
-      derivation tree popup will copy over the current item into the
-      other item set, preserving the active states of the trees and
-      disabling all other items. This allows for a convenient way to
-      diff the types in different readings of the same item.</p>
-
-     <p>It is also possible to use Typediff
-       to <span class="highlight">compare items across different
-       versions</span> of the same grammar. Simply select the relevant
-       grammar version from the drop down list before adding items to
-       either the A or B sets.</p>
+    <p>Notable information that is not stored in the URL includes custom sorting
+        placed on the types table and actively highlighted types.</p> 
   </div>
   <div id="help-tab-container">
        <div id="help-tab">
@@ -118,6 +193,7 @@
        </div>
   </div>
 </div>
+
 
 <div id="add-items-box" class="popup hidden">
     <form action="#" method="post" onsubmit="return false;">

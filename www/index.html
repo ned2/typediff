@@ -5,25 +5,30 @@
   <link rel="stylesheet" type="text/css" href="static/typediff.css"/>
   <link rel="stylesheet" type="text/css" href="static/font-awesome/css/font-awesome.min.css"/>
   <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel='stylesheet' type='text/css'>
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-  <script type="text/javascript">
-    if (typeof jQuery == 'undefined') {
-        //<!-- TODO: local version out of date  -->
-        document.write(unescape("%3Cscript src='static/jquery.min.js' type='text/javascript'%3E%3C/script%3E"));
-    }
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script>
+    if (typeof jQuery == 'undefined')
+        document.write(unescape('%3Cscript src="static/jquery.min.js"%3E%3C/script%3E'));
   </script>
   <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-  <!-- TODO: missing local version  -->
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
   <script>
-    if (typeof jQuery.ui == 'undefined') {
-        //<!-- TODO: local version out of date  -->
-        document.write(unescape("%3Cscript src='static/jquery-ui.min.js' type='text/javascript'%3E%3C/script%3E"));
+    if (typeof $.fn.dataTable == 'undefined') {
+        document.write(unescape('%3Cscript src="static/jquery.dataTables.min.js"%3E%3C/script%3E'));
+        document.write(unescape('%3Clink rel="stylesheet" type="text/css" href="static/jquery.dataTables.min.css"/%3E'));
     }
   </script>
-  <script type="text/javascript" src="static/lodash.min.js"></script>
-  <script type="text/javascript" src="static/typediff.js"></script>
-  <script type="text/javascript" src="static/render.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>  
+  <script>
+    if (typeof jQuery.ui == 'undefined')
+        document.write(unescape('%3Cscript src="static/jquery-ui.min.js"%3E%3C/script%3E'));
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+  <script>
+    if (typeof _ == 'undefined')
+        document.write(unescape('%3Cscript src="static/lodash.min.js"%3E%3C/script%3E'));
+  </script>
+  <script src="static/typediff.js"></script>
+  <script src="static/render.js"></script>
   <script type="text/html" id="item-template">
     <div class="item">
       <div class="tree-box popup hidden">

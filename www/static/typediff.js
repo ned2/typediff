@@ -1716,6 +1716,7 @@ function setHandlers() {
             $target.append($(`<option class="phenomenon">${option}</option>`));
         }
         $target.css('visibility', 'visible');
+        $target.next().css('visibility', 'visible');
     }
     
     $("#pos-profile-input").change(function (event){

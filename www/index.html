@@ -61,7 +61,7 @@
   </script>
 </head>
 <body>
-<div id="help-box">
+<div id="help-box" class="hidden">
   <div id="help-content">
       <h2>Overview</h2>
       
@@ -201,33 +201,35 @@
             <div class="input-box" style="width:45%">
                 <div class="header"><h2>A Items</h2></div>
                 <textarea id="pos-input" name="pos-items"></textarea>
-                <div class="flex-row">
+                <div class="row">
                     <select id="pos-profile-input" class="profile-input">
                         <option value="" disabled selected>Add profile items...</option>
                     </select>
                     <input id="pos-profile-filter" type="text" placeholder="TSQL Constraint">
                 </div>
-                <div class="flex-row">
-                    <select id="pos-profile-phenomenon" class="phenomenon-input">
+                <div class="row phenomenon-row">
+                    <select id="pos-profile-phenomenon">
                         <option selected disabled>Select phenomenon</option>
                     </select>
+                    <a target="_blank" href="/docs/phenomena.html">Phenomenon documentation</a>
                 </div>
             </div>
             <div class="spacer"></div>
             <div class="input-box" style="width:45%">
                 <div class="header"><h2>B Items</h2></div>
                 <textarea id="neg-input" name="neg-items"></textarea>
-                <div class="flex-row">
+                <div class="row">
                     <select id="neg-profile-input" class="profile-input">
                         <option value="" disabled selected>Add profile items...</option>
                     </select>
                     <input id="neg-profile-filter" type="text" placeholder="TSQL Constraint">
                 </div>
-                <div class="flex-row">
-                    <select id="neg-profile-phenomenon" class="phenomenon-input">
+                <div class="row phenomenon-row">
+                    <select id="neg-profile-phenomenon">
                         <option selected disabled>Select phenomenon</option>
                     </select>
-                    </div>
+                    <a target="_blank" href="/docs/phenomena.html">Phenomenon documentation</a>
+                </div>
                 </div>
         </div>
         <input id="submit-items-button" type="submit" value="Add Items"/>

@@ -98,8 +98,6 @@ body {
 
 #count-input { width: 2em }
 
-.phenomenon-input {visibility:hidden}
-
 .status-label {
     display: inline-block;
     vertical-align: top;
@@ -351,11 +349,18 @@ input[type=text], input[type=submit], select {
     margin-left: auto;
 }
 
-#add-items-box .flex-row {
+#add-items-box .row {
     margin-top: 1em;
+    display: flex;
 }
 
-.flex-row {display: flex}
+#add-items-box .phenomenon-row {
+    justify-content: space-between;
+}
+
+.phenomenon-row * {
+    visibility: hidden;
+}
 
 #submit-items-button {
     font-size: 1.25em;

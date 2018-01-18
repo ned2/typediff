@@ -475,7 +475,7 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
     var $table = $('<table>', {
         id: 'type-table',
         style: 'clear:none'
-    }).html('<thead><tr><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>');
+    }).html('<thead><tr><th></th><th>Kind</th><th>TF-IDF</th><th>A Items Coverage (%)</th><th>Treebank Coverage (%)</th><th>Type</th></tr></thead><tfoot><tr><th></th><th><select class="filter"><option selected value="(sign|synsem|head|cat|relation|predsort)">All</option></select></th><th></th><th></th><th></th><th></th></tr></tfoot>');
     var tbody = $('<tbody>').appendTo($table);
     
     function makeNode(type, kind, superOf) {
@@ -494,34 +494,36 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
         }
             
         // Make all the cells of the line 
+        var rowNumber = $('<td>', {class : 'row-number'});        
+
         var typeKind = $('<td>', {
-            text : kind,
+            text: kind,
             "data-order" : TYPEDATA[kind].rank
         });
 
         var itemCount = $('<td>', {
-            class : 'items-stat', 
-            text : convertToPercentage(itemCounts[type], numActivePosItems()),
-            title : 'percentage of active A items found in'
+            class: 'items-stat', 
+            text: convertToPercentage(itemCounts[type], numActivePosItems()),
+            title: 'percentage of active A items found in'
         });
 
         var treebankCount = $('<td>', {
-            class : 'items-stat', 
-            text : treebankPercentage,
-            title : 'percent of trees in treebank this type is found in'
+            class: 'items-stat', 
+            text: treebankPercentage,
+            title: 'percent of trees in treebank this type is found in'
         });
 
         var tfIdf = $('<td>', {
-            class : 'items-stat', 
-            text : tfIdfVal,
-            title : 'TF-IDF'
+            class: 'items-stat', 
+            text: tfIdfVal,
+            title: 'TF-IDF'
         });
 
         var typeName = $('<td>', {
-            'html'  : `<div class="type-name">${type}</div>`,
-            'class' : kind + ' type',
-            'title' : `${type} (${kind} type)`,
-            'style' : 'background: ' + TYPEDATA[kind].col
+            'html' : `<div class="type-name">${type}</div>`,
+            'class': kind + ' type',
+            'title': `${type} (${kind} type)`,
+            'style': 'background: ' + TYPEDATA[kind].col
         });
 
         typeName.append('<div class="filter-type-in"><i class="fa fa-filter" title="limit items to those having this type" style="color:#d6caca"></i></div>');
@@ -539,6 +541,7 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
         }
 
         typeLine.append([
+            rowNumber,
             typeKind,
             tfIdf,
             itemCount,
@@ -568,10 +571,15 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
     var dt = $table.DataTable({
         dom: 'fit',
         paging: false,
-        order: [[1, 'desc']],
+        order: [[2, 'desc']],
         fixedHeader: true,
-        //columnDefs: [{ "visible": false, "targets": 0 }]
+        columnDefs: [ {
+            searchable: false,
+            orderable: false,
+            targets: 0
+        } ],
         aoSearchCols: [
+            null, 
             {
                 sSearch: "(sign|synsem|head|cat|relation|predsort)",
                 "bRegex": true
@@ -615,6 +623,12 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
         });
     });
 
+    dt.on( 'order.dt search.dt', function() {
+        dt.column(0, {search:'applied', order:'applied'}).nodes().each(function (cell, i) {
+            cell.innerHTML = (i+1)+'.';
+        });
+    }).draw();
+    
     //return $table;
     // weird hack because datatables is not creating the container
     return $(dt.table().container()).append($table);

@@ -1339,8 +1339,8 @@ def get_text_results(lines, grammar, best=1, ace_path=None, lextypes=True,
     results_dict = defaultdict(list)
 
     for i, line in enumerate(lines):
-        f = Fragment(line, grammar, count=best, lextypes=lextypes, typifier=typifier, 
-                     cache=cache, ace_path=ace_path)
+        f = Fragment(line, grammar, count=best, typifier=typifier, cache=cache,
+                     ace_path=ace_path)
 
         for reading in f.readings:
             results_dict[i].append(reading)

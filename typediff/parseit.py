@@ -4,7 +4,8 @@ import argparse
 from collections import Counter, defaultdict
 
 from .delphin import (get_profile_ids, load_hierarchy, TypeNotFoundError,
-                      get_profile_results)
+                      get_profile_results, get_short_label_results,
+                      get_text_results, AceError)
 from .config import TYPIFIERBIN, ACEBIN
 from .gram import get_grammar
 from .stats import counts2dist, kl_divergence, js_divergence
@@ -350,16 +351,16 @@ def get_results(grammar, arg):
             lines = lines[:cutoff]
             
         if arg.feature == "short-derivation":
-            results = delphin.get_short_label_results(
+            results = get_short_label_results(
                 lines, grammar, best=arg.best, fragments=arg.fragments,
                 ace_path=ACEBIN)
         else:
-            results = delphin.get_text_results(
+            results = get_text_results(
                 lines, grammar, best=arg.best, ace_path=ACEBIN,
                 lextypes=lextypes, typifier=typifier, fragments=arg.fragments,
                 cache=cache)
     else:
-        results = delphin.get_profile_results(
+        results = get_profile_results(
             arg.paths, best=arg.best, gold=arg.gold, cutoff=arg.cutoff, 
             grammar=grammar, lextypes=lextypes, typifier=typifier,
             pspans=arg.pspans, condition=arg.tsql, cache=cache)
@@ -403,7 +404,7 @@ def main():
                                     arg.failtok, arg.best, arg.backoff))
             elif arg.command == 'draw':
                 draw(results)
-    except delphin.AceError as e:
+    except AceError as e:
         print(e)
 
     return 0

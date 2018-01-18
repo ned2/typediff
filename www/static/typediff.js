@@ -486,7 +486,11 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
             var typeStats = treebank.data[type];
             var trees = (typeStats != undefined) ? typeStats.items : 0;
             treebankPercentage = convertToPercentage(trees, treebank.trees); 
-            tfIdfVal = (itemCounts[type]/(1+Math.log(trees))).toFixed(2);
+            var tf = itemCounts[type];
+            var idf =  Math.log(treebank.trees/(1+trees));
+            var idfx =  1/(1+Math.log(1+trees));
+            tfIdfVal = (tf*idf).toFixed(2);
+            //tfIdfVal = (itemCounts[type]/(1+Math.log(trees))).toFixed(4);
         }
             
         // Make all the cells of the line 
@@ -1703,8 +1707,13 @@ function setHandlers() {
         if (keyCode === 10 || keyCode == 13 && event.ctrlKey) {
             $('#submit-items-button').trigger('click');
         } else if (keyCode === 10 || keyCode == 13 && event.altKey) {
-            $('#pos-input').val("We relied on and hired consultants.");
-            $('#neg-input').val("We relied on consultants and hired consultants.");
+            var posInputs = `
+The manager remembered having to hire and being forced to fire employees.
+The manager had to hire and fire employees.
+The manager hires and fires employees.`;
+            var negInputs = `The manager hires employees and fires employees.`;
+            $('#pos-input').val(posInputs);
+            $('#neg-input').val(negInputs);
             $('#submit-items-button').trigger('click');
         }
     });

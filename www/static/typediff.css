@@ -358,7 +358,7 @@ input[type=text], input[type=submit], select {
     justify-content: space-between;
 }
 
-.phenomenon-row * {
+.phenomenon-row {
     visibility: hidden;
 }
 

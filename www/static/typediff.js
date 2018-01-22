@@ -1738,8 +1738,8 @@ The manager hires and fires employees.`;
             var option = options[i];
             $target.append($(`<option class="phenomenon">${option}</option>`));
         }
-        $target.css('visibility', 'visible');
-        $target.next().css('visibility', 'visible');
+
+        $target.closest('.phenomenon-row').css('visibility', 'visible');
     }
     
     $("#pos-profile-input").change(function (event){

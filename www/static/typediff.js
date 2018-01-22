@@ -1738,7 +1738,6 @@ The manager hires and fires employees.`;
             var option = options[i];
             $target.append($(`<option class="phenomenon">${option}</option>`));
         }
-
         $target.closest('.phenomenon-row').css('visibility', 'visible');
     }
     

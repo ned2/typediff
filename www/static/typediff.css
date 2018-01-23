@@ -208,7 +208,7 @@ input[type=submit].disabled:active { position: static }
 
 input[type=submit] { font-weight: 700 }
 
-input[type=text], input[type=submit], select {
+input[type=text], input[type=submit], select, textarea {
     background: white;
     border: solid 2px black;
 }
@@ -312,7 +312,7 @@ input[type=text], input[type=submit], select {
 
 .type-button:hover, .del:hover, .disable:hover {
     color: rgba(0, 0, 0, 0.5);
-    text-shadow: 1px 1px 7px rgba(0, 0, 0, 0.5);
+    /* text-shadow: 1px 1px 7px rgba(0, 0, 0, 0.5); */
 }
 
 .clear { clear: both }
@@ -507,7 +507,8 @@ input[type=text], input[type=submit], select {
 }
 
 #annotation-label {
-    font-size: 2.5em;
+    font-size: 1.5em;
+    font-weight: 600;
     display: flex;
     justify-content: space-around;
     margin-bottom: 0.25em;
@@ -515,4 +516,15 @@ input[type=text], input[type=submit], select {
 
 #phenomenon-label {
     font-family: mono;
+}
+
+#annotation-comment {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.5em;
+}
+
+#annotation-comment textarea {
+    width: 50%;
+    height: 4em;
 }

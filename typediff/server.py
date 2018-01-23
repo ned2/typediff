@@ -1,5 +1,7 @@
 import json
 import sys
+import csv
+from datetime import datetime
 from collections import defaultdict
 
 from flask import Flask, request, jsonify
@@ -74,6 +76,32 @@ def process_the_profiles():
     return jsonify(typediff_web(pos_items, neg_items, opts))
 
 
+@app.route('/annotate', methods=['POST'])
+def annotate():
+    #import ipdb; ipdb.set_trace()
+    name = request.form.get('name').lower().replace(' ', '_')
+    label = request.form.get('label')
+    comment = request.form.get('comment')
+    nec_anns = request.form.get('necessary-annotations')
+    rel_anns = request.form.get('relevant-annotations')
+    url = request.form.get('url')
+    timestamp = str(datetime.now())
+    filename = f'{name}_annotations.csv'
+
+    with open(filename, 'a') as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            timestamp,
+            name,
+            label,
+            nec_anns,
+            rel_anns,
+            comment,
+            url,
+        ])
+
+    return jsonify({'success': True})
+    
 @app.route('/find-supers', methods=['POST'])
 def find_supers():
     alias = request.form.get('grammar-name')

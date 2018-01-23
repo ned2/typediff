@@ -26,6 +26,7 @@ var NEGPROFILES = Array();
 var FADELENGTH = 400;
 var ANNOTATION_MODE = false;
 var ANNOTATION_LABEL = null;
+var ANNOTATION_NAME = '';
 var ANNOTATION_LABELS = [
     'that',
     'bare',
@@ -151,8 +152,6 @@ function loadAnnotationMode(label){
         $('#phenomenon-label').html(ANNOTATION_LABEL);
         $('#success-box').hide();
         $('#annotation-box').show();
-
-        //....
     }
 }
 
@@ -167,9 +166,11 @@ function updateUrl() {
 
     var operator = $('#extra-group-operator .set-operator.enabled').data('operator');
 
-    if (ANNOTATION_MODE)
+    if (ANNOTATION_MODE) {
         params.push(makeParam('annotate', ANNOTATION_LABEL));
-
+        params.push(makeParam('annotator', ANNOTATION_NAME));
+    }
+    
     params.push(makeParam('count', $('#count-input').val()));
     params.push(makeParam('treebank', $("#treebank-input").val()));
     params.push(makeParam('labels', $("input[name=labels]:checked").val()));
@@ -285,9 +286,12 @@ function loadUrlParams() {
             BLACKLISTTYPES = value.split(',');
         } else if (param == 'includeTypes') {
             WHITELISTTYPES = value.split(',');
-        }  else if (param == 'annotate') {
+        } else if (param == 'annotate') {
             loadAnnotationMode(value);
+        } else if (param == 'annotator') {
+            $('#annotation-name').val(value);
         }
+
     }
 
     if (posProfiles != null ) {
@@ -719,6 +723,11 @@ function addRelAnnotation(typeName) {
 
     
 function addAnnotation(typeName, containerId){
+    if (getAllAnnotations().indexOf(typeName) > -1) {
+        alert(`You have already annotated ${typeName}`);
+        return;
+    }
+        
     var grammar = $('#grammar-input').val();
     var kind = DESCENDANTS[grammar][typeName] || "other";
     var $ann = $('<div>', {
@@ -727,8 +736,35 @@ function addAnnotation(typeName, containerId){
         'title' : `${typeName} (${kind} type)`,
         'style' : 'background: ' + TYPEDATA[kind].col
     });
-    $ann.append('<i title="remove this annotation" class="del fa fa-times"></i>');
+   
+    $ann.append('<i title="remove this annotation" class="type-button del fa fa-times"></i>');
     $(containerId).append($('<div class="type-wrapper">').append($ann));
+
+    $('#annotated-types-container .type .del').click(function(event) {
+        event.stopPropagation();
+        $(this).parent().remove();
+    });
+}
+
+
+function getNecAnnotations() {
+    return $('#necessary-types .type').map(
+        function() {return $(this).text();}
+    ).get();
+}
+
+
+function getRelAnnotations() {
+    return $('#relevant-types .type').map(
+        function() {return $(this).text();}
+    ).get();
+}
+
+
+function getAllAnnotations() {
+    var relAnns = getRelAnnotations();
+    var necAnns = getNecAnnotations();
+    return necAnns.concat(relAnns);
 }
 
 
@@ -1313,6 +1349,18 @@ function setTypeHandlers() {
         doDiff();
         updateUrl();
     });
+
+    $('.type .nec-ann').click(function(event) {
+        event.stopPropagation();
+        var typeName = $(this).parent().find('.type-name').text();
+        addNecAnnotation(typeName);
+    });
+
+    $('.type .rel-ann').click(function(event) {
+        event.stopPropagation();
+        var typeName = $(this).parent().find('.type-name').text();
+        addRelAnnotation(typeName);
+    });
 }
 
 
@@ -1893,7 +1941,41 @@ The manager hires and fires employees.`;
         }
         updateUrl();
     });
-    
+
+    $('#submit-annotation').click(function(event) {    
+        var name = $('#annotation-name').val();
+
+        if (name == ''){
+            alert('Please enter your name');
+            return;
+        }
+
+        var annotations = getAllAnnotations();
+        
+        if (annotations.length == 0) {
+            alert('Need at least one type to record an annotation.');
+            return;
+        }
+
+        var data = {
+            'name': name,
+            'label': $('#phenomenon-label').text(),
+            'comment': $('#annotation-comment textarea').val(),
+            'necessary-annotations': getNecAnnotations().join(';'),
+            'relevant-annotations': getRelAnnotations().join(';'),
+            'url': window.location.href
+        };
+
+        $.post('/annotate', data).done(function(data) {
+            if (!data.success)
+                return;
+            var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
+            ANNOTATION_LABEL = ANNOTATION_LABELS[current + 1];
+            $('#phenomenon-label').html(ANNOTATION_LABEL);
+            $('#annotated-types-container .type-wrapper').remove();
+            $('#annotation-comment textarea').val('');
+        });
+    });
 }
 
 

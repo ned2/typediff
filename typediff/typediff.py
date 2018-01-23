@@ -173,6 +173,7 @@ def typediff_web(pos_items, neg_items, opts):
         'descendants' : load_descendants(opts.grammar) if opts.desc else False,
         'typeData': type_data(),
         'grammar': opts.grammar.alias,
+        'treebank': opts.treebank,
     }
 
     if opts.supers:

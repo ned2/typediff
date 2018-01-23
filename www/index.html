@@ -294,6 +294,7 @@
             <input id="add-items-button" type="submit" value="Add Items"/>
             <input id="swap-items-button" class="disabled" type="submit" value="Swap A-B"/>
             <input id="clear-button" class="disabled" type="submit" value="Clear"/>
+            <input id="annotate-button" type="submit" value="Annotate"/>
           </div>
         </form>
       </div>
@@ -323,6 +324,26 @@
         <div id="treebank-details" class="status-value"></div>
       </div>
       <div id="fail-box" class="error hidden"></div>
+      <div id="annotation-box" class="hidden">
+          <div id="annotation-label">
+              <div>Phenomenon:</div>
+              <div id="phenomenon-label"></div>
+          </div>
+          <div id="annotated-types-container" class="type-list-container">
+              <div id="necessary-types" class="type-list">
+                  <div class="type-list-header">Necessary Types</div>
+              </div>
+              <div id="relevant-types" class="type-list">
+                  <div class="type-list-header">Relevant Types</div>
+              </div>
+          </div>
+          <div class="annotation-form-container">
+              <div class="annotation-form">              
+                  <input id="annotator-name" type="text" placeholder="Your name">
+                  <input id="submit-annotation" type="submit" value="Annotate">
+              </div>
+          </div>
+      </div>
     </div>
   </div>
   <div id="input-pane" class="pane left-pane">

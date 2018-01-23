@@ -59,12 +59,14 @@ def process_the_profiles():
         prof = PROFILES[pos_prof_name]
         query = f'{prof.home}:{pos_prof_filter}'
         opts.grammar = get_grammar(prof.grammar)
+        opts.treebank = prof.treebank
         pos_items = process_profiles(query, opts)
 
     if neg_prof_name != '':
         prof = PROFILES[neg_prof_name]
         query = f'{prof.home}:{pos_prof_filter}'
         opts.grammar = get_grammar(prof.grammar)
+        opts.treebank = prof.treebank
         neg_items = process_profiles(query, opts)
 
     # for now assume that both profiles will be parsed using the

@@ -24,6 +24,39 @@ var DESCENDANTS = {};
 var POSPROFILES = Array();
 var NEGPROFILES = Array();
 var FADELENGTH = 400;
+var ANNOTATION_MODE = false;
+var ANNOTATION_LABEL = null;
+var ANNOTATION_LABELS = [
+    'that',
+    'bare',
+    'wh-simple',
+    'wh-complex-1',
+    'wh-complex-2',
+    'wh-complex-3',
+    'wh-complex-4',
+    'wh-complex-5',
+    'wh-complex-6',
+    'wh-complex-7',
+    'wh-complex-8',
+    'integrated-non-inf',
+    'integrated-inf',
+    'supplementary',
+    'cleft',
+    'fused',
+    'subject',
+    'object',
+    'predicative-comp',
+    'comp-of-prep',
+    'adjunct',
+    'genitive-subj-det',
+    'comp-of-aux-verb',
+    'oblique-comp',
+    'relative',
+    'non-relative',
+    'wh',
+    'wh-complex',
+    'integrated',
+];
 
 var BLACKLISTTYPES = Array();
 var WHITELISTTYPES = Array();
@@ -103,9 +136,29 @@ function updateCompare(operator){
 }
 
 
-function updateUrl() {
-    if (!haveItems()) return;
+function loadAnnotationMode(label){
+    if (label == 'start'){
+        ANNOTATION_LABEL = ANNOTATION_LABELS[0]; 
+    } else {
+        if (ANNOTATION_LABELS.indexOf(label) == -1)
+            alert(`'${label}' is not a valid annotation label.`);
+        else
+            ANNOTATION_LABEL = label;
+    }
 
+    if (ANNOTATION_LABEL != null){
+        ANNOTATION_MODE = true;
+        $('#phenomenon-label').html(ANNOTATION_LABEL);
+        $('#success-box').hide();
+        $('#annotation-box').show();
+
+        //....
+    }
+}
+
+//Submit button creates url with next label and loads it
+
+function updateUrl() {
     var params = []; 
 
     var makeParam = function(param, value) {
@@ -113,6 +166,9 @@ function updateUrl() {
     };
 
     var operator = $('#extra-group-operator .set-operator.enabled').data('operator');
+
+    if (ANNOTATION_MODE)
+        params.push(makeParam('annotate', ANNOTATION_LABEL));
 
     params.push(makeParam('count', $('#count-input').val()));
     params.push(makeParam('treebank', $("#treebank-input").val()));
@@ -159,6 +215,7 @@ function updateUrl() {
     }
 
     window.location.hash = encodeURI(params.join('&'));
+    updateButtons();
 }
 
 
@@ -228,6 +285,8 @@ function loadUrlParams() {
             BLACKLISTTYPES = value.split(',');
         } else if (param == 'includeTypes') {
             WHITELISTTYPES = value.split(',');
+        }  else if (param == 'annotate') {
+            loadAnnotationMode(value);
         }
     }
 
@@ -345,12 +404,17 @@ function processProfiles(savedProfiles) {
     var posting = $.post('/process-profiles', data);
 
     posting.done(function(data){
-        if (posProfile != null) {
+
+        if (posProfile)
             POSPROFILES.push(`${posProfile}:${posFilter}`);
-        }
-        if (negProfile != null) {
+        if (negProfile)
             NEGPROFILES.push(`${negProfile}:${negFilter}`);
+
+        if (posProfile || negProfile){
+            $('#grammar-input').val(data.grammar);
+            $('#treebank-input').val(data.treebank);
         }
+            
     }, processPostData);
 }
 
@@ -436,22 +500,26 @@ function processItemResults(newItems, type) {
 
 
 function showStatusBox(id) {
-    var boxes = $('#status-pane .pane-content > div').hide();
-    return $(id).show();
+    $('#success-box, #waiting-box, #fail-box').hide();
+
+    if (!(ANNOTATION_MODE && id == '#success-box'))
+        $(id).show();
 }
  
 
 function updateButtons() {
     if (window.location.hash == '')
         $('#clear-button').addClass('disabled');
-
+    else
+        $('#clear-button').removeClass('disabled');        
+    
     if (!haveItems()) {
         $('#swap-items-button').addClass('disabled');
     } else if (!(havePosItems() && haveNegItems())) {
         $('#swap-items-button').addClass('disabled');
         $('#clear-button').removeClass('disabled');
     } else {
-        $('#swap-items-button, #clear-button').removeClass('disabled');    
+        $('#swap-items-button').removeClass('disabled');
     }
 }
 
@@ -526,8 +594,13 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
             'style': 'background: ' + TYPEDATA[kind].col
         });
 
-        typeName.append('<div class="filter-type-in"><i class="fa fa-filter" title="limit items to those having this type" style="color:#d6caca"></i></div>');
-        typeName.append('<div class="filter-type-out"><i class="fa fa-filter" title="remove items that have this type"></i></div>');
+        if (ANNOTATION_MODE) {
+            typeName.append('<div class="nec-ann type-button"><i class="fa fa-file-text" title="Annotate this item as necessary for the phenomenon"></i></div>');
+            typeName.append('<div class="rel-ann type-button"><i class="fa fa-file-text-o" title="Annotate this item as relevant to the phenomenon"></i></div>');
+        }
+            
+        typeName.append('<div class="filter-type-in type-button"><i class="fa fa-filter" title="limit items to those having this type" style="color:#d6caca"></i></div>');
+        typeName.append('<div class="filter-type-out type-button"><i class="fa fa-filter" title="remove items that have this type"></i></div>');
 
         var typeLine = $('<tr>', {'class' : 'type-line'});
 
@@ -635,6 +708,29 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
 
 }
 
+function addNecAnnotation(typeName) {
+    addAnnotation(typeName, '#necessary-types');
+}
+
+
+function addRelAnnotation(typeName) {
+    addAnnotation(typeName, '#relevant-types');
+}
+
+    
+function addAnnotation(typeName, containerId){
+    var grammar = $('#grammar-input').val();
+    var kind = DESCENDANTS[grammar][typeName] || "other";
+    var $ann = $('<div>', {
+        'html' : typeName,
+        'class' : kind + ' type',
+        'title' : `${typeName} (${kind} type)`,
+        'style' : 'background: ' + TYPEDATA[kind].col
+    });
+    $ann.append('<i title="remove this annotation" class="del fa fa-times"></i>');
+    $(containerId).append($('<div class="type-wrapper">').append($ann));
+}
+
 
 function makeFilterLists(grammar) {
     var makeFilterList = function (filters, id, text) {
@@ -648,21 +744,21 @@ function makeFilterLists(grammar) {
                 'title' : `${typeName} (${kind} type)`,
                 'style' : 'background: ' + TYPEDATA[kind].col
             });
-            $filter.append('<i title="remove this filter" class="del fa fa-times"></i>');
+            $filter.append('<i title="remove this filter" class="type-button del fa fa-times"></i>');
             typeFilters.push($('<div class="type-wrapper">').append($filter));
         }
 
         var header = $('<div>', {
             text: text,
-            class: 'filter-header'
+            class: 'type-list-header'
         });
-        return $('<div>', {id: id, class: 'filter-list'})
+        return $('<div>', {id: id, class: 'type-list'})
             .append(header)
             .append(typeFilters);
     };
     
     return $('<div>', {
-        class: 'filter-list-container'
+        class: 'type-list-container'
     }).append([
         makeFilterList(BLACKLISTTYPES, 'black-filter-list', 'Excluded Types'),
         makeFilterList(WHITELISTTYPES, 'white-filter-list', 'Included Types'),
@@ -731,10 +827,9 @@ function postDiff(types, supers, itemCounts, grammar, typesToSupers, treebank) {
     else
         $('#treebank-details').html('none');
 
-    showStatusBox('#success-box');
     setTypeHandlers();
-    updateButtons();
     updateUrl();
+    showStatusBox('#success-box');
 }
 
 
@@ -1788,6 +1883,17 @@ The manager hires and fires employees.`;
         updateUrl();
         doDiff();
     });
+
+    $('#annotate-button').click(function(event) {    
+        if (!ANNOTATION_MODE) {
+            loadAnnotationMode('start');
+        } else{
+            ANNOTATION_MODE = false;
+            $('#annotation-box').hide();
+        }
+        updateUrl();
+    });
+    
 }
 
 
@@ -1796,4 +1902,5 @@ $(document).ready(function(){
     loadData(loadUrlParams);
     setHandlers();
     updateCompare("union");
+    updateButtons();
 });

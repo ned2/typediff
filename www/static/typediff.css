@@ -310,7 +310,10 @@ input[type=text], input[type=submit], select {
 }
 
 
-.del:hover,.disable:hover { color: rgba(0, 0, 0, 0.5) }
+.type-button:hover, .del:hover, .disable:hover {
+    color: rgba(0, 0, 0, 0.5);
+    text-shadow: 1px 1px 7px rgba(0, 0, 0, 0.5);
+}
 
 .clear { clear: both }
 
@@ -437,16 +440,19 @@ input[type=text], input[type=submit], select {
 
 .type-name {display: inline-block;}
 
-.filter-type-in,  .filter-type-out {
+.type-button {
     display: none;
     float: right;
     margin-left: 0.5em;
 }
 
-.type:hover .filter-type-in, .type:hover .filter-type-out {
+.type:hover .type-button {
     display: inline-block;
 }
 
+.filter-type-in:hover {
+
+}
 
 #type-table_wrapper {
     position: static;
@@ -468,39 +474,45 @@ input[type=text], input[type=submit], select {
     float: right;
 }
 
-.filter-list-container {
+.type-list-container {
     display: flex;
     justify-content: center;
     margin-bottom: 0.5em;
 }
 
-.filter-header {
+.type-list-header {
     text-align: center;
     font-weight: 600;
     margin-bottom: 0.5em;
 }
 
-.filter-list {
+.type-list {
     width: 50%;
     display: flex;
     flex-direction: column;
 }
 
-.filter-list .type-wrapper {
+.type-list .type-wrapper {
     display: flex;
     justify-content: center;
 }
 
-.filter-list .type {
+.type-list .type {
     max-width: 90%;
 }
 
-.filter-list .type .del {
-    float: right;
-    display: none;
+.annotation-form-container {
+    display: flex;
+    justify-content: flex-end;
 }
 
-.filter-list .type:hover .del {
-    display: inline-block;
+#annotation-label {
+    font-size: 2.5em;
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 0.25em;
 }
 
+#phenomenon-label {
+    font-family: mono;
+}

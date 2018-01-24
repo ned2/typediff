@@ -2,6 +2,9 @@ body {
     min-height: 500px;
 }
 
+a {color: black;}
+a:hover {color: rgba(0, 0, 0, 0.8);}
+
 #help-box {
     position: absolute;
     width: 39%;
@@ -51,11 +54,11 @@ body {
 }
 
 .left-pane {
-    width: 55%;
+    width: 50%;
 }
 
 .right-pane {
-    width: 44%;
+    width: 49%;
 }
 
 .pane {

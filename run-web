@@ -57,9 +57,11 @@ export PYTHONPATH=${SCRIPTPATH}:${PYTHONPATH}
 ${ECHO} mod_wsgi-express start-server \
                  --port ${PORT} \
                  ${DEBUGFLAGS} \
+                 --processes 3 \
                  --compress-responses \
                  --reload-on-changes \
                  --document-root www \
                  --directory-index index.html \
                  --include-file httpd.conf \
+                 --request-timeout 180 \
                  --entry-point wsgi.py

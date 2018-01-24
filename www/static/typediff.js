@@ -54,9 +54,9 @@ var ANNOTATION_LABELS = [
     'oblique-comp',
     'relative',
     'non-relative',
-    'wh',
-    'wh-complex',
-    'integrated',
+    'wh',             // broken
+    'wh-complex',     // broken
+    'integrated',     // broken
 ];
 
 var BLACKLISTTYPES = Array();
@@ -433,8 +433,8 @@ function processPostData(data) {
         processItemResults(data['pos-items'], 'pos');
         processItemResults(data['neg-items'], 'neg');
         $('#pos-input, #neg-input').val('');
-        $('#pos-profile-input, #neg-profile-input').val(null);
-        $('#pos-profile-filter, #neg-profile-filter').val('');
+        //$('#pos-profile-input, #neg-profile-input').val(null);
+        //$('#pos-profile-filter, #neg-profile-filter').val('');
         setOperator();
         // applyFilters calls doDiff even when there are no filters();
         applyFilters();
@@ -1288,11 +1288,11 @@ function setTypeHandlers() {
         }
     );
         
-    $('#type-table .type:not(.super)').click(function(event) {
+    $('#type-table .type:not(.super) .type-name').click(function(event) {
         event.stopPropagation();
-        var $this = $(this);
+        var $type = $(this).parent();
         
-        $this.toggleClass('active');
+        $type.toggleClass('active');
         applyActiveHighlights('locked');
         toggleTrees();
     });
@@ -1734,6 +1734,7 @@ function clearState(callback) {
         callback();
     }
     setOperator();
+    updateUrl();
 }
 
 
@@ -1792,7 +1793,6 @@ function setHandlers() {
         if ($(this).hasClass('disabled')) 
             return;
         clearState();
-        window.location.hash = '';
     });
 
     $('input[name=labels]').change(function(event) {
@@ -1961,8 +1961,8 @@ The manager hires and fires employees.`;
             'name': name,
             'label': $('#phenomenon-label').text(),
             'comment': $('#annotation-comment textarea').val(),
-            'necessary-annotations': getNecAnnotations().join(';'),
-            'relevant-annotations': getRelAnnotations().join(';'),
+            'necessary-annotations': getNecAnnotations().join(','),
+            'relevant-annotations': getRelAnnotations().join(','),
             'url': window.location.href
         };
 
@@ -1970,10 +1970,16 @@ The manager hires and fires employees.`;
             if (!data.success)
                 return;
             var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
+
+            if (current == ANNOTATION_LABELS.length - 1){
+                $('#annotation-box').html("<h3>You're done!</h3>");
+            }
+                
             ANNOTATION_LABEL = ANNOTATION_LABELS[current + 1];
             $('#phenomenon-label').html(ANNOTATION_LABEL);
             $('#annotated-types-container .type-wrapper').remove();
             $('#annotation-comment textarea').val('');
+            $('#clear-button').trigger('click');
         });
     });
 }

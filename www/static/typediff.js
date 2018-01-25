@@ -152,6 +152,7 @@ function loadAnnotationMode(label){
         $('#phenomenon-label').html(ANNOTATION_LABEL);
         $('#success-box').hide();
         $('#annotation-box').show();
+        doDiff();
     }
 }
 
@@ -231,7 +232,8 @@ function loadUrlParams() {
     var Binput = [];
     var Agrammar = false;
     var Bgramamr = false;
-
+    var annotationLabel = null;
+    
     for (var i=0; i < params.length; i++) {
         var p = params[i];
 
@@ -287,7 +289,7 @@ function loadUrlParams() {
         } else if (param == 'includeTypes') {
             WHITELISTTYPES = value.split(',');
         } else if (param == 'annotate') {
-            loadAnnotationMode(value);
+            annotationLabel = value;
         } else if (param == 'annotator') {
             $('#annotation-name').val(value);
         }
@@ -355,6 +357,10 @@ function loadUrlParams() {
             $('#neg-input').val(Binput.join('\n'));
             processItems();
         });
+    }
+
+    if (annotationLabel) {
+        loadAnnotationMode(value);
     }
 }
 
@@ -602,7 +608,7 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
             typeName.append('<div class="nec-ann type-button"><i class="fa fa-file-text" title="Annotate this item as necessary for the phenomenon"></i></div>');
             typeName.append('<div class="rel-ann type-button"><i class="fa fa-file-text-o" title="Annotate this item as relevant to the phenomenon"></i></div>');
         }
-            
+        
         typeName.append('<div class="filter-type-in type-button"><i class="fa fa-filter" title="limit items to those having this type" style="color:#d6caca"></i></div>');
         typeName.append('<div class="filter-type-out type-button"><i class="fa fa-filter" title="remove items that have this type"></i></div>');
 
@@ -1942,6 +1948,15 @@ The manager hires and fires employees.`;
         updateUrl();
     });
 
+    $('#next-annotation').click(function(event) {
+        var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
+        ANNOTATION_LABEL = ANNOTATION_LABELS[current + 1];
+        $('#phenomenon-label').html(ANNOTATION_LABEL);
+        $('#annotated-types-container .type-wrapper').remove();
+        $('#annotation-comment textarea').val('');
+        $('#clear-button').trigger('click');
+    });
+    
     $('#submit-annotation').click(function(event) {    
         var name = $('#annotation-name').val();
 
@@ -1969,17 +1984,17 @@ The manager hires and fires employees.`;
         $.post('/annotate', data).done(function(data) {
             if (!data.success)
                 return;
+            
             var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
 
             if (current == ANNOTATION_LABELS.length - 1){
                 $('#annotation-box').html("<h3>You're done!</h3>");
+                return; 
             }
-                
-            ANNOTATION_LABEL = ANNOTATION_LABELS[current + 1];
-            $('#phenomenon-label').html(ANNOTATION_LABEL);
+            
             $('#annotated-types-container .type-wrapper').remove();
             $('#annotation-comment textarea').val('');
-            $('#clear-button').trigger('click');
+
         });
     });
 }

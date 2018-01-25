@@ -299,8 +299,6 @@ input[type=text], input[type=submit], select, textarea {
     vertical-align: bottom;
 }
 
-
-
 .tree-actions { margin: .5em; }
 
 .item>.tree-count {

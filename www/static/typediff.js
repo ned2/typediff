@@ -360,7 +360,7 @@ function loadUrlParams() {
     }
 
     if (annotationLabel) {
-        loadAnnotationMode(value);
+        loadAnnotationMode(annotationLabel);
     }
 }
 
@@ -605,7 +605,7 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
         });
 
         if (ANNOTATION_MODE) {
-            typeName.append('<div class="nec-ann type-button"><i class="fa fa-file-text" title="Annotate this item as necessary for the phenomenon"></i></div>');
+            typeName.append('<div class="suf-ann type-button"><i class="fa fa-file-text" title="Annotate this item as being sufficient (together with the other sufficient types) for the presence of the phenomenon."></i></div>');
             typeName.append('<div class="rel-ann type-button"><i class="fa fa-file-text-o" title="Annotate this item as relevant to the phenomenon"></i></div>');
         }
         
@@ -718,8 +718,8 @@ function makeTable(types, supers, itemCounts, grammar, typesToSupers, treebank) 
 
 }
 
-function addNecAnnotation(typeName) {
-    addAnnotation(typeName, '#necessary-types');
+function addSufAnnotation(typeName) {
+    addAnnotation(typeName, '#sufficient-types');
 }
 
 
@@ -753,8 +753,8 @@ function addAnnotation(typeName, containerId){
 }
 
 
-function getNecAnnotations() {
-    return $('#necessary-types .type').map(
+function getSufAnnotations() {
+    return $('#sufficient-types .type').map(
         function() {return $(this).text();}
     ).get();
 }
@@ -769,8 +769,8 @@ function getRelAnnotations() {
 
 function getAllAnnotations() {
     var relAnns = getRelAnnotations();
-    var necAnns = getNecAnnotations();
-    return necAnns.concat(relAnns);
+    var sufAnns = getSufAnnotations();
+    return sufAnns.concat(relAnns);
 }
 
 
@@ -1356,10 +1356,10 @@ function setTypeHandlers() {
         updateUrl();
     });
 
-    $('.type .nec-ann').click(function(event) {
+    $('.type .suf-ann').click(function(event) {
         event.stopPropagation();
         var typeName = $(this).parent().find('.type-name').text();
-        addNecAnnotation(typeName);
+        addSufAnnotation(typeName);
     });
 
     $('.type .rel-ann').click(function(event) {
@@ -1949,6 +1949,11 @@ The manager hires and fires employees.`;
     });
 
     $('#next-annotation').click(function(event) {
+        if (getAllAnnotations().length > 0){
+            alert('You have unrecorded annotations. Submit or remove them to continue.');
+            return;
+        }
+            
         var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
         ANNOTATION_LABEL = ANNOTATION_LABELS[current + 1];
         $('#phenomenon-label').html(ANNOTATION_LABEL);
@@ -1976,7 +1981,7 @@ The manager hires and fires employees.`;
             'name': name,
             'label': $('#phenomenon-label').text(),
             'comment': $('#annotation-comment textarea').val(),
-            'necessary-annotations': getNecAnnotations().join(','),
+            'sufficient-annotations': getSufAnnotations().join(','),
             'relevant-annotations': getRelAnnotations().join(','),
             'url': window.location.href
         };

@@ -30,6 +30,7 @@ var ANNOTATION_NAME = '';
 var ANNOTATION_LABELS = [
     'that',
     'bare',
+    'non-wh',
     'wh-simple',
     'wh-complex-1',
     'wh-complex-2',
@@ -39,8 +40,11 @@ var ANNOTATION_LABELS = [
     'wh-complex-6',
     'wh-complex-7',
     'wh-complex-8',
+    'wh-complex',
+    'wh',
     'integrated-non-inf',
     'integrated-inf',
+    'integrated',    
     'supplementary',
     'cleft',
     'fused',
@@ -53,10 +57,6 @@ var ANNOTATION_LABELS = [
     'comp-of-aux-verb',
     'oblique-comp',
     'relative',
-    'non-relative',
-    'wh',             // broken
-    'wh-complex',     // broken
-    'integrated',     // broken
 ];
 
 var BLACKLISTTYPES = Array();
@@ -1953,8 +1953,14 @@ The manager hires and fires employees.`;
             alert('You have unrecorded annotations. Submit or remove them to continue.');
             return;
         }
-            
+        
         var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
+        
+        if (current == ANNOTATION_LABELS.length - 1){
+            $('#annotation-box').html("<h3>You're done!</h3>");
+            return; 
+        }
+
         ANNOTATION_LABEL = ANNOTATION_LABELS[current + 1];
         $('#phenomenon-label').html(ANNOTATION_LABEL);
         $('#annotated-types-container .type-wrapper').remove();
@@ -1989,13 +1995,6 @@ The manager hires and fires employees.`;
         $.post('/annotate', data).done(function(data) {
             if (!data.success)
                 return;
-            
-            var current = ANNOTATION_LABELS.indexOf(ANNOTATION_LABEL);
-
-            if (current == ANNOTATION_LABELS.length - 1){
-                $('#annotation-box').html("<h3>You're done!</h3>");
-                return; 
-            }
             
             $('#annotated-types-container .type-wrapper').remove();
             $('#annotation-comment textarea').val('');

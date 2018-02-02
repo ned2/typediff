@@ -76,7 +76,8 @@ function linkify(url, text, title) {
 }
 
 function makeFangornQueryUrl(treebank, query) {
-    return FANGORNPATH + '/search?corpus=' + treebank + '&query=' + query.toUpperCase(); 
+    var urlBase = window.location.protocol + '//' + window.location.hostname;
+    return urlBase + FANGORNPATH + `/search?corpus=${treebank}&query=${query.toUpperCase()}`; 
 }
 
 function isERG(grammar) { return grammar.match('t?erg') !== null;}
@@ -1432,10 +1433,10 @@ function setTreeHandlers($item) {
 
                     var links = [];  
                     var fangornUrl = makeFangornQueryUrl(treebankAlias, '//' + nodeQuery);
-                    links.push(linkify(fangornUrl, 'node', 'fangorn search for this node'));
+                    links.push(linkify(fangornUrl, 'query', 'fangorn search for this node'));
 
                     if (itemIsLex && grammar.ltdblink != null) {
-                        links.push(linkify(grammar.ltdblink+'/description.cgi?type='+label, 'lextypeDB'));
+                        links.push(linkify(grammar.ltdblink+'/description.cgi?type='+label, 'LTDB'));
                     } else {
                         var makeSubtreeQuery = function(node, query) {
                             var label = node.find('>text').attr('title');
@@ -1460,7 +1461,7 @@ function setTreeHandlers($item) {
                         };
                         var subtreeQuery = makeSubtreeQuery($this.parent(), '/');
                         var fangornUrl = makeFangornQueryUrl(treebankAlias, subtreeQuery);
-                        links.push(linkify(fangornUrl, 'subtree', 'Fangorn search for this subtree'));
+                        links.push(linkify(fangornUrl, 'subtree-query', 'Fangorn search for this subtree'));
                     }
                     lines.push(makeDiv('Links', links.join(' ')));
                 }

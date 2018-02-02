@@ -275,7 +275,7 @@ input[type=text], input[type=submit], select, textarea {
 .ui-tooltip {
     border-radius: 5px;
 	border: 1px solid #aaa;
-    background-color: rgba(255,255,255,0.9);
+    background-color: white;
 	border-width: 2px;
 	padding: .3em;
 	position: absolute;

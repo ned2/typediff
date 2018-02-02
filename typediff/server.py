@@ -66,7 +66,7 @@ def process_the_profiles():
 
     if neg_prof_name != '':
         prof = PROFILES[neg_prof_name]
-        query = f'{prof.home}:{pos_prof_filter}'
+        query = f'{prof.home}:{neg_prof_filter}'
         opts.grammar = get_grammar(prof.grammar)
         opts.treebank = prof.treebank
         neg_items = process_profiles(query, opts)
@@ -78,7 +78,6 @@ def process_the_profiles():
 
 @app.route('/annotate', methods=['POST'])
 def annotate():
-    #import ipdb; ipdb.set_trace()
     name = request.form.get('name').lower().replace(' ', '_')
     label = request.form.get('label')
     comment = request.form.get('comment')

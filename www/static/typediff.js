@@ -6,12 +6,10 @@
  * Author: Ned Letcher
  * http://github.com/ned2/typediff
  *
- * This file represents my first attempt at a non-trivial web application. It is
- * an exemplar of what is often referred to as 'jQuery spaghetti' -- a complex
- * and highly coupled pile of event listeners and callbacks with state being
- * stored in the DOM. One day I'd like to re-implement it using
- * best-practices. For now, to anyone trying to make sense of any of this: 
- * I'm so sorry.
+ * This represents my first attempt at a non-trivial web application. It is an
+ * exemplar jQuery spaghetti -- a complex and highly coupled pile of event
+ * listeners and callbacks with state being stored in the DOM. For anyone trying
+ * anyone trying to make sense of any of this, I'm so sorry.
  */
 
 
@@ -78,6 +76,11 @@ function linkify(url, text, title) {
 function makeFangornQueryUrl(treebank, query) {
     var urlBase = window.location.protocol + '//' + window.location.hostname;
     return urlBase + FANGORNPATH + `/search?corpus=${treebank}&query=${query.toUpperCase()}`; 
+}
+
+function makeLtdbUrl(grammar, label) {
+    var urlBase = window.location.protocol + '//' + window.location.hostname;
+    return urlBase + grammar.ltdblink + '/description.cgi?type=' + label;
 }
 
 function isERG(grammar) { return grammar.match('t?erg') !== null;}
@@ -1435,8 +1438,9 @@ function setTreeHandlers($item) {
                     var fangornUrl = makeFangornQueryUrl(treebankAlias, '//' + nodeQuery);
                     links.push(linkify(fangornUrl, 'query', 'fangorn search for this node'));
 
+                    var ltdbUrl = makeLtdbUrl(grammar, label);
                     if (itemIsLex && grammar.ltdblink != null) {
-                        links.push(linkify(grammar.ltdblink+'/description.cgi?type='+label, 'LTDB'));
+                        links.push(linkify(ltdbUrl, 'LTDB'));
                     } else {
                         var makeSubtreeQuery = function(node, query) {
                             var label = node.find('>text').attr('title');

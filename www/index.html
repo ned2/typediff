@@ -1,386 +1,389 @@
 <html>
-<head>
-  <meta charset="utf-8" />
-  <title>Typediff</title>
-  <link rel="stylesheet" type="text/css" href="static/typediff.css"/>
-  <link rel="stylesheet" type="text/css" href="static/font-awesome/css/font-awesome.min.css"/>
-  <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel='stylesheet' type='text/css'>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-  <script>
-    if (typeof jQuery == 'undefined')
-        document.write(unescape('%3Cscript src="static/jquery.min.js"%3E%3C/script%3E'));
-  </script>
-  <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-  <script>
-    if (typeof $.fn.dataTable == 'undefined') {
-        document.write(unescape('%3Cscript src="static/jquery.dataTables.min.js"%3E%3C/script%3E'));
-        document.write(unescape('%3Clink rel="stylesheet" type="text/css" href="static/jquery.dataTables.min.css"/%3E'));
-    }
-  </script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>  
-  <script>
-    if (typeof jQuery.ui == 'undefined')
-        document.write(unescape('%3Cscript src="static/jquery-ui.min.js"%3E%3C/script%3E'));
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
-  <script>
-    if (typeof _ == 'undefined')
-        document.write(unescape('%3Cscript src="static/lodash.min.js"%3E%3C/script%3E'));
-  </script>
-  <script src="static/typediff.js"></script>
-  <script src="static/render.js"></script>
-  <script type="text/html" id="item-template">
-    <div class="item">
-      <div class="tree-box popup hidden">
-        <div class="tree-actions">
-          <input class="activate-derivations" type="submit" value="Select All"/>
-          <input class="disable-derivations" type="submit" value="Unselect All"/>
-          <input class="copy-item" type="submit" value="Copy Item" title="Copy this item to the other set with the same active trees."/>
-          <input class="toggle-tree-box" type="submit" value="Maximise" title="Expand popup to fill window."/>
-          <div class="tree-count"></div>
-        </div>
-      </div>
-      <div class="mrs-box popup hidden">
-        <div class="mrs-label"></div>
-        <div class="mrs"></div>
-      </div>
-      <div class="actions">
-        <div class="number">1.</div>
-        <div class="del" title="remove item">
-            <i class="fa fa-times"></i>
-        </div>
-        <div class="disable">
-            <i class="fa fa-toggle-on" title="toggle item"></i>
-        </div>
-        </div>
-      <div class="clear"></div>
-      <div class="text"></div>
-      <div class="tree-count"></div>
-      <div class="clear"></div>
-    </div>
-  </script>
-</head>
-<body>
-<div id="help-box">
-  <div id="help-content" class="hidden">
-      <h2>Overview</h2>
-
-      <p>This is a summary of the various Typediff features. For a detailed
-      walkthrough of how to use Typediff to isolate an ERG phenomenon, see <a href="/docs/rnr.html" target="_blank">here</a>. </p>
-
-      <p>Typediff allows you to quickly explore types used in the
-        parsing of text by DELPH-IN grammars. It works by taking one or more
-        texts as input and then extracting all types found in the full AVM of
-        the selected parse derivation. The resulting bag of types are aggregated
-        and sorted by customizable groupings and weightings.</p>
-
-    <p>By manipulating the groupings of input texts, selecting preferred
-        readings, and manipulating the output types through operations such as
-        sorting and filtering, users can identify the grammar types involved in
-        the processing of target phenomena.</p>
-
-    <p>Input texts can be assigned to the two different groups of 
-        <span class="highlight">A Items</span> and <span class="highlight">B Items</span>.
-        When only A items are used as input, the union of all types found across
-        all items are shown in the Output area. When B items are added, Typediff
-        will use set difference to subtract the B types from A types. The user
-        can modify this default behaviour to use intersection or union.</p>
-
-
-    <h2>Adding Items</h2>
-
-    <p>After opening the <span class="highlight">Add Items</span> box,
-        there are two ways you can add initial and additional items:
-
-        <ol>
-            <li>
-                <p class="highlight">Adding items to be parsed on the fly</p>
-                <p>Enter as many items as you want into either the A or B Items
-                    text boxes, separated by new lines. These will be parsed by
-                    ACE, with the best reading initally selected.  Alternate
-                    readings can be selected by clicking on an item, which
-                    presents the list of readings to select from.  Multiple
-                    readings can be selected with the Control key, resulting in
-                    the union of types from across selected readings being
-                    extracted.
-            </li>
-            <li>
-                <p class="highlight">Bulk add parsed items from a profile</p>
-                <p>Select a profile from the dropdown option for either A or B
-                    items. These contain contain treebanked and thinned profiles
-                    that also have phenomenon annotations.  You can load the
-                    entire profile, or filter down to a subset by selecting one
-                    of the phenomena the profile is annotated with, or by
-                    providing your own TSQL 'where' clause constraint. </p>
-            </li>
-        </ol>
-        
-
-    <h2>Removing Items</h2>
-        
-    <p>You can temporarily disable items by toggling the slider in their upper
-    right corner, or permanently remove items with the cross button.</p>
-
-    
-    <h2>Working with Output Types</h2>
-
-    <p>The types in the output type table are coloured according to whether they
-        are subtypes of high-level HPSG theoretic types (<i>sign</i>, <i>synsem</i>, <i>head</i>,
-        <i>cat</i>, <i>relation</i>, <i>predsort</i>) in addition to everything else (<i>other</i>).
-        Hovering over a type will indicate which kind it it is.</p>
-
-    <p>Hovering over the output types will also cause the corresponding items
-        that contain these types to be highlighted. Hovering over sign (red)
-        types also causes the corresponding surface span and subtrees in the
-        derivation to be highlighted. Clickin on a type fixes the highlighting
-        on/off.</p>
-
-    <p>The types can be sorted by a range of different variables. These
-    variables can be stacked by Control clicking on the sort directions. The
-    column variables that can be sorted are:</p>
-
-    <ol>
-        <li>The high level type category</li>
-        <li>The TF-IDF of the type, where TF is the number of A items containing
-        the type, which is offset by DF, the number of trees in the active
-        treebank that contain the type. </li>
-        <li>The proportion of A items containing the type.</li>
-        <li>The proportion of trees from the active treebank containing the type.</li>
-        <li>The name of the type.</li>
-    </ol>
-
-    <p>The types can also be filtered by:</p>
-        <ul>
-            <li>Types with a name that matches a text search. Performed with the 'Search' input.</li>
-            <li>Only subtypes of a particular high-level category. Performed with the dropdown underneath the 'Kind' column.</li>
-            <li>Those originating from items that *do* include a specific type. Performed by clicking on the grey filter icon on the desired type.</li>
-            <li>Those originating from items that *do not* include a specific type. Performed by clicking on the black filter icon on the desired type.</li>
-        </ul>
-
-    <h2>Minimal Pairs</h2>
-
-    <p>The motivating use case for being able to perform a diff between A and B
-        items is to compare two sentences which form a minimal pair for a
-        phenomenon, where the A sentence contains a positive instance of a
-        target phenomenon, and the B sentence is as close to the A sentence as
-        possible but without the occurance of the phenomenon. By subtracting the
-        types of the phenomenon-negative sentence from the phenomenon-positive
-        sentence, the hope is that the resultant output types are more likely to
-        be associated with the target phenomenon.
-
-        To see an example of this, open the Add Items box, place the cursor in
-        the A Items text box, and press Alt-Enter on the keyboard. This will
-        load a minimal pair corresponding to the right node-raising phenomenon.</p>
-    
-    <p>In the <span class="highlight">difference mode</span>, this
-       displays all types used to process A items that were not used
-       in the processing of B items. This allows you (for instance) to
-       contrast similar sentences, such as passive and active
-       variants, thereby shedding light on which types are involved in
-       constraining a phenomenon. </p>
-
-    
-    <h2>Sharing Typediff Results</h2>
-
-    <p>Most of the current state of the Typediff interface is represented in the
-        URL and synchronised as you perform actions. This means that you can
-        grab the URL and use it as a means of saving and sharing a particular
-        set of inputs and configuration.</p>
-
-    <p>Notable information that is not stored in the URL includes custom sorting
-        placed on the types table and actively highlighted types.</p> 
-  </div>
-  <div id="help-tab-container">
-       <div id="help-tab">
-         <a id="toggle-help">help</a>
-       </div>
-  </div>
-</div>
-
-
-<div id="add-items-box" class="popup hidden">
-    <form action="#" method="post" onsubmit="return false;">
-        <div id="input-boxes-container">
-            <div class="input-box" style="width:45%">
-                <div class="header"><h2>A Items</h2></div>
-                <textarea id="pos-input" name="pos-items"></textarea>
-                <div class="row">
-                    <select id="pos-profile-input" class="profile-input">
-                        <option value="" disabled selected>Add profile items...</option>
-                    </select>
-                    <input id="pos-profile-filter" type="text" placeholder="TSQL Constraint">
+    <head>
+        <meta charset="utf-8" />
+        <title>Typediff</title>
+        <link rel="stylesheet" type="text/css" href="static/typediff.css"/>
+        <link rel="stylesheet" type="text/css" href="static/font-awesome/css/font-awesome.min.css"/>
+        <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css" rel='stylesheet' type='text/css'>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script>
+         if (typeof jQuery == 'undefined')
+             document.write(unescape('%3Cscript src="static/jquery.min.js"%3E%3C/script%3E'));
+        </script>
+        <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+        <script>
+         if (typeof $.fn.dataTable == 'undefined') {
+             document.write(unescape('%3Cscript src="static/jquery.dataTables.min.js"%3E%3C/script%3E'));
+             document.write(unescape('%3Clink rel="stylesheet" type="text/css" href="static/jquery.dataTables.min.css"/%3E'));
+         }
+        </script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>  
+        <script>
+         if (typeof jQuery.ui == 'undefined')
+             document.write(unescape('%3Cscript src="static/jquery-ui.min.js"%3E%3C/script%3E'));
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
+        <script>
+         if (typeof _ == 'undefined')
+             document.write(unescape('%3Cscript src="static/lodash.min.js"%3E%3C/script%3E'));
+        </script>
+        <script src="static/typediff.js"></script>
+        <script src="static/render.js"></script>
+        <script type="text/html" id="item-template">
+            <div class="item">
+                <div class="tree-box popup hidden">
+                    <div class="tree-actions">
+                        <input class="activate-derivations" type="submit" value="Select All"/>
+                        <input class="disable-derivations" type="submit" value="Unselect All"/>
+                        <input class="copy-item" type="submit" value="Copy Item" title="Copy this item to the other set with the same active trees."/>
+                        <input class="toggle-tree-box" type="submit" value="Maximise" title="Expand popup to fill window."/>
+                        <div class="tree-count"></div>
+                    </div>
                 </div>
-                <div class="row phenomenon-row">
-                    <select id="pos-profile-phenomenon">
-                        <option selected disabled>Select phenomenon</option>
-                    </select>
-                    <a target="_blank" href="/docs/phenomena.html">Phenomenon documentation</a>
+                <div class="mrs-box popup hidden">
+                    <div class="mrs-label"></div>
+                    <div class="mrs"></div>
+                </div>
+                <div class="actions">
+                    <div class="number">1.</div>
+                    <div class="del" title="remove item">
+                        <i class="fa fa-times"></i>
+                    </div>
+                    <div class="disable">
+                        <i class="fa fa-toggle-on" title="toggle item"></i>
+                    </div>
+                    <div class="focus">
+                        <i class="fa fa-caret-square-o-down" title="toggle item focus"></i>
+                    </div>
+                </div>
+                <div class="clear"></div>
+                <div class="text"></div>
+                <div class="tree-count"></div>
+                <div class="clear"></div>
+            </div>
+        </script>
+    </head>
+    <body>
+        <div id="help-box">
+            <div id="help-content" class="hidden">
+                <h2>Overview</h2>
+                
+                <p>This is a summary of the various Typediff features. For a detailed
+                    walkthrough of how to use Typediff to isolate an ERG phenomenon, see <a href="/docs/rnr.html" target="_blank">here</a>. </p>
+                
+                <p>Typediff allows you to quickly explore types used in the
+                    parsing of text by DELPH-IN grammars. It works by taking one or more
+                    texts as input and then extracting all types found in the full AVM of
+                    the selected parse derivation. The resulting bag of types are aggregated
+                    and sorted by customizable groupings and weightings.</p>
+                
+                <p>By manipulating the groupings of input texts, selecting preferred
+                    readings, and manipulating the output types through operations such as
+                    sorting and filtering, users can identify the grammar types involved in
+                    the processing of target phenomena.</p>
+                
+                <p>Input texts can be assigned to the two different groups of 
+                    <span class="highlight">A Items</span> and <span class="highlight">B Items</span>.
+                    When only A items are used as input, the union of all types found across
+                    all items are shown in the Output area. When B items are added, Typediff
+                    will use set difference to subtract the B types from A types. The user
+                    can modify this default behaviour to use intersection or union.</p>
+                
+                
+                <h2>Adding Items</h2>
+                
+                <p>After opening the <span class="highlight">Add Items</span> box,
+                    there are two ways you can add initial and additional items:
+                    
+                    <ol>
+                        <li>
+                            <p class="highlight">Adding items to be parsed on the fly</p>
+                            <p>Enter as many items as you want into either the A or B Items
+                                text boxes, separated by new lines. These will be parsed by
+                                ACE, with the best reading initally selected.  Alternate
+                                readings can be selected by clicking on an item, which
+                                presents the list of readings to select from.  Multiple
+                                readings can be selected with the Control key, resulting in
+                                the union of types from across selected readings being
+                                extracted.
+                        </li>
+                        <li>
+                            <p class="highlight">Bulk add parsed items from a profile</p>
+                            <p>Select a profile from the dropdown option for either A or B
+                                items. These contain contain treebanked and thinned profiles
+                                that also have phenomenon annotations.  You can load the
+                                entire profile, or filter down to a subset by selecting one
+                                of the phenomena the profile is annotated with, or by
+                                providing your own TSQL 'where' clause constraint. </p>
+                        </li>
+                    </ol>
+                    
+
+                    <h2>Removing Items</h2>
+                    
+                    <p>You can temporarily disable items by toggling the slider in their upper
+                        right corner, or permanently remove items with the cross button.</p>
+
+                    
+                    <h2>Working with Output Types</h2>
+
+                    <p>The types in the output type table are coloured according to whether they
+                        are subtypes of high-level HPSG theoretic types (<i>sign</i>, <i>synsem</i>, <i>head</i>,
+                        <i>cat</i>, <i>relation</i>, <i>predsort</i>) in addition to everything else (<i>other</i>).
+                        Hovering over a type will indicate which kind it it is.</p>
+
+                    <p>Hovering over the output types will also cause the corresponding items
+                        that contain these types to be highlighted. Hovering over sign (red)
+                        types also causes the corresponding surface span and subtrees in the
+                        derivation to be highlighted. Clickin on a type fixes the highlighting
+                        on/off.</p>
+
+                    <p>The types can be sorted by a range of different variables. These
+                        variables can be stacked by Control clicking on the sort directions. The
+                        column variables that can be sorted are:</p>
+
+                    <ol>
+                        <li>The high level type category</li>
+                        <li>The TF-IDF of the type, where TF is the number of A items containing
+                            the type, which is offset by DF, the number of trees in the active
+                            treebank that contain the type. </li>
+                        <li>The proportion of A items containing the type.</li>
+                        <li>The proportion of trees from the active treebank containing the type.</li>
+                        <li>The name of the type.</li>
+                    </ol>
+
+                    <p>The types can also be filtered by:</p>
+                    <ul>
+                        <li>Types with a name that matches a text search. Performed with the 'Search' input.</li>
+                        <li>Only subtypes of a particular high-level category. Performed with the dropdown underneath the 'Kind' column.</li>
+                        <li>Those originating from items that *do* include a specific type. Performed by clicking on the grey filter icon on the desired type.</li>
+                        <li>Those originating from items that *do not* include a specific type. Performed by clicking on the black filter icon on the desired type.</li>
+                    </ul>
+
+                    <h2>Minimal Pairs</h2>
+
+                    <p>The motivating use case for being able to perform a diff between A and B
+                        items is to compare two sentences which form a minimal pair for a
+                        phenomenon, where the A sentence contains a positive instance of a
+                        target phenomenon, and the B sentence is as close to the A sentence as
+                        possible but without the occurance of the phenomenon. By subtracting the
+                        types of the phenomenon-negative sentence from the phenomenon-positive
+                        sentence, the hope is that the resultant output types are more likely to
+                        be associated with the target phenomenon.
+
+                        To see an example of this, open the Add Items box, place the cursor in
+                        the A Items text box, and press Alt-Enter on the keyboard. This will
+                        load a minimal pair corresponding to the right node-raising phenomenon.</p>
+                    
+                    <p>In the <span class="highlight">difference mode</span>, this
+                        displays all types used to process A items that were not used
+                        in the processing of B items. This allows you (for instance) to
+                        contrast similar sentences, such as passive and active
+                        variants, thereby shedding light on which types are involved in
+                        constraining a phenomenon. </p>
+
+                    
+                    <h2>Sharing Typediff Results</h2>
+
+                    <p>Most of the current state of the Typediff interface is represented in the
+                        URL and synchronised as you perform actions. This means that you can
+                        grab the URL and use it as a means of saving and sharing a particular
+                        set of inputs and configuration.</p>
+
+                    <p>Notable information that is not stored in the URL includes custom sorting
+                        placed on the types table and actively highlighted types.</p> 
+            </div>
+            <div id="help-tab-container">
+                <div id="help-tab">
+                    <a id="toggle-help">help</a>
                 </div>
             </div>
-            <div class="spacer"></div>
-            <div class="input-box" style="width:45%">
-                <div class="header"><h2>B Items</h2></div>
-                <textarea id="neg-input" name="neg-items"></textarea>
-                <div class="row">
-                    <select id="neg-profile-input" class="profile-input">
-                        <option value="" disabled selected>Add profile items...</option>
-                    </select>
-                    <input id="neg-profile-filter" type="text" placeholder="TSQL Constraint">
-                </div>
-                <div class="row phenomenon-row">
-                    <select id="neg-profile-phenomenon">
-                        <option selected disabled>Select phenomenon</option>
-                    </select>
-                    <a target="_blank" href="/docs/phenomena.html">Phenomenon documentation</a>
-                </div>
-                </div>
         </div>
-        <input id="submit-items-button" type="submit" value="Add Items"/>
-    </form>
-</div>
 
-<div id="container">
-  <div id="console-pane" class="pane left-pane">
-    <div class="pane-header">CONFIG</div>
-    <div class="pane-content">
-      <div id="options">
-        <form action="#" method="post" onsubmit="return false;">
-          <div class="option-line">
-            <div class="option">
-              <div class="option-name">Grammar:</div>
-              <div class="option-input">
-                <select id="grammar-input" name="grammar-name"></select>
-              </div>
+
+        <div id="add-items-box" class="popup hidden">
+            <form action="#" method="post" onsubmit="return false;">
+                <div id="input-boxes-container">
+                    <div class="input-box" style="width:45%">
+                        <div class="header"><h2>A Items</h2></div>
+                        <textarea id="pos-input" name="pos-items"></textarea>
+                        <div class="row">
+                            <select id="pos-profile-input" class="profile-input">
+                                <option value="" disabled selected>Add profile items...</option>
+                            </select>
+                            <input id="pos-profile-filter" type="text" placeholder="TSQL Constraint">
+                        </div>
+                        <div class="row phenomenon-row">
+                            <select id="pos-profile-phenomenon">
+                                <option selected disabled>Select phenomenon</option>
+                            </select>
+                            <a target="_blank" href="/docs/phenomena.html">Phenomenon documentation</a>
+                        </div>
+                    </div>
+                    <div class="spacer"></div>
+                    <div class="input-box" style="width:45%">
+                        <div class="header"><h2>B Items</h2></div>
+                        <textarea id="neg-input" name="neg-items"></textarea>
+                        <div class="row">
+                            <select id="neg-profile-input" class="profile-input">
+                                <option value="" disabled selected>Add profile items...</option>
+                            </select>
+                            <input id="neg-profile-filter" type="text" placeholder="TSQL Constraint">
+                        </div>
+                        <div class="row phenomenon-row">
+                            <select id="neg-profile-phenomenon">
+                                <option selected disabled>Select phenomenon</option>
+                            </select>
+                            <a target="_blank" href="/docs/phenomena.html">Phenomenon documentation</a>
+                        </div>
+                    </div>
+                </div>
+                <input id="submit-items-button" type="submit" value="Add Items"/>
+            </form>
+        </div>
+
+        <div id="container">
+            <div id="console-pane" class="pane left-pane">
+                <div class="pane-header">CONFIG</div>
+                <div class="pane-content">
+                    <div id="options">
+                        <form action="#" method="post" onsubmit="return false;">
+                            <div class="option-line">
+                                <div class="option">
+                                    <div class="option-name">Grammar:</div>
+                                    <div class="option-input">
+                                        <select id="grammar-input" name="grammar-name"></select>
+                                    </div>
+                                </div>
+                                <div class="option" title="treebank to take type coverage statistics from">
+                                    <div class="option-name">Treebank:</div>
+                                    <div class="option-input">
+                                        <select id="treebank-input" name="treebank-name"></select>
+                                    </div>
+                                </div>
+                                <div class="option" title="limit number of readings ACE returns">
+                                    <div class="option-name">Count:</div>
+                                    <div class="option-input">
+                                        <input id="count-input" type="text" name="count" value="10"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="options-line-two" class="option-line">
+                                <div class="option" title="Show the (diffed) super types each type inherits from">
+                                    <div class="option-name">Super types:</div>
+                                    <div class="option-input">
+                                        <input type="checkbox" name="supers">
+                                    </div>
+                                </div>
+                                <div class="option" title="Choose short or long labels for tree nodes">
+                                    <div class="option-name">Labels:</div>
+                                    <div class="option-input">
+                                        <span title="use short labels for tree nodes"><input type="radio" name="labels" value="short" checked /> short</span>
+                                        <span title="use rule names and lex types for tree labels"><input type="radio" name="labels" value="long"/> long</span>
+                                    </div>
+                                </div>
+                                <div class="option" title="Toggle whether fragment readings are returned (ERG only)">
+                                    <div class="option-name">Fragments:</div>
+                                    <div class="option-input">
+                                        <input type="checkbox" name="fragments">
+                                    </div>
+                                </div>
+                                <div class="option" title="Choose which tagger to use for the ERG">
+                                    <div class="option-name">Tagger:</div>
+                                    <div class="option-input">
+                                        <span title="use ACE's built in tagger (ERG only)"><input type="radio" name="tagger" value="ace" checked /> ACE</span>
+                                        <span title="Use the TnT tagger with WSJ model (ERG only)"><input type="radio" name="tagger" value="tnt"/> TnT</span>
+                                    </div>
+                                </div>
+                            </div> 
+                            <div id="actions" class="option-line">
+                                <input id="add-items-button" type="submit" value="Add Items"/>
+                                <input id="swap-items-button" class="disabled" type="submit" value="Swap A-B"/>
+                                <input id="clear-button" class="disabled" type="submit" value="Clear"/>
+                                <input id="annotate-button" type="submit" value="Annotate"/>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="option" title="treebank to take type coverage statistics from">
-              <div class="option-name">Treebank:</div>
-              <div class="option-input">
-                <select id="treebank-input" name="treebank-name"></select>
-              </div>
+            <div id="status-pane" class="pane right-pane">
+                <div class="pane-header">STATUS</div>
+                <div class="pane-content">
+                    <div id="waiting-box" class="hidden"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i></div>
+                    <div id="success-box" class="hidden">
+                        <div class="status-label">A items:</div>
+                        <div id="num-pos-items" class="status-value"></div>
+                        <div class="status-label">B items:</div>
+                        <div id="num-neg-items" class="status-value"></div>
+                        <div class="status-label">Grammar used to parse A items:</div>
+                        <div id="pos-grammar" class="status-value"></div>
+                        <div></div>
+                        <div class="status-label">Grammar used to parse B items:</div>
+                        <div id="neg-grammar" class="status-value"></div>
+                        <div></div>
+                        <div class="status-label">Number of types:</div>
+                        <div id="numtypes" class="status-value"></div>
+                        <div></div>
+                        <div class="status-label">Number of super types:</div>
+                        <div id="numsupers" class="status-value">??</div>
+                        <div class="status-label">Treebank details:</div>
+                        <div id="treebank-details" class="status-value"></div>
+                    </div>
+                    <div id="fail-box" class="error hidden"></div>
+                    <div id="annotation-box" class="hidden">
+                        <div id="annotation-label">
+                            <div>Phenomenon:</div>
+                            <div><a id="phenomenon-label" target="_blank" href="/docs/phenomena.html"></a></div>
+                        </div>
+                        <div id="annotated-types-container" class="type-list-container">
+                            <div id="sufficient-types" class="type-list">
+                                <div class="type-list-header">Sufficient Types</div>
+                            </div>
+                            <div id="relevant-types" class="type-list">
+                                <div class="type-list-header">Relevant Types</div>
+                            </div>
+                        </div>
+                        <div id="annotation-comment"><textarea placeholder="Comment"></textarea></div>
+                        <div class="annotation-form-container">
+                            <div class="annotation-form">              
+                                <input id="annotation-name" type="text" placeholder="Your name">
+                                <input id="submit-annotation" type="submit" value="Annotate">
+                                <input id="next-annotation" type="submit" value="Next"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="option" title="limit number of readings ACE returns">
-              <div class="option-name">Count:</div>
-              <div class="option-input">
-                <input id="count-input" type="text" name="count" value="10"/>
-              </div>
+            <div id="input-pane" class="pane left-pane">
+                <div class="pane-header">INPUT</div>
+                <div class="pane-content">
+                    <div id="pos-items" class="item-type hidden">
+                        <div class="item-group-info">
+                            <div class="item-type-header">A ITEMS</div>
+                            <div id="pos-active-count" class="item-count-header"></div>
+                        </div>
+                        <div class="item-list"></div>
+                    </div>
+                    <div id="extra-group-operator" class="hidden">
+                        <div class="set-operator" data-operator="difference" title="show types used to process A items but not used to process B items">−</div>
+                        <div class="set-operator" data-operator="intersection" title="show types used in the processing of both A and B items">∩</div>
+                        <div class="set-operator" data-operator="union" title="show types used in the processing of all items">∪</div>
+                    </div>
+                    <div id="neg-items" class="item-type hidden">
+                        <div class="item-group-info">
+                            <div class="item-type-header">B ITEMS</div>
+                            <div id="neg-active-count" class="item-count-header"></div>
+                        </div>
+                        <div class="item-list"></div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div id="options-line-two" class="option-line">
-            <div class="option" title="Show the (diffed) super types each type inherits from">
-              <div class="option-name">Super types:</div>
-              <div class="option-input">
-                <input type="checkbox" name="supers">
-              </div>
+            <div id="output-pane" class="pane right-pane">
+                <div class="pane-header">OUTPUT</div>
+                <div id="output-pane-contents" class="pane-content">
+                </div>
             </div>
-            <div class="option" title="Choose short or long labels for tree nodes">
-              <div class="option-name">Labels:</div>
-              <div class="option-input">
-                <span title="use short labels for tree nodes"><input type="radio" name="labels" value="short" checked /> short</span>
-                <span title="use rule names and lex types for tree labels"><input type="radio" name="labels" value="long"/> long</span>
-              </div>
-            </div>
-            <div class="option" title="Toggle whether fragment readings are returned (ERG only)">
-              <div class="option-name">Fragments:</div>
-              <div class="option-input">
-                <input type="checkbox" name="fragments">
-              </div>
-            </div>
-            <div class="option" title="Choose which tagger to use for the ERG">
-              <div class="option-name">Tagger:</div>
-              <div class="option-input">
-                <span title="use ACE's built in tagger (ERG only)"><input type="radio" name="tagger" value="ace" checked /> ACE</span>
-                <span title="Use the TnT tagger with WSJ model (ERG only)"><input type="radio" name="tagger" value="tnt"/> TnT</span>
-              </div>
-            </div>
-          </div> 
-          <div id="actions" class="option-line">
-            <input id="add-items-button" type="submit" value="Add Items"/>
-            <input id="swap-items-button" class="disabled" type="submit" value="Swap A-B"/>
-            <input id="clear-button" class="disabled" type="submit" value="Clear"/>
-            <input id="annotate-button" type="submit" value="Annotate"/>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div id="status-pane" class="pane right-pane">
-    <div class="pane-header">STATUS</div>
-    <div class="pane-content">
-      <div id="waiting-box" class="hidden"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i></div>
-      <div id="success-box" class="hidden">
-        <div class="status-label">A items:</div>
-        <div id="num-pos-items" class="status-value"></div>
-        <div class="status-label">B items:</div>
-        <div id="num-neg-items" class="status-value"></div>
-        <div class="status-label">Grammar used to parse A items:</div>
-        <div id="pos-grammar" class="status-value"></div>
-        <div></div>
-        <div class="status-label">Grammar used to parse B items:</div>
-        <div id="neg-grammar" class="status-value"></div>
-        <div></div>
-        <div class="status-label">Number of types:</div>
-        <div id="numtypes" class="status-value"></div>
-        <div></div>
-        <div class="status-label">Number of super types:</div>
-        <div id="numsupers" class="status-value">??</div>
-        <div class="status-label">Treebank details:</div>
-        <div id="treebank-details" class="status-value"></div>
-      </div>
-      <div id="fail-box" class="error hidden"></div>
-      <div id="annotation-box" class="hidden">
-          <div id="annotation-label">
-              <div>Phenomenon:</div>
-              <div><a id="phenomenon-label" target="_blank" href="/docs/phenomena.html"></a></div>
-          </div>
-          <div id="annotated-types-container" class="type-list-container">
-              <div id="sufficient-types" class="type-list">
-                  <div class="type-list-header">Sufficient Types</div>
-              </div>
-              <div id="relevant-types" class="type-list">
-                  <div class="type-list-header">Relevant Types</div>
-              </div>
-          </div>
-          <div id="annotation-comment"><textarea placeholder="Comment"></textarea></div>
-          <div class="annotation-form-container">
-              <div class="annotation-form">              
-                  <input id="annotation-name" type="text" placeholder="Your name">
-                  <input id="submit-annotation" type="submit" value="Annotate">
-                  <input id="next-annotation" type="submit" value="Next"/>
-              </div>
-          </div>
-      </div>
-    </div>
-  </div>
-  <div id="input-pane" class="pane left-pane">
-    <div class="pane-header">INPUT</div>
-    <div class="pane-content">
-      <div id="pos-items" class="item-type hidden">
-          <div class="item-group-info">
-              <div class="item-type-header">A ITEMS</div>
-              <div id="pos-active-count" class="item-count-header"></div>
-          </div>
-        <div class="item-list"></div>
-      </div>
-      <div id="extra-group-operator" class="hidden">
-          <div class="set-operator" data-operator="difference" title="show types used to process A items but not used to process B items">−</div>
-          <div class="set-operator" data-operator="intersection" title="show types used in the processing of both A and B items">∩</div>
-          <div class="set-operator" data-operator="union" title="show types used in the processing of all items">∪</div>
-      </div>
-      <div id="neg-items" class="item-type hidden">
-          <div class="item-group-info">
-              <div class="item-type-header">B ITEMS</div>
-              <div id="neg-active-count" class="item-count-header"></div>
-          </div>
-        <div class="item-list"></div>
-      </div>
-    </div>
-  </div>
-  <div id="output-pane" class="pane right-pane">
-    <div class="pane-header">OUTPUT</div>
-    <div id="output-pane-contents" class="pane-content">
-    </div>
-  </div>
-  <div class="clear"></div>
-</div>
-</body>
+            <div class="clear"></div>
+        </div>
+    </body>
 </html>

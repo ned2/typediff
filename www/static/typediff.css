@@ -230,14 +230,14 @@ input[type=text], input[type=submit], select, textarea {
 
 .actions .number { font-weight: 700 }
 
-.item .del,.item .disable {
+.item .del, .item .disable, .item .focus {
     visibility: hidden;
     float: right;
     margin-left: 0.6em;
     font-size: 110%;
 }
 
-.item:hover .del, .item:hover .disable {
+.item:hover .del, .item:hover .disable, .item:hover .focus {
     visibility: visible;
 }
 

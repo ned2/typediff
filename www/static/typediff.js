@@ -1600,13 +1600,67 @@ function setItemHandlers($item) {
         }
     });
 
+    function enableItem($item){
+        var item = getItemObject($item);
+        item.disabled = false;
+        $item.find('.disable i')
+            .removeClass('fa-toggle-off')
+            .addClass('fa-toggle-on');
+        $item.removeClass('disabled');
+    }
+
+    function disableItem($item){
+        var item = getItemObject($item);
+        item.disabled = true;
+        $item.find('.disable i')
+            .removeClass('fa-toggle-on')
+            .addClass('fa-toggle-off');
+        $item.addClass('disabled');
+    }
+
+    function toggleItem($item){
+        var item = getItemObject($item);
+        if (item.disabled)
+            enableItem($item);
+        else
+            disableItem($item);
+    }
+
+    function focusItem($item){
+        $item.addClass('focused');
+        $item.find('.focus i').removeClass('fa-caret-square-o-down')
+            .addClass('fa-caret-square-o-up');
+    };
+
+    function unfocusItem($item){
+        $item.removeClass('focused');
+        $item.find('.focus i').removeClass('fa-caret-square-o-up')
+            .addClass('fa-caret-square-o-down');
+    };
+    
+    $item.find('.focus').click(function(event) {
+        event.stopPropagation();
+        if ($item.hasClass('focused')) {
+            // this item is focused; change to being unfocused
+            $('#input-pane .item').each(function(i, elem){enableItem($(elem));});
+            unfocusItem($item);
+        } else {
+            // this item is unfocused; unfocus all other items then focus this one
+            $('#input-pane .item').each(function(i, elem){
+                var $elem = $(elem); 
+                disableItem($elem);
+                unfocusItem($elem);
+            });
+            enableItem($item);
+            focusItem($item);
+        }
+        doDiff();
+    });
+
     $item.find('.disable').click(function(event) {
         event.stopPropagation();
-        var item = getItemObject($item);
-        item.disabled = !item.disabled;
-        $(this).children().toggleClass('fa-toggle-on fa-toggle-off');
-        $item.toggleClass('disabled');
-        doDiff();
+        toggleItem($item);
+        doDiff();        
     });
 
     $item.click(function(event) {
@@ -1631,7 +1685,6 @@ function setItemHandlers($item) {
         // in case some of the types are already active
         applyActiveHighlights('locked');
     });
-
 
     $item.find('.actions .del').click(function(event) {
         event.stopPropagation();

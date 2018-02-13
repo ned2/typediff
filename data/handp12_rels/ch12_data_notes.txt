@@ -1,0 +1,94 @@
+The fields
+-------------------------------------
+1. number
+2. page number
+3. the section number it hails from (eg 3.2.2). This can be cross referenced with the expanded outline file. 
+4. the example number (eg 12 iv)
+5. boolean value corresponding to grammatical status
+6. boolean value corresponding to sentence status (ie non-fragment)
+7. boolean value corresponding to relative construction status 
+8. inline label identifier (eg wh-relative, fused-relative, non-cleft etc)
+9. the text of the exemplar
+
+
+Notes on phenomenon label field
+----------------------------------
+
+labels beginning with ~ indicate that either no label was explicitly provided
+and one was inferred from the context, or that the label was massaged somewhat
+to make it make more sense independent of its context
+
+no label was explicitly provided and I
+have inferred the label from the context.
+
+'or'  indicates ambiguity between the two
+'and' indicates both labels apply
+
+When a simple syntactic category is specified as the phenomenon type/label (eg
+clause, NP, AdjP) it is illustrating the types of constituents that can be
+relativised for the current kind of relative construction being discussed.
+
+
+Notes text field
+----------------------------------
+
+The text field of each exemplar contains markup which is explained below. This
+will all be stripped out when creating profiles for parsing.
+
+[...]    delimits the span that is the relative clause 
+{...}    delimits a span that is a referent
+__       indicates a gap corresponding to a referent
+
+non-binary grammaticality judgements in H&P
+p1041 14.ii.c
+p1042 17.i.b
+p1045 29.ii.b
+p1051 53.ii
+p1053 61.ii
+p1055 68.i, 68.ii, 68.iii
+p1074 18.iii, 18.iv
+p1078 30iii (alternate paraphrase)
+p1083 15.iii.b
+p1087 27.ii
+p1089 33.ii
+p1091 38.iii
+p1092 40.iii
+
+Each of these is marked as one of the following:
+? -- of questionable grammaticality
+!  -- non-standard
+# -- semantically or pragmatically anomalous
+% -- grammatical in some dialects only
+
+
+Misc Item notes
+----------------------------------
+
+18 is not a fused relative
+28=31
+37=40
+38=41
+39=42
+57, 58, 60, 61: the fine grained labels for these complex relatives could be further inferred with some thought.
+303 is ambiguous between a relative construction and a purpose adjunct 
+336 is ambiguous 
+339 is ambiguous
+
+TODO:
+Go through and identify minimal pairs that H&P used
+extract for use in Typediff
+
+Complex relatives subtypes:
+--------------------------------------
+Type I:    comp of preposition -> PP
+Type II:   PP -> NP
+Type III:  PP -> AdjP
+Type IV:   NP -> infinitival
+Type V:    NP -> gerund-participial
+Type VI:   genitive whose -> NP
+Type VII:  determinative which -> NP
+
+
+total pages = 1096 - 1033 = 63
+current status = 31/63 
+

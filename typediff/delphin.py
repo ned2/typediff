@@ -1337,10 +1337,9 @@ def get_profile_results(paths, best=1, gold=False, grammar=None,
 def get_text_results(lines, grammar, best=1, ace_path=None, lextypes=True,
                      typifier=None, cache=False, fragments=False):
     results_dict = defaultdict(list)
-
     for i, line in enumerate(lines):
         f = Fragment(line, grammar, count=best, typifier=typifier, cache=cache,
-                     ace_path=ace_path)
+                     ace_path=ace_path, fragments=fragments)
 
         for reading in f.readings:
             results_dict[i].append(reading)

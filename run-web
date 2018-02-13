@@ -64,4 +64,6 @@ ${ECHO} mod_wsgi-express start-server \
                  --directory-index index.html \
                  --include-file httpd.conf \
                  --request-timeout 180 \
-                 --entry-point wsgi.py
+                 --log-to-terminal \
+                 --application-type module \
+                 --entry-point typediff.wsgi

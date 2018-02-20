@@ -449,7 +449,8 @@ function processPostData(data) {
         // applyFilters calls doDiff even when there are no filters();
         applyFilters();
     } else {
-        showStatusBox('#fail-box').html(data.error.replace(/\n/g, '<br/>'));
+        $('#fail-box').html(data.error.replace(/\n/g, '<br/>'));
+        showStatusBox('#fail-box');
         updateButtons();
     }
 }

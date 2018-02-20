@@ -167,7 +167,6 @@ def type_data():
 
 def typediff_web(pos_items, neg_items, opts):
     data = {
-        'success': True,
         'pos-items' : pos_items,
         'neg-items' : neg_items,
         'descendants' : load_descendants(opts.grammar) if opts.desc else False,

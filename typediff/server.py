@@ -9,16 +9,12 @@ from flask import Flask, request, jsonify
 from .config import LOGONROOT, TREEBANKLIST, FANGORNPATH, PROFILELIST
 from .gram import get_grammar, get_grammars
 from .delphin import (init_paths, JSONEncoder, load_hierarchy, Treebank,
-                      dotdict, Profile)
+                      dotdict, Profile, AceError)
 
 # set LOGONROOT environment variable in case it's not set
 init_paths(logonroot=LOGONROOT)
 
 from .typediff import typediff_web, process_sentences, process_profiles
-
-# TODO:
-# create a setup.py file with executable entry points for the main functions of:
-# -- typediff.py, grammar-utils.py, type-stats.py, parseit.py, queryex.py, eval.py
 
 
 app = Flask(__name__)
@@ -39,9 +35,16 @@ def parse_types():
 
     pos_inputs = request.form.get('pos-items', '').strip().splitlines()
     neg_inputs = request.form.get('neg-items', '').strip().splitlines()
-    pos_items = process_sentences(pos_inputs, opts)
-    neg_items = process_sentences(neg_inputs, opts)
-    return jsonify(typediff_web(pos_items, neg_items, opts))
+    try:
+        pos_items = process_sentences(pos_inputs, opts)
+        neg_items = process_sentences(neg_inputs, opts)
+    except AceError as e:
+        return jsonify({'success':False, 'error': e.msg})
+
+    data = typediff_web(pos_items, neg_items, opts)
+    data['success'] = True
+
+    return jsonify(data)
 
 
 @app.route('/process-profiles', methods=['POST'])

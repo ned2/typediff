@@ -7,8 +7,8 @@ This script runs the typediff webapp. Options are:
 
   --port PORT        Runs the app on port PORT.
                      
-  --debug            Runs mod_wsgi-express with --debug-mode and --enable-debugger
-                     flags enabled.   
+  --debug            Runs mod_wsgi-express with --debug-mode, --enable-debugger
+                     and --log-to-terminal flags enabled.   
 
   --echo             Don't run the app, just echo the underlying mod_wsgi-express 
                      command that would have been run with the configuration 
@@ -30,7 +30,7 @@ while [[ ${1} == --* ]]; do
             shift 2
             ;;
         --debug)
-            DEBUGFLAGS="--debug-mode --enable-debugger"
+            DEBUGFLAGS="--log-to-terminal --debug-mode --enable-debugger"
             shift 1
             ;;
         --echo)
@@ -64,6 +64,5 @@ ${ECHO} mod_wsgi-express start-server \
                  --directory-index index.html \
                  --include-file httpd.conf \
                  --request-timeout 180 \
-                 --log-to-terminal \
                  --application-type module \
                  --entry-point typediff.wsgi

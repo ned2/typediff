@@ -76,7 +76,10 @@ def process_the_profiles():
 
     # for now assume that both profiles will be parsed using the
     # same grammar version, so use whichever grammar was assigned
-    return jsonify(typediff_web(pos_items, neg_items, opts))
+    data = typediff_web(pos_items, neg_items, opts)
+    data['success'] = True
+
+    return jsonify(data)
 
 
 @app.route('/annotate', methods=['POST'])

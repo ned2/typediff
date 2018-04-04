@@ -8,9 +8,6 @@ exploring unfamiliar grammars, and comparing different versions of the same
 grammar. If you find Typediff useful, feedback on your particular use case and
 how you used Typediff would be very much desired.
 
-A live installation of Typediff can be found here:
-http://hum.csse.unimelb.edu.au/typediff/
-
 Typediff uses ACE for parsing, and should be compatible with any DELPH-IN
 grammar that has been configured to work with ACE. Many thanks to Woodley
 Packard for his assistance with extracting the required data from ACE.
